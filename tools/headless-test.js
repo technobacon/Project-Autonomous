@@ -100,7 +100,7 @@ sandbox.document = {
 
 // ---- Load & concatenate the game source (skip main.js auto-init) ---------
 const order = ['utils', 'audio', 'input', 'particles', 'save', 'content',
-  'weapons', 'evolutions', 'enemies', 'upgrades', 'achievements', 'player', 'game', 'ui'];
+  'weapons', 'evolutions', 'enemies', 'upgrades', 'achievements', 'modifiers', 'player', 'game', 'ui'];
 let src = '';
 for (const f of order) src += fs.readFileSync(path.join(__dirname, '..', 'js', f + '.js'), 'utf8') + '\n;\n';
 
@@ -294,8 +294,42 @@ globalThis.__run = function(report) {
     ok('time advanced sanely', g.time > 0 && Number.isFinite(g.player.x));
   });
 
+  // 15) Run modifiers ("omens"): every omen applies + a run plays cleanly.
+  sectionTry('every omen applies + run is stable', () => {
+    // Baseline (no omen) stats for comparison.
+    const g0 = new Game(document.getElementById('game')); g0.start('spark', 0);
+    const baseHp = g0.player.maxHp, baseMight = g0.player.might;
+    for (const mo of MODIFIER_LIST) {
+      const g = new Game(document.getElementById('game'));
+      UI.init(document.getElementById('overlay'), g);
+      g.start('spark', 0, { omen: mo.id });
+      ok('omen set: ' + mo.id, g.omen && g.omen.id === mo.id);
+      // Run a short burst with foes present — must not crash / NaN.
+      for (let k = 0; k < 30; k++) g.spawnEnemy('drifter', g.player.x + Math.cos(k) * 90, g.player.y + Math.sin(k) * 90, 1, 1);
+      for (let i = 0; i < 120; i++) { g.update(1 / 60); g.render(); }
+      ok('omen run finite: ' + mo.id, Number.isFinite(g.player.x) && Number.isFinite(g.player.hp));
+    }
+    // Spot-check a couple of concrete effects.
+    const gg = new Game(document.getElementById('game')); gg.start('spark', 0, { omen: 'glass' });
+    ok('glass cannon halves HP', gg.player.maxHp < baseHp && gg.player.might > baseMight);
+    const gv = new Game(document.getElementById('game')); gv.start('spark', 0, { omen: 'vampire' });
+    gv.player.hp = 1; gv.spawnEnemy('drifter', gv.player.x, gv.player.y, 1, 1);
+    const before = gv.player.hp;
+    gv.killEnemy(gv.enemies[0]);
+    ok('vampiric heals on kill', gv.player.hp > before);
+  });
+  sectionTry('omen draft builds + omen achievement', () => {
+    ok('draftOmens returns 3 distinct', new Set(draftOmens(3).map(o => o.id)).size === 3);
+    Save.data.achievements = {};
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { omen: 'frenzy' });
+    g.time = 301;
+    Achievements.check(g);
+    ok('omened achievement unlocks', Save.hasAchievement('omened'));
+    UI.showOmenDraft('spark', 0);   // builds without error
+  });
+
   report(results, { frames, maxEnemiesSeen, kills: game.kills, score: game.score, levelUps: levelUpsHandled,
-    evolutions: EVOLUTIONS.length, achievements: ACHIEVEMENTS.length });
+    evolutions: EVOLUTIONS.length, achievements: ACHIEVEMENTS.length, omens: MODIFIER_LIST.length });
 };
 `;
 

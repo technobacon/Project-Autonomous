@@ -40,6 +40,9 @@ const App = {
     } else if (g.state === 'levelup') {
       const n = parseInt(e.key, 10);
       if (n >= 1 && n <= 9) { e.preventDefault(); UI.pickLevelByIndex(n - 1); }
+    } else if (UI._omens) {
+      const n = parseInt(e.key, 10);
+      if (n >= 1 && n <= 9) { e.preventDefault(); UI.pickOmenByIndex(n - 1); }
     }
   },
 

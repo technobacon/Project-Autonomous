@@ -25,6 +25,8 @@ const ACHIEVEMENTS = [
   { id: 'abyssal',      icon: '🌑', name: 'Abyssal',            desc: 'Survive 5:00 in the Abyss.',             reward: 150, check: c => c.difficultyIndex >= 3 && c.time >= 300 },
   { id: 'roster',       icon: '🌟', name: 'The Five',           desc: 'Unlock every standard character.',       reward: 50,  check: c => c.baseCharsUnlocked >= 5 },
   { id: 'archivist',    icon: '📖', name: 'Archivist',          desc: 'Discover every foe in the Codex.',       reward: 40,  check: c => c.enemiesSeen },
+  { id: 'omened',       icon: '🎴', name: 'Fate Sealed',         desc: 'Reach 5:00 with an Omen active.',        reward: 40,  check: c => c.omen && c.time >= 300 },
+  { id: 'cursed_glory', icon: '🩸', name: 'Cursed Glory',        desc: 'Reach 8:00 with the Berserker Omen.',    reward: 80,  check: c => c.omenId === 'berserk' && c.time >= 480 },
 ];
 
 function getAchievement(id) { return ACHIEVEMENTS.find(a => a.id === id); }
@@ -43,6 +45,8 @@ const Achievements = {
       evolved: game ? !!game.evolvedThisRun : false,
       firstHitTime: game ? (game.firstHitTime == null ? Infinity : game.firstHitTime) : 0,
       difficultyIndex: game ? (game.diffIndex || 0) : 0,
+      omen: game ? !!game.omen : false,
+      omenId: game && game.omen ? game.omen.id : null,
       save: s,
       baseCharsUnlocked: CHARACTERS.filter(c => !c.secret && Save.isUnlocked(c.id)).length,
       enemiesSeen: Object.keys(ENEMY_TYPES).every(k => Save.isSeen('enemies', k)),

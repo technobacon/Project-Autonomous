@@ -242,6 +242,19 @@ html, body {
 .evo-tag { background: linear-gradient(135deg, #ffd84d, #ff7a3c); color: #1a1206; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px; vertical-align: middle; }
 .go-unlocks { margin: 10px 0; width: 100%; display: flex; flex-direction: column; gap: 8px; }
 
+/* ---- Omen draft ---- */
+.omen-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; width: 100%; margin: 14px 0 18px; }
+.omen-card {
+  position: relative; background: var(--panel); border: 2px solid var(--c, var(--panel-border));
+  border-radius: 14px; padding: 20px 16px; cursor: pointer; text-align: center;
+  transition: transform .12s, box-shadow .15s;
+  box-shadow: 0 0 20px color-mix(in srgb, var(--c) 22%, transparent);
+}
+.omen-card:hover { transform: translateY(-6px) scale(1.03); box-shadow: 0 0 38px color-mix(in srgb, var(--c) 55%, transparent); }
+.omen-icon { font-size: 40px; margin-bottom: 6px; }
+.omen-card h3 { font-size: 18px; margin-bottom: 8px; }
+.omen-card p { font-size: 13px; color: var(--muted); line-height: 1.5; min-height: 56px; }
+
 /* ---- Scrollbar ---- */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background: rgba(120,150,255,0.3); border-radius: 4px; }

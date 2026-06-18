@@ -54,6 +54,8 @@ class Game {
     this.seed = 0;
     this.daily = false;
     this.dailyDate = null;
+    this.mods = defaultMods(); // run modifier ("omen") effects
+    this.omen = null;
     // Run-tracking for achievements / scoring.
     this.damageTaken = 0;
     this.firstHitTime = null;
@@ -101,6 +103,10 @@ class Game {
       this.seed = (opts.seed != null ? opts.seed : (Date.now() ^ Math.floor(Math.random() * 0xffffffff))) >>> 0;
     }
     RNG.seed(this.seed);
+    // Apply the drafted run modifier ("omen") before the player is built so its
+    // stat tweaks are baked into recalc().
+    this.omen = getModifier(opts.omen);
+    this.mods = buildMods(opts.omen);
     this.diffIndex = clamp(diffIndex, 0, DIFFICULTIES.length - 1);
     this.diff = getDifficulty(this.diffIndex);
     const char = getCharacter(charId);
@@ -192,12 +198,12 @@ class Game {
     if (this.enemies.length >= this.maxEnemies && !defOverride) return null;
     const def = defOverride || ENEMY_TYPES[typeId] || BOSSES[typeId];
     if (!def) return null;
-    const d = this.diff;
-    const hp = def.hp * hpScale * d.hp;
+    const d = this.diff, mo = this.mods;
+    const hp = def.hp * hpScale * d.hp * mo.enemyHpMul;
     const e = {
       id: this._eid++, type: def, x, y, vx: 0, vy: 0,
-      hp, maxHp: hp, speed: def.speed * d.speed, radius: def.radius,
-      damage: def.damage * dmgScale * d.dmg, xp: def.xp, color: def.color, shape: def.shape,
+      hp, maxHp: hp, speed: def.speed * d.speed * mo.enemySpeedMul, radius: def.radius,
+      damage: def.damage * dmgScale * d.dmg * mo.enemyDmgMul, xp: def.xp, color: def.color, shape: def.shape,
       ai: def.ai, flash: 0, slowAmount: 0, slowTimer: 0, burn: 0, dead: false,
       boss: !!def.boss, shootTimer: rand(0.3, (def.shootCd || 2)), state: 0, stateT: 0,
       spawnT: 0,
@@ -281,6 +287,8 @@ class Game {
     if (e.dead) return;
     const crit = chance(this.player.crit);
     let dmg = amount * (crit ? this.player.critMult : 1);
+    // Berserker omen: bonus damage scaling with the player's missing health.
+    if (this.mods.berserk) dmg *= 1 + (1 - this.player.hp / this.player.maxHp);
     e.hp -= dmg;
     e.flash = 0.08;
     const a = angleTo(fromX, fromY, e.x, e.y);
@@ -299,6 +307,8 @@ class Game {
     e.dead = true;
     this.kills++;
     this.score += Math.round(10 + e.xp * 5 + (e.boss ? 500 : 0));
+    // Vampiric omen: heal a little on each kill.
+    if (this.mods.lifesteal && this.player.alive) this.player.heal(1 + this.player.maxHp * this.mods.lifesteal);
 
     // XP gems — bosses shower the player with them.
     if (e.boss) {
@@ -344,7 +354,8 @@ class Game {
     if (this.pendingLevels <= 0) { this.state = 'playing'; return; }
     this.state = 'levelup';
     this.running = false;
-    const luckBonus = chance(this.player.luck) ? 4 : 3; // luck can grant an extra choice
+    // 4 choices if lucky or the Abundance omen is active, otherwise 3.
+    const luckBonus = (this.mods.extraChoice || chance(this.player.luck)) ? 4 : 3;
 
     // Evolutions take priority — they appear as special golden cards.
     const evos = availableEvolutions(this.player);

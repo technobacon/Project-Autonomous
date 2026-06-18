@@ -61,7 +61,24 @@ class Player {
     this.luck = m('luck') + pv('luck') * 0.06;
     this.regen = m('regen') + pv('regen') * 0.5;
 
-    const newMax = base.maxHp + m('vigor') + pv('vigor') * 20;
+    let newMax = base.maxHp + m('vigor') + pv('vigor') * 20;
+
+    // Run modifier ("omen") effects.
+    const mod = this.game.mods || defaultMods();
+    this.might *= mod.dmgMul;
+    this.haste *= mod.hasteMul;
+    this.speed *= mod.speedMul;
+    this.area *= mod.areaMul;
+    this.projSpeed *= mod.projSpeedMul;
+    this.pickupRange *= mod.pickupMul;
+    this.xpMult *= mod.xpMul;
+    this.shardMult *= mod.shardMul;
+    this.crit += mod.critChanceBonus;
+    this.critMult += mod.critDmgBonus;
+    this.armor += mod.armorBonus;
+    this.luck += mod.luckBonus;
+    newMax = Math.round(newMax * mod.hpMul);
+
     if (initHp) {
       this.maxHp = newMax; this.hp = newMax;
       this.revives = m('revival');

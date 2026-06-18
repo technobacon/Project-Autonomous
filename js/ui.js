@@ -20,7 +20,7 @@ const UI = {
     return best ? ` <span class="shard-chip">best ${formatTime(best.time)}</span>` : '';
   },
 
-  clear() { this.root.innerHTML = ''; this.root.className = 'overlay'; },
+  clear() { this.root.innerHTML = ''; this.root.className = 'overlay'; this._omens = null; },
   show() { this.root.style.display = 'flex'; },
   hide() { this.root.style.display = 'none'; },
 
@@ -79,6 +79,7 @@ const UI = {
           <div class="help-card"><h3>☠ Bosses</h3><p>Bosses arrive on a timer and hit hard — but drop a flood of XP and treasure. Survive past 10:00 to face the Devourer.</p></div>
           <div class="help-card"><h3>✦ Sanctuary</h3><p>Earn shards every run. Spend them in the Sanctuary on <b>permanent upgrades</b> and to <b>unlock new characters</b>.</p></div>
           <div class="help-card"><h3>🧬 Evolve</h3><p>Max a weapon <b>and</b> own its paired passive to unlock a golden <b>EVOLUTION</b> — a far more powerful form. Chase them.</p></div>
+          <div class="help-card"><h3>🎴 Omens</h3><p>Before each run, draft a powerful <b>Omen</b> that reshapes the whole run — usually a big upside with a tradeoff. Or play with none.</p></div>
           <div class="help-card"><h3>🗓 Daily</h3><p>A <b>seeded</b> run that's the same for everyone today. Pure skill — beat your own best score each day.</p></div>
         </div>
         <button class="btn btn-primary" id="btn-back">← Back</button>
@@ -139,7 +140,7 @@ const UI = {
       b.onclick = () => { this._selectedDiff = +b.dataset.i; Audio2.uiMove(); this.showCharacterSelect(); };
     });
     this.root.querySelectorAll('.select-btn').forEach(b => {
-      b.onclick = () => { Audio2.uiSelect(); this.hide(); App.startRun(b.dataset.id, this._selectedDiff); };
+      b.onclick = () => { Audio2.uiSelect(); this.showOmenDraft(b.dataset.id, this._selectedDiff); };
     });
     this.root.querySelectorAll('.unlock-btn').forEach(b => {
       b.onclick = () => {
@@ -149,6 +150,43 @@ const UI = {
       };
     });
     document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
+  },
+
+  // ---- Omen draft (run modifier) ----------------------------------------
+  showOmenDraft(charId, diffIndex) {
+    this.clear(); this.show();
+    const omens = draftOmens(3);
+    const cards = omens.map((o, i) => `
+      <div class="omen-card" data-i="${i}" style="--c:${o.color}">
+        <div class="up-key">${i + 1}</div>
+        <div class="omen-icon" style="color:${o.color}">${o.icon}</div>
+        <h3 style="color:${o.color}">${o.name}</h3>
+        <p>${o.desc}</p>
+      </div>`).join('');
+    this.root.innerHTML = `
+      <div class="screen panel wide">
+        <h2>Draft an Omen</h2>
+        <p class="tagline small">A power that reshapes the whole run — choose wisely, or go without.</p>
+        <div class="omen-grid">${cards}</div>
+        <div class="menu-buttons row">
+          <button class="btn btn-primary" id="btn-none">▶ No Omen</button>
+          <button class="btn" id="btn-back">← Back</button>
+        </div>
+        <p class="hint">Press 1–${omens.length}, or play with no omen</p>
+      </div>`;
+    const launch = (omenId) => { this._omens = null; Audio2.uiSelect(); this.hide(); App.startRun(charId, diffIndex, { omen: omenId }); };
+    this._omenLaunch = launch; this._omens = omens;
+    this.root.querySelectorAll('.omen-card').forEach(card => {
+      card.onmouseenter = () => Audio2.uiMove();
+      card.onclick = () => launch(omens[+card.dataset.i].id);
+    });
+    document.getElementById('btn-none').onclick = () => launch(null);
+    document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showCharacterSelect(); };
+  },
+
+  // Called from the global key handler (number keys) while drafting.
+  pickOmenByIndex(i) {
+    if (this._omens && this._omenLaunch && this._omens[i]) this._omenLaunch(this._omens[i].id);
   },
 
   // ---- Achievements -----------------------------------------------------
@@ -345,13 +383,14 @@ const UI = {
     const diffTag = game.daily
       ? `<span class="diff-chip" style="color:#9ad8ff;border-color:#9ad8ff">🗓 Daily ${game.dailyDate}</span>`
       : (game.diffIndex > 0 ? `<span class="diff-chip" style="color:${game.diff.color};border-color:${game.diff.color}">${game.diff.name}</span>` : '');
+    const omenTag = game.omen ? `<span class="diff-chip" style="color:${game.omen.color};border-color:${game.omen.color}">${game.omen.icon} ${game.omen.name}</span>` : '';
     const dailyBlock = (game.daily && game.lastDaily)
       ? `<p class="new-best" ${game.lastDaily.isNew ? '' : 'style="color:var(--muted)"'}>${game.lastDaily.isNew ? '★ New Daily Best!' : 'Daily best: ' + formatNum(game.lastDaily.best.score) + ' (' + formatTime(game.lastDaily.best.time) + ')'}</p>`
       : '';
     this.root.innerHTML = `
       <div class="screen panel">
         <h2 class="gameover-title">The light fades…</h2>
-        ${diffTag}
+        ${diffTag} ${omenTag}
         ${dailyBlock}
         ${!game.daily && newBest ? '<p class="new-best">★ New Best Time! ★</p>' : ''}
         ${diffBlock}

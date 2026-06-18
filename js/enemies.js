@@ -90,7 +90,7 @@ class Director {
   // Enough fodder to fuel level-ups, but gentle enough to survive while weak.
   // Difficulty raises both the population target and the spawn cadence.
   targetCount(min) {
-    const sp = this.game.diff ? this.game.diff.spawn : 1;
+    const sp = (this.game.diff ? this.game.diff.spawn : 1) * (this.game.mods ? this.game.mods.enemyCountMul : 1);
     return Math.min(this.game.maxEnemies, Math.floor((12 + Math.floor(min * 8)) * sp));
   }
   spawnInterval(min) {
