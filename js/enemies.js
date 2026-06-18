@@ -88,8 +88,15 @@ class Director {
   dmgScale(min) { return 1 + min * 0.14; }
   // Target simultaneous enemy count grows over time, with a hard cap.
   // Enough fodder to fuel level-ups, but gentle enough to survive while weak.
-  targetCount(min) { return Math.min(this.game.maxEnemies, 12 + Math.floor(min * 8)); }
-  spawnInterval(min) { return Math.max(0.14, 0.9 - min * 0.06); }
+  // Difficulty raises both the population target and the spawn cadence.
+  targetCount(min) {
+    const sp = this.game.diff ? this.game.diff.spawn : 1;
+    return Math.min(this.game.maxEnemies, Math.floor((12 + Math.floor(min * 8)) * sp));
+  }
+  spawnInterval(min) {
+    const sp = this.game.diff ? this.game.diff.spawn : 1;
+    return Math.max(0.1, (0.9 - min * 0.06) / sp);
+  }
 
   update(dt) {
     const g = this.game;

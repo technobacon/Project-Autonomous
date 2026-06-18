@@ -60,6 +60,33 @@ projectile speed, pickup range, max health, regen, XP gain, crit, armor, luck.
 You carry up to **6 weapons** and **6 passives** per run, so every game becomes
 a different build. The upgrade pool is weighted and nudged by your **Luck**.
 
+## 🧬 Weapon evolutions
+
+Max out a weapon **and** own its paired passive, and the level-up screen offers
+a golden **EVOLUTION** — transforming it into a devastating new form:
+
+| Weapon + Passive | becomes |
+|---|---|
+| Light Bolt + Split Prism | **Starfall** — a storm of homing starlight |
+| Frost Shard + Velocity Rune | **Glacier** — a deep-freezing barrage |
+| Flame Aura + Power Crystal | **Inferno** — an erupting firestorm |
+| Orbit Wisps + Swift Sigil | **Halo** — a ring of swift searing wisps |
+| Nova Burst + Wide Lens | **Singularity** — collapses foes, then detonates |
+| Arc Lightning + Keen Edge | **Tempest** — arcs through the whole horde |
+| Spirit Seekers + Lodestone | **Reaper Swarm** — relentless piercing reapers |
+| Light Whip + Piercer | **Eclipse Blade** — encircling sweeping blades |
+
+## 🏆 Achievements, difficulty & the Codex
+
+- **20 achievements** with shard rewards and long-term goals — survive 15:00 to
+  unlock the secret character **Void**.
+- **Ascension difficulties** — Normal → Hard → Nightmare → Abyss. Each scales
+  enemies *and* shard rewards up, and unlocks by surviving a threshold on the
+  tier below.
+- **Codex** — a bestiary + arsenal that fills in as you discover foes, weapons,
+  and evolutions.
+- **Options** — toggle SFX, music, and screen shake (accessibility).
+
 ---
 
 ## 🛠 Project layout
@@ -77,26 +104,31 @@ js/
   input.js          # keyboard / pointer / touch
   particles.js      # particle + floating-text system
   save.js           # localStorage meta-progression
-  content.js        # characters + meta-upgrade shop definitions
-  weapons.js        # 8 weapons (periodic + continuous)
+  content.js        # characters, difficulty tiers + meta-upgrade shop
+  weapons.js        # 8 base weapons (periodic + continuous)
+  evolutions.js     # 8 weapon evolutions + evolution rules
   enemies.js        # enemy archetypes + the spawn Director + bosses
   upgrades.js       # passives + level-up choice generator
+  achievements.js   # achievement definitions + live/game-over checker
   player.js         # player entity, stat recalculation, leveling
   game.js           # engine: world, camera, collision, combat, render, HUD
-  ui.js             # DOM overlays: menu, shop, level-up, pause, game over
-  main.js           # bootstrap + game loop + global keys
+  ui.js             # DOM overlays: menu, shop, level-up, achievements, codex…
+  main.js           # bootstrap + fixed-timestep loop + global keys
 tools/
   headless-test.js  # runs the whole game headless to validate runtime
+  balance-sim.js    # auto-plays with a dodge-AI to tune difficulty
 ```
 
 ## ✅ Tests
 
 A headless harness stubs the DOM/Canvas/WebAudio APIs and actually runs the
-game — a full simulated run, every weapon, all bosses, level-ups, pickups, UI
-screens, death, persistence, and the shop:
+game — a full simulated run, every weapon, all bosses, all 8 evolutions, the 20
+achievements, difficulty scaling, level-ups, pickups, every UI screen, death,
+persistence, and the shop (90+ assertions):
 
 ```bash
-node tools/headless-test.js
+node tools/headless-test.js       # functional suite
+node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```
 
 ## 📜 License

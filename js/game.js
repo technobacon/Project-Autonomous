@@ -50,6 +50,13 @@ class Game {
     this.toasts = [];
     this.activeBoss = null;
     this.pendingLevels = 0;
+    // Run-tracking for achievements / scoring.
+    this.damageTaken = 0;
+    this.firstHitTime = null;
+    this.evolvedThisRun = false;
+    this.maxWeaponsHeld = 0;
+    this.diffIndex = 0;
+    this.diff = getDifficulty(0);
   }
 
   resize() {
@@ -78,8 +85,10 @@ class Game {
   }
 
   // ---- Lifecycle --------------------------------------------------------
-  start(charId) {
+  start(charId, diffIndex = 0) {
     this.reset();
+    this.diffIndex = clamp(diffIndex, 0, DIFFICULTIES.length - 1);
+    this.diff = getDifficulty(this.diffIndex);
     const char = getCharacter(charId);
     this.player = new Player(this, char);
     this.cam.x = this.player.x - this.view.w / 2;
@@ -89,7 +98,7 @@ class Game {
     this.state = 'playing';
     Audio2.resume();
     Audio2.startMusic(0);
-    this.toast('Survive.');
+    this.toast(this.diffIndex > 0 ? this.diff.name + ' — survive.' : 'Survive.');
   }
 
   // ---- Spatial grid (for radius queries) --------------------------------
@@ -168,16 +177,18 @@ class Game {
     if (this.enemies.length >= this.maxEnemies && !defOverride) return null;
     const def = defOverride || ENEMY_TYPES[typeId] || BOSSES[typeId];
     if (!def) return null;
-    const hp = def.hp * hpScale;
+    const d = this.diff;
+    const hp = def.hp * hpScale * d.hp;
     const e = {
       id: this._eid++, type: def, x, y, vx: 0, vy: 0,
-      hp, maxHp: hp, speed: def.speed, radius: def.radius,
-      damage: def.damage * dmgScale, xp: def.xp, color: def.color, shape: def.shape,
+      hp, maxHp: hp, speed: def.speed * d.speed, radius: def.radius,
+      damage: def.damage * dmgScale * d.dmg, xp: def.xp, color: def.color, shape: def.shape,
       ai: def.ai, flash: 0, slowAmount: 0, slowTimer: 0, burn: 0, dead: false,
       boss: !!def.boss, shootTimer: rand(0.3, (def.shootCd || 2)), state: 0, stateT: 0,
       spawnT: 0,
     };
     this.enemies.push(e);
+    Save.markSeen('enemies', def.id);
     return e;
   }
 
@@ -318,14 +329,29 @@ class Game {
     if (this.pendingLevels <= 0) { this.state = 'playing'; return; }
     this.state = 'levelup';
     this.running = false;
-    const luckBonus = Math.random() < this.player.luck ? 4 : 3; // luck can grant an extra choice
-    const choices = buildUpgradeChoices(this, luckBonus);
+    const luckBonus = chance(this.player.luck) ? 4 : 3; // luck can grant an extra choice
+
+    // Evolutions take priority — they appear as special golden cards.
+    const evos = availableEvolutions(this.player);
+    const evoChoices = evos.map(evo => {
+      const def = getWeapon(evo.into);
+      return { kind: 'evolve', id: evo.into, baseId: evo.base, name: def.name,
+        icon: def.icon, color: def.color, desc: def.desc(1), level: 1, isNew: false, evolve: true };
+    });
+    const targetN = Math.min(4, Math.max(luckBonus, evoChoices.length));
+    let choices = evoChoices.slice(0, 4);
+    if (choices.length < targetN) {
+      const normal = buildUpgradeChoices(this, targetN - choices.length);
+      choices = choices.concat(normal);
+    }
     UI.showLevelUp(this, choices);
   }
 
   chooseUpgrade(choice) {
     this.player.applyUpgrade(choice);
     Audio2.uiSelect();
+    this.maxWeaponsHeld = Math.max(this.maxWeaponsHeld, this.player.weapons.length);
+    this.announce(Achievements.check(this));
     this.pendingLevels--;
     if (this.pendingLevels > 0) {
       this.openLevelUp();
@@ -334,6 +360,26 @@ class Game {
       this.running = true;
       UI.hideLevelUp();
     }
+  }
+
+  onEvolve(choice) {
+    this.evolvedThisRun = true;
+    Save.data.evolutionsMade = (Save.data.evolutionsMade || 0) + 1;
+    Save.save();
+    this.shake(12, 0.4);
+    this.particles.ring(this.player.x, this.player.y, 40, { color: choice.color, speed: 320, life: 0.9, size: 4 });
+    this.nova(this.player.x, this.player.y, 220, 40 * this.player.might, 260, choice.color);
+    this.toast('🧬 EVOLVED: ' + choice.name + '!');
+    Audio2.victory();
+  }
+
+  // Toast + sound for any newly-unlocked achievements.
+  announce(newly) {
+    if (!newly || !newly.length) return;
+    for (const a of newly) {
+      this.toast('🏆 ' + a.name + (a.reward ? '  (+' + a.reward + '✦)' : ''));
+    }
+    Audio2.levelUp();
   }
 
   onBossSpawn(e) {
@@ -351,11 +397,25 @@ class Game {
     this.shake(20, 0.8);
     this.particles.burst(this.player.x, this.player.y, 70, { color: this.player.char.color, speed: rand(100, 400), life: rand(0.6, 1.3) });
 
-    // Compute shards earned and persist progression.
-    const earned = Math.floor((this.time / 8 + this.kills * 0.25 + this.bossKills * 30) * this.player.shardMult);
+    // Compute shards earned and persist progression (difficulty boosts reward).
+    const earned = Math.floor((this.time / 8 + this.kills * 0.25 + this.bossKills * 30)
+      * this.player.shardMult * this.diff.reward);
     Save.addShards(earned);
     Save.recordRun(this.time, this.score, this.kills, this.bossKills);
+
+    // Ascension: surviving the unlock threshold opens the next difficulty.
+    const next = DIFFICULTIES[this.diffIndex + 1];
+    let unlockedDiff = null;
+    if (next && this.time >= next.unlockAt && Save.data.maxDifficulty < this.diffIndex + 1) {
+      Save.unlockDifficulty(this.diffIndex + 1);
+      unlockedDiff = next;
+    }
+
+    // Achievements (some reward extra shards on top).
+    const newly = Achievements.check(this);
     this.lastEarned = earned;
+    this.lastNewAchievements = newly;
+    this.lastUnlockedDiff = unlockedDiff;
     setTimeout(() => UI.showGameOver(this), 900);
   }
 
@@ -374,7 +434,10 @@ class Game {
     UI.showMenu();
   }
 
-  shake(mag, t) { if (mag > this.shake_.mag) { this.shake_.mag = mag; this.shake_.t = t; this.shake_.max = t; } }
+  shake(mag, t) {
+    if (Save.data && Save.data.shakeOff) return;
+    if (mag > this.shake_.mag) { this.shake_.mag = mag; this.shake_.t = t; this.shake_.max = t; }
+  }
   toast(msg) { this.toasts.push({ msg, life: 2.6 }); if (this.toasts.length > 3) this.toasts.shift(); }
 
   // ---- Update -----------------------------------------------------------
@@ -986,14 +1049,17 @@ class Game {
     ctx.textBaseline = 'top';
     let wx = 12; const wy = 64;
     for (const w of p.weapons) {
+      const evo = w.def.evolved;
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
       ctx.fillRect(wx, wy, 30, 30);
-      ctx.strokeStyle = w.def.color; ctx.lineWidth = 2; ctx.strokeRect(wx, wy, 30, 30);
+      ctx.strokeStyle = w.def.color; ctx.lineWidth = evo ? 2.5 : 2; ctx.strokeRect(wx, wy, 30, 30);
+      if (evo) { ctx.shadowBlur = 8; ctx.shadowColor = w.def.color; }
       ctx.fillStyle = w.def.color; ctx.font = '16px sans-serif'; ctx.textAlign = 'center';
       ctx.fillText(w.def.icon, wx + 15, wy + 7);
-      // Level pips.
-      ctx.fillStyle = '#fff'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'right';
-      ctx.fillText('L' + w.level, wx + 28, wy + 21);
+      ctx.shadowBlur = 0;
+      // Level (or a star for evolved weapons).
+      ctx.fillStyle = evo ? '#ffd84d' : '#fff'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(evo ? '★' : ('L' + w.level), wx + 28, wy + 21);
       wx += 34;
     }
 

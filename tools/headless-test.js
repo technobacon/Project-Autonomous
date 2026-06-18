@@ -100,7 +100,7 @@ sandbox.document = {
 
 // ---- Load & concatenate the game source (skip main.js auto-init) ---------
 const order = ['utils', 'audio', 'input', 'particles', 'save', 'content',
-  'weapons', 'enemies', 'upgrades', 'player', 'game', 'ui'];
+  'weapons', 'evolutions', 'enemies', 'upgrades', 'achievements', 'player', 'game', 'ui'];
 let src = '';
 for (const f of order) src += fs.readFileSync(path.join(__dirname, '..', 'js', f + '.js'), 'utf8') + '\n;\n';
 
@@ -203,6 +203,7 @@ globalThis.__run = function(report) {
   sectionTry('player death + game over', () => {
     game.openLevelUp = origOpen; // restore
     game.player.revives = 0;
+    game.player.invuln = 0;      // clear any active i-frames so the hit lands
     game.player.hurt(1e9);
     ok('player dead', !game.player.alive);
     ok('state gameover', game.state === 'gameover');
@@ -221,7 +222,80 @@ globalThis.__run = function(report) {
     ok('meta upgrade leveled', Save.metaLevel('might') === before + 1);
   });
 
-  report(results, { frames, maxEnemiesSeen, kills: game.kills, score: game.score, levelUps: levelUpsHandled });
+  // 10) Weapon evolution: every evolution pair must resolve and apply.
+  sectionTry('all evolutions resolve + apply', () => {
+    ok('evolved weapons registered', Object.keys(EVOLVED_WEAPONS).every(id => !!getWeapon(id)));
+    for (const evo of EVOLUTIONS) {
+      const g = new Game(document.getElementById('game'));
+      UI.init(document.getElementById('overlay'), g);
+      g.start('spark', 0);
+      // Clear the starting weapon, grant the base maxed + paired passive.
+      g.player.weapons = [];
+      g.player.addWeapon(evo.base);
+      g.player.weapon(evo.base).level = getWeapon(evo.base).maxLevel;
+      g.player.passives[evo.passive] = evo.passiveLvl;
+      const avail = availableEvolutions(g.player).map(e => e.into);
+      ok('evolution available: ' + evo.into, avail.includes(evo.into));
+      g.player.applyUpgrade({ kind: 'evolve', id: evo.into, baseId: evo.base });
+      ok('evolved into ' + evo.into, g.player.hasWeapon(evo.into) && !g.player.hasWeapon(evo.base));
+      // Fire the evolved weapon against foes for a bit.
+      for (let k = 0; k < 24; k++) g.spawnEnemy('drifter', g.player.x + Math.cos(k) * 100, g.player.y + Math.sin(k) * 100, 1, 1);
+      for (let i = 0; i < 120; i++) { g.update(1 / 60); g.render(); }
+      ok('evolvedThisRun flag ' + evo.into, g.evolvedThisRun === true);
+    }
+  });
+
+  // 11) Achievements unlock + reward + secret character gate.
+  sectionTry('achievements unlock & reward', () => {
+    Save.data.achievements = {};
+    const g = new Game(document.getElementById('game'));
+    g.start('spark', 0);
+    g.time = 901; g.kills = 600; g.bossKills = 3; g.player.level = 31;
+    const shardsBefore = Save.data.shards;
+    const newly = Achievements.check(g);
+    const ids = newly.map(a => a.id);
+    ok('eternal unlocked', Save.hasAchievement('eternal'));
+    ok('slayer unlocked', Save.hasAchievement('slayer'));
+    ok('boss_slayer unlocked', Save.hasAchievement('boss_slayer'));
+    ok('power unlocked', Save.hasAchievement('power'));
+    ok('achievement shards rewarded', Save.data.shards > shardsBefore);
+    ok('secret char Void unlockable', getCharacter('void').secret && Save.hasAchievement('eternal'));
+  });
+
+  // 12) Difficulty scaling applies to spawned enemies.
+  sectionTry('difficulty scaling', () => {
+    const gN = new Game(document.getElementById('game')); gN.start('spark', 0);
+    const eN = gN.spawnEnemy('drifter', 100, 100, 1, 1);
+    const gH = new Game(document.getElementById('game')); gH.start('spark', 2);
+    const eH = gH.spawnEnemy('drifter', 100, 100, 1, 1);
+    ok('nightmare HP > normal HP', eH.maxHp > eN.maxHp);
+    ok('nightmare DMG > normal DMG', eH.damage > eN.damage);
+    ok('diff index set', gH.diffIndex === 2);
+  });
+
+  // 13) New menu screens build without error.
+  sectionTry('UI.showAchievements/showCodex/charSelect', () => {
+    Save.data.maxDifficulty = 3;            // exercise difficulty buttons
+    Save.markSeen('enemies', 'drifter'); Save.markSeen('weapons', 'bolt');
+    UI.showAchievements();
+    UI.showCodex();
+    UI.showCharacterSelect();
+    const gOver = new Game(document.getElementById('game')); gOver.start('spark', 1);
+    gOver.lastNewAchievements = [getAchievement('survivor')];
+    gOver.lastUnlockedDiff = DIFFICULTIES[2];
+    gOver.player.invuln = 0; gOver.player.revives = 0; gOver.player.hurt(1e9);
+    UI.showGameOver(gOver);
+  });
+
+  // 14) Fixed-timestep stability: a stutter must not explode the sim.
+  sectionTry('big-dt clamp stable', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0);
+    g.update(0.05); g.update(0.05); // engine clamps internally
+    ok('time advanced sanely', g.time > 0 && Number.isFinite(g.player.x));
+  });
+
+  report(results, { frames, maxEnemiesSeen, kills: game.kills, score: game.score, levelUps: levelUpsHandled,
+    evolutions: EVOLUTIONS.length, achievements: ACHIEVEMENTS.length });
 };
 `;
 

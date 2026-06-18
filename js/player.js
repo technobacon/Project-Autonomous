@@ -77,6 +77,7 @@ class Player {
   addWeapon(id) {
     if (this.hasWeapon(id) || this.weapons.length >= this.maxWeapons) return;
     this.weapons.push({ def: getWeapon(id), level: 1, timer: 0 });
+    Save.markSeen('weapons', id);
   }
 
   // Apply a chosen level-up upgrade.
@@ -84,6 +85,14 @@ class Player {
     switch (choice.kind) {
       case 'weapon-new': this.addWeapon(choice.id); break;
       case 'weapon-up': { const w = this.weapon(choice.id); if (w) w.level++; break; }
+      case 'evolve': {
+        const idx = this.weapons.findIndex(w => w.def.id === choice.baseId);
+        if (idx >= 0) this.weapons.splice(idx, 1);
+        this.weapons.push({ def: getWeapon(choice.id), level: 1, timer: 0 });
+        Save.markSeen('weapons', choice.id);
+        this.game.onEvolve(choice);
+        break;
+      }
       case 'passive-new':
       case 'passive-up': {
         const before = this.maxHp;
@@ -116,6 +125,8 @@ class Player {
     if (this.invuln > 0 || !this.alive) return;
     const dmg = Math.max(1, amount - this.armor);
     this.hp -= dmg;
+    if (this.game.firstHitTime == null) this.game.firstHitTime = this.game.time;
+    this.game.damageTaken++;
     this.invuln = 0.6;
     this.hitFlash = 0.3;
     this.game.particles.burst(this.x, this.y, 10, { color: '#ff5d6c', speed: rand(80, 200), life: 0.5 });
@@ -189,27 +200,32 @@ class Player {
     const x = this.x - cam.x, y = this.y - cam.y;
     ctx.save();
 
-    // Flame aura render (if owned) — drawn under the player.
-    const flame = this.weapon('flame');
-    if (flame && flame._radius) {
-      const r = flame._radius;
-      const g = ctx.createRadialGradient(x, y, r * 0.2, x, y, r);
-      g.addColorStop(0, 'rgba(255,140,60,0.28)');
-      g.addColorStop(0.7, 'rgba(255,90,40,0.12)');
-      g.addColorStop(1, 'rgba(255,90,40,0)');
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
-    }
-
-    // Orbit wisps render.
-    const orbit = this.weapon('orbit');
-    if (orbit && orbit._orbs) {
-      for (const o of orbit._orbs) {
-        ctx.shadowBlur = 14; ctx.shadowColor = '#8affc1';
-        ctx.fillStyle = '#caffe0';
-        ctx.beginPath(); ctx.arc(o.x - cam.x, o.y - cam.y, o.r, 0, TAU); ctx.fill();
+    // Continuous-weapon visuals (base + evolved), drawn under the player.
+    for (const inst of this.weapons) {
+      // Aura (Flame Aura / Inferno).
+      if (inst._radius) {
+        const r = inst._radius;
+        const col = inst._auraColor || '#ff7a3c';
+        const g = ctx.createRadialGradient(x, y, r * 0.2, x, y, r);
+        g.addColorStop(0, 'rgba(255,140,60,0.28)');
+        g.addColorStop(0.7, 'rgba(255,90,40,0.12)');
+        g.addColorStop(1, 'rgba(255,90,40,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+        // A faint ring edge tinted to the aura's colour.
+        ctx.globalAlpha = 0.25; ctx.strokeStyle = col; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1;
       }
-      ctx.shadowBlur = 0;
+      // Orbiting wisps (Orbit Wisps / Halo).
+      if (inst._orbs) {
+        const col = inst._orbColor || '#caffe0';
+        for (const o of inst._orbs) {
+          ctx.shadowBlur = 14; ctx.shadowColor = inst.def.color || '#8affc1';
+          ctx.fillStyle = col;
+          ctx.beginPath(); ctx.arc(o.x - cam.x, o.y - cam.y, o.r, 0, TAU); ctx.fill();
+        }
+        ctx.shadowBlur = 0;
+      }
     }
 
     // Player body — glowing orb in the character color.

@@ -43,15 +43,28 @@ const App = {
     }
   },
 
-  startRun(charId) {
-    this.game.start(charId);
+  startRun(charId, diffIndex = 0) {
+    this.game.start(charId, diffIndex);
     this.lastT = performance.now();
+    this.acc = 0;
   },
 
+  // Fixed-timestep simulation (consistent speed at any framerate) with a
+  // single render per animation frame.
   loop(t) {
-    const dt = Math.min(0.05, (t - this.lastT) / 1000) || 0;
+    const FIXED = 1 / 60;
+    let frame = (t - this.lastT) / 1000;
+    if (!Number.isFinite(frame) || frame < 0) frame = 0;
+    frame = Math.min(frame, 0.25); // avoid spiral-of-death after a tab stall
     this.lastT = t;
-    this.game.update(dt);
+    this.acc += frame;
+    let steps = 0;
+    while (this.acc >= FIXED && steps < 5) {
+      this.game.update(FIXED);
+      this.acc -= FIXED;
+      steps++;
+    }
+    if (steps === 5) this.acc = 0; // drop backlog if we fell badly behind
     this.game.render();
     requestAnimationFrame((tt) => this.loop(tt));
   },

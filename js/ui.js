@@ -30,7 +30,11 @@ const UI = {
         <div class="menu-buttons">
           <button class="btn btn-primary" id="btn-play">▶ PLAY</button>
           <button class="btn" id="btn-shop">⚙ SANCTUARY <span class="shard-chip">✦ ${formatNum(d.shards)}</span></button>
-          <button class="btn" id="btn-help">? HOW TO PLAY</button>
+          <div class="menu-buttons row">
+            <button class="btn" id="btn-ach">🏆 ${Save.achievementCount()}/${ACHIEVEMENTS.length}</button>
+            <button class="btn" id="btn-codex">📖 CODEX</button>
+            <button class="btn" id="btn-help">? HELP</button>
+          </div>
         </div>
         <div class="stats-row">
           <div class="stat"><span>Best Time</span><b>${formatTime(d.bestTime)}</b></div>
@@ -41,14 +45,18 @@ const UI = {
         <div class="audio-toggles">
           <button class="mini" id="btn-sfx">${Audio2.muted ? '🔇' : '🔊'} SFX</button>
           <button class="mini" id="btn-music">${Audio2.musicMuted ? '🎵̶' : '🎵'} Music</button>
+          <button class="mini" id="btn-shake">${d.shakeOff ? '⬚' : '⬛'} Shake</button>
         </div>
         <p class="hint">Move: WASD / Arrows • Pause: Esc/P • Weapons fire automatically</p>
       </div>`;
     document.getElementById('btn-play').onclick = () => { Audio2.uiSelect(); this.showCharacterSelect(); };
     document.getElementById('btn-shop').onclick = () => { Audio2.uiSelect(); this.showShop(); };
+    document.getElementById('btn-ach').onclick = () => { Audio2.uiSelect(); this.showAchievements(); };
+    document.getElementById('btn-codex').onclick = () => { Audio2.uiSelect(); this.showCodex(); };
     document.getElementById('btn-help').onclick = () => { Audio2.uiSelect(); this.showHelp(); };
     document.getElementById('btn-sfx').onclick = (e) => { Audio2.resume(); const m = Audio2.toggleMute(); Save.data.muted = m; Save.save(); e.target.textContent = (m ? '🔇' : '🔊') + ' SFX'; };
     document.getElementById('btn-music').onclick = (e) => { Audio2.resume(); const m = Audio2.toggleMusic(); Save.data.musicMuted = m; Save.save(); e.target.textContent = (m ? '🎵̶' : '🎵') + ' Music'; };
+    document.getElementById('btn-shake').onclick = (e) => { Save.data.shakeOff = !Save.data.shakeOff; Save.save(); e.target.textContent = (Save.data.shakeOff ? '⬚' : '⬛') + ' Shake'; Audio2.uiMove(); };
   },
 
   showHelp() {
@@ -70,37 +78,59 @@ const UI = {
   },
 
   // ---- Character select -------------------------------------------------
+  _charUnlocked(c) { return c.secret ? Save.hasAchievement(c.achievement) : Save.isUnlocked(c.id); },
+
   showCharacterSelect() {
     this.clear(); this.show();
+    if (this._selectedDiff == null) this._selectedDiff = 0;
+    this._selectedDiff = clamp(this._selectedDiff, 0, Save.data.maxDifficulty);
+
     const cards = CHARACTERS.map(c => {
-      const unlocked = Save.isUnlocked(c.id);
+      const unlocked = this._charUnlocked(c);
       const affordable = Save.data.shards >= c.cost;
+      let action;
+      if (unlocked) action = `<button class="btn btn-primary select-btn" data-id="${c.id}">SELECT</button>`;
+      else if (c.secret) action = `<div class="char-locktag">🔒 ${getAchievement(c.achievement).name}</div>`;
+      else action = `<button class="btn ${affordable ? '' : 'disabled'} unlock-btn" data-id="${c.id}">🔒 Unlock ✦${c.cost}</button>`;
       return `
-        <div class="char-card ${unlocked ? '' : 'locked'}" data-id="${c.id}">
+        <div class="char-card ${unlocked ? '' : 'locked'} ${c.secret ? 'secret' : ''}" data-id="${c.id}">
           <div class="char-orb" style="--c:${c.color}"></div>
-          <h3 style="color:${c.color}">${c.name}</h3>
-          <p class="char-desc">${c.desc}</p>
+          <h3 style="color:${c.color}">${unlocked || !c.secret ? c.name : '???'}</h3>
+          <p class="char-desc">${unlocked || !c.secret ? c.desc : 'A hidden light awaits the worthy.'}</p>
           <p class="char-blurb">${c.blurb}</p>
           <div class="char-stats">
             <span>❤ ${c.stats.maxHp}</span><span>👟 ${c.stats.speed}</span>
             <span>🗡 ${Math.round(c.stats.might*100)}%</span>
           </div>
-          ${unlocked
-            ? `<button class="btn btn-primary select-btn" data-id="${c.id}">SELECT</button>`
-            : `<button class="btn ${affordable ? '' : 'disabled'} unlock-btn" data-id="${c.id}">🔒 Unlock ✦${c.cost}</button>`}
+          ${action}
         </div>`;
     }).join('');
+
+    const diffBtns = DIFFICULTIES.map((dd, i) => {
+      const locked = i > Save.data.maxDifficulty;
+      const sel = i === this._selectedDiff;
+      return `<button class="diff-btn ${sel ? 'sel' : ''} ${locked ? 'disabled' : ''}" data-i="${i}" style="--c:${dd.color}">
+        ${locked ? '🔒 ' : ''}${dd.name}${i > 0 ? ` <small>×${dd.reward}✦</small>` : ''}</button>`;
+    }).join('');
+    const nextLocked = DIFFICULTIES[Save.data.maxDifficulty + 1];
+    const diffHint = nextLocked ? `Survive ${formatTime(nextLocked.unlockAt)} to unlock <b style="color:${nextLocked.color}">${nextLocked.name}</b>.` : 'All difficulties unlocked. You are formidable.';
+
     this.root.innerHTML = `
       <div class="screen panel wide">
         <div class="panel-head">
           <h2>Choose your Light</h2>
           <span class="shard-chip big">✦ ${formatNum(Save.data.shards)}</span>
         </div>
+        <div class="diff-row">${diffBtns}</div>
+        <p class="tagline small">${diffHint}</p>
         <div class="char-grid">${cards}</div>
         <button class="btn" id="btn-back">← Back</button>
       </div>`;
+    this.root.querySelectorAll('.diff-btn:not(.disabled)').forEach(b => {
+      b.onclick = () => { this._selectedDiff = +b.dataset.i; Audio2.uiMove(); this.showCharacterSelect(); };
+    });
     this.root.querySelectorAll('.select-btn').forEach(b => {
-      b.onclick = () => { Audio2.uiSelect(); this.hide(); App.startRun(b.dataset.id); };
+      b.onclick = () => { Audio2.uiSelect(); this.hide(); App.startRun(b.dataset.id, this._selectedDiff); };
     });
     this.root.querySelectorAll('.unlock-btn').forEach(b => {
       b.onclick = () => {
@@ -109,6 +139,67 @@ const UI = {
         else Audio2.deny();
       };
     });
+    document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
+  },
+
+  // ---- Achievements -----------------------------------------------------
+  showAchievements() {
+    this.clear(); this.show();
+    const cards = ACHIEVEMENTS.map(a => {
+      const got = Save.hasAchievement(a.id);
+      return `
+        <div class="ach-card ${got ? 'got' : 'locked'}">
+          <div class="ach-icon">${got ? a.icon : '🔒'}</div>
+          <div class="ach-info">
+            <h3>${a.name}</h3>
+            <p>${a.desc}</p>
+          </div>
+          ${a.reward ? `<div class="ach-reward">+${a.reward}✦</div>` : ''}
+        </div>`;
+    }).join('');
+    this.root.innerHTML = `
+      <div class="screen panel wide">
+        <div class="panel-head">
+          <h2>Achievements</h2>
+          <span class="shard-chip big">${Save.achievementCount()} / ${ACHIEVEMENTS.length}</span>
+        </div>
+        <div class="ach-grid">${cards}</div>
+        <button class="btn" id="btn-back">← Back</button>
+      </div>`;
+    document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
+  },
+
+  // ---- Codex / Bestiary -------------------------------------------------
+  showCodex() {
+    this.clear(); this.show();
+    const enemyCards = Object.values(ENEMY_TYPES).concat(Object.values(BOSSES)).map(e => {
+      const seen = Save.isSeen('enemies', e.id);
+      return `<div class="codex-card ${seen ? '' : 'locked'}" style="--c:${e.color}">
+        <div class="codex-glyph" style="color:${seen ? e.color : '#444'}">${e.boss ? '☠' : '◆'}</div>
+        <h4>${seen ? e.name : '???'}</h4>
+        <p>${seen ? (e.boss ? 'Boss' : 'HP ' + e.hp + ' · DMG ' + e.damage) : 'Undiscovered'}</p>
+      </div>`;
+    }).join('');
+    const weaponCards = WEAPON_LIST.concat(Object.values(EVOLVED_WEAPONS)).map(w => {
+      const seen = Save.isSeen('weapons', w.id);
+      const evo = w.evolved;
+      return `<div class="codex-card ${seen ? '' : 'locked'} ${evo ? 'evo' : ''}" style="--c:${w.color}">
+        <div class="codex-glyph" style="color:${seen ? w.color : '#444'}">${seen ? w.icon : '?'}</div>
+        <h4>${seen ? w.name : '???'}</h4>
+        <p>${seen ? (evo ? 'Evolved' : 'Weapon') : 'Undiscovered'}</p>
+      </div>`;
+    }).join('');
+    const eSeen = Object.keys(ENEMY_TYPES).filter(k => Save.isSeen('enemies', k)).length;
+    const wSeen = WEAPON_LIST.filter(w => Save.isSeen('weapons', w.id)).length;
+    this.root.innerHTML = `
+      <div class="screen panel wide">
+        <div class="panel-head"><h2>Codex</h2></div>
+        <h3 class="sub">Foes <small>(${eSeen}/${Object.keys(ENEMY_TYPES).length})</small></h3>
+        <div class="codex-grid">${enemyCards}</div>
+        <h3 class="sub">Arsenal <small>(${wSeen}/${WEAPON_LIST.length} + evolutions)</small></h3>
+        <div class="codex-grid">${weaponCards}</div>
+        <button class="btn" id="btn-back">← Back</button>
+      </div>`;
     document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
   },
 
@@ -167,14 +258,16 @@ const UI = {
     this.root.classList.add('translucent');
     this._levelChoices = choices;
     const cards = choices.map((c, i) => {
-      const newTag = c.isNew ? `<span class="new-tag">NEW</span>` : `<span class="lvl-tag">Lv ${c.level}</span>`;
-      const kind = c.kind.startsWith('weapon') ? 'Weapon' : (c.kind === 'gold' ? 'Bonus' : 'Passive');
+      const tag = c.evolve ? `<span class="evo-tag">EVOLVE</span>`
+        : (c.isNew ? `<span class="new-tag">NEW</span>` : `<span class="lvl-tag">Lv ${c.level}</span>`);
+      const kind = c.evolve ? 'Evolution'
+        : (c.kind.startsWith('weapon') ? 'Weapon' : (c.kind === 'gold' ? 'Bonus' : 'Passive'));
       return `
-        <div class="up-card" data-i="${i}" style="--c:${c.color}">
+        <div class="up-card ${c.evolve ? 'evolve-card' : ''}" data-i="${i}" style="--c:${c.color}">
           <div class="up-key">${i + 1}</div>
           <div class="up-icon" style="color:${c.color}">${c.icon}</div>
           <div class="up-kind">${kind}</div>
-          <h3>${c.name} ${newTag}</h3>
+          <h3>${c.name} ${tag}</h3>
           <p>${c.desc}</p>
         </div>`;
     }).join('');
@@ -233,10 +326,20 @@ const UI = {
     this.clear(); this.show();
     const d = Save.data;
     const newBest = game.time >= d.bestTime;
+    const newAch = game.lastNewAchievements || [];
+    const achBlock = newAch.length ? `
+      <div class="go-unlocks">
+        <h3 class="sub" style="text-align:center;align-self:center">🏆 Unlocked</h3>
+        <div class="tags">${newAch.map(a => `<span class="tag" style="border-color:#ffd84d;color:#ffd84d">${a.icon} ${a.name}${a.reward ? ' +' + a.reward + '✦' : ''}</span>`).join('')}</div>
+      </div>` : '';
+    const diffBlock = game.lastUnlockedDiff ? `<p class="new-best" style="color:${game.lastUnlockedDiff.color}">▲ ${game.lastUnlockedDiff.name} difficulty unlocked!</p>` : '';
+    const diffTag = game.diffIndex > 0 ? `<span class="diff-chip" style="color:${game.diff.color};border-color:${game.diff.color}">${game.diff.name}</span>` : '';
     this.root.innerHTML = `
       <div class="screen panel">
         <h2 class="gameover-title">The light fades…</h2>
+        ${diffTag}
         ${newBest ? '<p class="new-best">★ New Best Time! ★</p>' : ''}
+        ${diffBlock}
         <div class="go-stats">
           <div class="go-big"><span>Survived</span><b>${formatTime(game.time)}</b></div>
           <div class="go-row">
@@ -247,6 +350,7 @@ const UI = {
           </div>
           <div class="earned">✦ Shards earned: <b>${formatNum(game.lastEarned || 0)}</b></div>
         </div>
+        ${achBlock}
         <div class="menu-buttons row">
           <button class="btn btn-primary" id="btn-retry">↺ Play Again</button>
           <button class="btn" id="btn-menu">⌂ Menu</button>

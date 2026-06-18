@@ -47,9 +47,30 @@ const CHARACTERS = [
     stats: { maxHp: 110, speed: 160, might: 1.4, haste: 0.85, armor: 1, pickup: 150 },
     blurb: 'For the patient. Devastating bursts of arcane power.',
   },
+  {
+    // Secret character — not purchasable; unlocked by the "Into the Void"
+    // achievement (survive 15:00). Powerful but high-risk.
+    id: 'void', name: 'Void', color: '#ff4dff',
+    desc: 'Born of the dark it once fought. Lethal and relentless.',
+    startWeapon: 'chain',
+    cost: -1, secret: true, achievement: 'eternal',
+    stats: { maxHp: 90, speed: 185, might: 1.5, haste: 1.1, armor: 0, pickup: 170 },
+    blurb: 'For masters. Immense power, little margin for error.',
+  },
 ];
 
 function getCharacter(id) { return CHARACTERS.find(c => c.id === id) || CHARACTERS[0]; }
+
+// ---- Difficulty / Ascension tiers -----------------------------------------
+// Higher tiers scale enemies up and rewards with them. Each unlocks by
+// surviving a time threshold on the previous tier.
+const DIFFICULTIES = [
+  { id: 'normal',    name: 'Normal',    color: '#7affc4', hp: 1.0, dmg: 1.0, speed: 1.0, spawn: 1.0, reward: 1.0,  unlockAt: 0 },
+  { id: 'hard',      name: 'Hard',      color: '#ffd84d', hp: 1.5, dmg: 1.25, speed: 1.06, spawn: 1.2, reward: 1.4, unlockAt: 360 },
+  { id: 'nightmare', name: 'Nightmare', color: '#ff7a3c', hp: 2.2, dmg: 1.6, speed: 1.12, spawn: 1.45, reward: 2.0, unlockAt: 480 },
+  { id: 'abyss',     name: 'Abyss',     color: '#ff4d6d', hp: 3.2, dmg: 2.1, speed: 1.2, spawn: 1.7, reward: 3.0,  unlockAt: 600 },
+];
+function getDifficulty(i) { return DIFFICULTIES[clamp(i, 0, DIFFICULTIES.length - 1)]; }
 
 // ---- Meta-progression shop (permanent upgrades bought with shards) --------
 // Each level multiplies cost. value(level) returns the bonus at a given level.

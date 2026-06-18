@@ -1,7 +1,8 @@
 // ===========================================================================
 // LASTLIGHT - save.js
 // Persistent meta-progression via localStorage: shards (meta currency),
-// permanent upgrades, unlocked characters, high scores, and stats.
+// permanent upgrades, unlocked characters, high scores, achievements, the
+// codex (discovered enemies/weapons), and options.
 // ===========================================================================
 
 const Save = {
@@ -16,14 +17,20 @@ const Save = {
         haste: 0, armor: 0, luck: 0, regen: 0, revival: 0,
       },
       unlocked: { spark: true }, // characters unlocked (spark is free)
+      achievements: {},          // id -> true
+      seen: { enemies: {}, weapons: {} }, // codex discovery
+      maxDifficulty: 0,          // highest difficulty tier unlocked (index)
       bestTime: 0,               // longest survival, seconds
       bestScore: 0,
       runs: 0,
       totalKills: 0,
       bossKills: 0,
+      totalShardsEarned: 0,
+      evolutionsMade: 0,
       seenIntro: false,
       muted: false,
       musicMuted: false,
+      shakeOff: false,
     };
   },
 
@@ -35,6 +42,10 @@ const Save = {
       const d = this.defaults();
       this.data.meta = Object.assign(d.meta, this.data.meta || {});
       this.data.unlocked = Object.assign(d.unlocked, this.data.unlocked || {});
+      this.data.achievements = Object.assign({}, this.data.achievements || {});
+      this.data.seen = Object.assign(d.seen, this.data.seen || {});
+      this.data.seen.enemies = Object.assign({}, this.data.seen.enemies || {});
+      this.data.seen.weapons = Object.assign({}, this.data.seen.weapons || {});
     } catch (e) {
       this.data = this.defaults();
     }
@@ -46,7 +57,7 @@ const Save = {
     catch (e) { /* storage may be unavailable; ignore */ }
   },
 
-  addShards(n) { this.data.shards += n; this.save(); },
+  addShards(n) { this.data.shards += n; this.data.totalShardsEarned += n; this.save(); },
   spendShards(n) {
     if (this.data.shards < n) return false;
     this.data.shards -= n; this.save(); return true;
@@ -57,6 +68,20 @@ const Save = {
 
   unlock(charId) { this.data.unlocked[charId] = true; this.save(); },
   isUnlocked(charId) { return !!this.data.unlocked[charId]; },
+
+  hasAchievement(id) { return !!this.data.achievements[id]; },
+  grantAchievement(id) { this.data.achievements[id] = true; this.save(); },
+  achievementCount() { return Object.keys(this.data.achievements).length; },
+
+  markSeen(kind, id) {
+    if (!this.data.seen[kind]) this.data.seen[kind] = {};
+    if (!this.data.seen[kind][id]) { this.data.seen[kind][id] = true; this.save(); }
+  },
+  isSeen(kind, id) { return !!(this.data.seen[kind] && this.data.seen[kind][id]); },
+
+  unlockDifficulty(index) {
+    if (index > this.data.maxDifficulty) { this.data.maxDifficulty = index; this.save(); }
+  },
 
   recordRun(time, score, kills, bosses) {
     this.data.runs++;
