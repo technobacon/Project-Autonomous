@@ -84,10 +84,10 @@ const Audio2 = {
   },
 
   // ---- Named SFX --------------------------------------------------------
-  shoot()      { this.blip(rand(620, 700), 0.08, 'square', 0.12, -260); },
-  shootSoft()  { this.blip(rand(440, 500), 0.10, 'triangle', 0.10, -120); },
-  hit()        { this.blip(rand(180, 220), 0.06, 'sawtooth', 0.10, -80); },
-  enemyDie()   { this.noise(0.12, 0.18, 900, 'lowpass'); this.blip(rand(120,160), 0.10, 'square', 0.08, -60); },
+  shoot()      { this.blip(vrand(620, 700), 0.08, 'square', 0.12, -260); },
+  shootSoft()  { this.blip(vrand(440, 500), 0.10, 'triangle', 0.10, -120); },
+  hit()        { this.blip(vrand(180, 220), 0.06, 'sawtooth', 0.10, -80); },
+  enemyDie()   { this.noise(0.12, 0.18, 900, 'lowpass'); this.blip(vrand(120,160), 0.10, 'square', 0.08, -60); },
   bossDie()    { this.noise(0.5, 0.35, 600); this.blip(90, 0.5, 'sawtooth', 0.2, -40); },
   pickup()     { this.blip(880, 0.05, 'sine', 0.12, 220); },
   pickupBig()  { this.blip(660, 0.06, 'sine', 0.14, 440); this.blip(990, 0.08, 'sine', 0.10, 220); },

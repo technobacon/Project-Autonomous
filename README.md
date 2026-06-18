@@ -87,6 +87,18 @@ a golden **EVOLUTION** — transforming it into a devastating new form:
   and evolutions.
 - **Options** — toggle SFX, music, and screen shake (accessibility).
 
+## 🗓 Daily Challenge
+
+A **deterministic, seeded** run from the main menu: today's date seeds the
+world, so the spawn waves, drops, and upgrade offers are identical every time
+you play it that day — it comes down to pure skill. Your best score per day is
+saved, and "Play Again" re-rolls the same daily so you can refine your run.
+
+The simulation is built so the seed alone determines the world: the gameplay
+RNG stream is fully isolated from anything cosmetic, so framerate, audio mute,
+and screen-shake settings **cannot** change the outcome. This is verified by a
+dedicated determinism test (see below).
+
 ---
 
 ## 🛠 Project layout
@@ -127,7 +139,9 @@ achievements, difficulty scaling, level-ups, pickups, every UI screen, death,
 persistence, and the shop (90+ assertions):
 
 ```bash
-node tools/headless-test.js       # functional suite
+npm test                          # functional + determinism suites
+node tools/headless-test.js       # functional suite (90+ assertions)
+node tools/determinism-test.js    # proves Daily seeds are framerate/settings-independent
 node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```
 

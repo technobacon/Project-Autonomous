@@ -15,6 +15,11 @@ const UI = {
 
   _esc() { /* allow Escape handling elsewhere */ },
 
+  _dailyChip() {
+    const best = Save.getDailyBest(dailyDateString());
+    return best ? ` <span class="shard-chip">best ${formatTime(best.time)}</span>` : '';
+  },
+
   clear() { this.root.innerHTML = ''; this.root.className = 'overlay'; },
   show() { this.root.style.display = 'flex'; },
   hide() { this.root.style.display = 'none'; },
@@ -29,6 +34,7 @@ const UI = {
         <p class="tagline">A spark of light against the endless dark.<br>Survive as long as you can.</p>
         <div class="menu-buttons">
           <button class="btn btn-primary" id="btn-play">▶ PLAY</button>
+          <button class="btn" id="btn-daily">🗓 DAILY CHALLENGE${this._dailyChip()}</button>
           <button class="btn" id="btn-shop">⚙ SANCTUARY <span class="shard-chip">✦ ${formatNum(d.shards)}</span></button>
           <div class="menu-buttons row">
             <button class="btn" id="btn-ach">🏆 ${Save.achievementCount()}/${ACHIEVEMENTS.length}</button>
@@ -50,6 +56,7 @@ const UI = {
         <p class="hint">Move: WASD / Arrows • Pause: Esc/P • Weapons fire automatically</p>
       </div>`;
     document.getElementById('btn-play').onclick = () => { Audio2.uiSelect(); this.showCharacterSelect(); };
+    document.getElementById('btn-daily').onclick = () => { Audio2.uiSelect(); this.hide(); App.startRun('spark', 0, { daily: true }); };
     document.getElementById('btn-shop').onclick = () => { Audio2.uiSelect(); this.showShop(); };
     document.getElementById('btn-ach').onclick = () => { Audio2.uiSelect(); this.showAchievements(); };
     document.getElementById('btn-codex').onclick = () => { Audio2.uiSelect(); this.showCodex(); };
@@ -71,6 +78,8 @@ const UI = {
           <div class="help-card"><h3>⚒ Build</h3><p>You hold up to <b>6 weapons</b> and <b>6 passives</b>. Combine them into a build. Every run is different.</p></div>
           <div class="help-card"><h3>☠ Bosses</h3><p>Bosses arrive on a timer and hit hard — but drop a flood of XP and treasure. Survive past 10:00 to face the Devourer.</p></div>
           <div class="help-card"><h3>✦ Sanctuary</h3><p>Earn shards every run. Spend them in the Sanctuary on <b>permanent upgrades</b> and to <b>unlock new characters</b>.</p></div>
+          <div class="help-card"><h3>🧬 Evolve</h3><p>Max a weapon <b>and</b> own its paired passive to unlock a golden <b>EVOLUTION</b> — a far more powerful form. Chase them.</p></div>
+          <div class="help-card"><h3>🗓 Daily</h3><p>A <b>seeded</b> run that's the same for everyone today. Pure skill — beat your own best score each day.</p></div>
         </div>
         <button class="btn btn-primary" id="btn-back">← Back</button>
       </div>`;
@@ -333,12 +342,18 @@ const UI = {
         <div class="tags">${newAch.map(a => `<span class="tag" style="border-color:#ffd84d;color:#ffd84d">${a.icon} ${a.name}${a.reward ? ' +' + a.reward + '✦' : ''}</span>`).join('')}</div>
       </div>` : '';
     const diffBlock = game.lastUnlockedDiff ? `<p class="new-best" style="color:${game.lastUnlockedDiff.color}">▲ ${game.lastUnlockedDiff.name} difficulty unlocked!</p>` : '';
-    const diffTag = game.diffIndex > 0 ? `<span class="diff-chip" style="color:${game.diff.color};border-color:${game.diff.color}">${game.diff.name}</span>` : '';
+    const diffTag = game.daily
+      ? `<span class="diff-chip" style="color:#9ad8ff;border-color:#9ad8ff">🗓 Daily ${game.dailyDate}</span>`
+      : (game.diffIndex > 0 ? `<span class="diff-chip" style="color:${game.diff.color};border-color:${game.diff.color}">${game.diff.name}</span>` : '');
+    const dailyBlock = (game.daily && game.lastDaily)
+      ? `<p class="new-best" ${game.lastDaily.isNew ? '' : 'style="color:var(--muted)"'}>${game.lastDaily.isNew ? '★ New Daily Best!' : 'Daily best: ' + formatNum(game.lastDaily.best.score) + ' (' + formatTime(game.lastDaily.best.time) + ')'}</p>`
+      : '';
     this.root.innerHTML = `
       <div class="screen panel">
         <h2 class="gameover-title">The light fades…</h2>
         ${diffTag}
-        ${newBest ? '<p class="new-best">★ New Best Time! ★</p>' : ''}
+        ${dailyBlock}
+        ${!game.daily && newBest ? '<p class="new-best">★ New Best Time! ★</p>' : ''}
         ${diffBlock}
         <div class="go-stats">
           <div class="go-big"><span>Survived</span><b>${formatTime(game.time)}</b></div>
@@ -356,7 +371,12 @@ const UI = {
           <button class="btn" id="btn-menu">⌂ Menu</button>
         </div>
       </div>`;
-    document.getElementById('btn-retry').onclick = () => { Audio2.uiSelect(); this.hide(); this.showCharacterSelect(); };
+    const wasDaily = game.daily;
+    document.getElementById('btn-retry').onclick = () => {
+      Audio2.uiSelect(); this.hide();
+      if (wasDaily) App.startRun('spark', 0, { daily: true });
+      else this.showCharacterSelect();
+    };
     document.getElementById('btn-menu').onclick = () => { Audio2.uiMove(); this.showMenu(); };
   },
 };

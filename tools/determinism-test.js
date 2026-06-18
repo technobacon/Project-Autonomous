@@ -1,0 +1,116 @@
+// ===========================================================================
+// LASTLIGHT - tools/determinism-test.js
+// Proves the Daily Challenge is fair: a given seed produces the SAME world
+// regardless of framerate (render cadence), audio mute, or screen-shake — i.e.
+// the seeded gameplay RNG stream is fully isolated from cosmetic randomness.
+// Run:  node tools/determinism-test.js
+// ===========================================================================
+
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+
+function makeCtx() {
+  return new Proxy({ canvas: {} }, {
+    get(t, p) {
+      if (p in t) return t[p];
+      if (p === 'createRadialGradient' || p === 'createLinearGradient') return () => ({ addColorStop() {} });
+      if (p === 'measureText') return () => ({ width: 8 });
+      return () => {};
+    }, set(t, p, v) { t[p] = v; return true; },
+  });
+}
+const makeCanvas = () => ({ width: 0, height: 0, style: {}, getContext: () => makeCtx(), addEventListener() {}, getBoundingClientRect: () => ({ left: 0, top: 0, width: 960, height: 640 }) });
+const makeEl = () => { const e = { _h: '', className: '', style: {}, classList: { add() {}, remove() {} }, addEventListener() {}, querySelectorAll: () => [], querySelector: () => makeEl() }; Object.defineProperty(e, 'innerHTML', { get() { return e._h; }, set(v) { e._h = '' + v; } }); Object.defineProperty(e, 'onclick', { get() { return e._c; }, set(v) { e._c = v; } }); return e; };
+const gn = () => ({ gain: { value: 0, setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {}, cancelScheduledValues() {} }, connect() {} });
+class AC { constructor() { this.currentTime = 0; this.state = 'running'; this.destination = {}; this.sampleRate = 44100; } createGain() { return gn(); } createOscillator() { return { type: '', frequency: { value: 0, setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {}, start() {}, stop() {} }; } createBuffer(c, l) { return { getChannelData: () => new Float32Array(l) }; } createBufferSource() { return { connect() {}, start() {} }; } createBiquadFilter() { return { frequency: {}, connect() {} }; } resume() {} }
+const store = {};
+const sandbox = {};
+sandbox.window = sandbox; sandbox.globalThis = sandbox; sandbox.console = console; sandbox.Math = Math; sandbox.Date = Date;
+sandbox.setTimeout = () => 0; sandbox.clearTimeout = () => {}; sandbox.setInterval = () => 0; sandbox.clearInterval = () => {};
+sandbox.performance = { now: () => 0 }; sandbox.requestAnimationFrame = () => 0;
+sandbox.devicePixelRatio = 1; sandbox.innerWidth = 960; sandbox.innerHeight = 640;
+sandbox.AudioContext = AC; sandbox.webkitAudioContext = AC;
+sandbox.localStorage = { getItem: k => k in store ? store[k] : null, setItem: (k, v) => store[k] = '' + v, removeItem: k => delete store[k] };
+sandbox.addEventListener = () => {}; sandbox.removeEventListener = () => {}; sandbox.confirm = () => true;
+const overlay = makeEl(), gameCanvas = makeCanvas();
+sandbox.document = { addEventListener() {}, createElement: () => makeCanvas(), getElementById: id => id === 'game' ? gameCanvas : (id === 'overlay' ? overlay : makeEl()) };
+
+const order = ['utils', 'audio', 'input', 'particles', 'save', 'content', 'weapons', 'evolutions', 'enemies', 'upgrades', 'achievements', 'player', 'game', 'ui'];
+let src = '';
+for (const f of order) src += fs.readFileSync(path.join(__dirname, '..', 'js', f + '.js'), 'utf8') + '\n;\n';
+
+src += `
+globalThis.__det = function(report) {
+  Save.load();
+  UI.hideLevelUp = () => {}; UI.showGameOver = () => {};
+
+  // A run that is identical given (seed, inputs), regardless of cosmetic config.
+  function runSim(opts) {
+    const o = Object.assign({ render: false, renderEvery: 1, mute: false, shakeOff: false, steps: 2400, daily: false }, opts);
+    Audio2.muted = o.mute; Audio2.musicMuted = o.mute;
+    Save.data.shakeOff = o.shakeOff;
+    const game = new Game(document.getElementById('game'));
+    UI.init(document.getElementById('overlay'), game);
+    UI.showLevelUp = (g, choices) => { g.chooseUpgrade(choices[0]); };
+    let step = 0;
+    // Deterministic, input-only movement (a pure function of the step index).
+    Input.moveVector = () => ({ x: Math.cos(step * 0.13) * 0.8, y: Math.sin(step * 0.17) * 0.8 });
+    game.start('spark', 0, o.daily ? { daily: true, date: '2026-06-18' } : { seed: o.seed });
+    for (let i = 0; i < o.steps; i++) {
+      step = i;
+      game.update(1 / 60);
+      if (o.render && i % o.renderEvery === 0) game.render();
+      if (!game.player.alive) break;
+    }
+    return hashState(game);
+  }
+
+  function hashState(g) {
+    let ehp = 0, ex = 0, ey = 0;
+    for (const e of g.enemies) { ehp += e.hp; ex += e.x; ey += e.y; }
+    return [g.time.toFixed(3), g.kills, g.score, g.player.level, g.player.hp.toFixed(3),
+      g.player.x.toFixed(3), g.player.y.toFixed(3), g.enemies.length, ehp.toFixed(2),
+      ex.toFixed(2), ey.toFixed(2), g.gems.length, g.projectiles.length].join('|');
+  }
+
+  const results = { passed: [], failed: [] };
+  const eq = (name, a, b) => { (a === b ? results.passed : results.failed).push(name + (a === b ? '' : '\\n      A=' + a + '\\n      B=' + b)); };
+  const ne = (name, a, b) => { (a !== b ? results.passed : results.failed).push(name + (a !== b ? '' : ' (unexpectedly equal)')); };
+
+  const SEED = 12345;
+  const base = runSim({ seed: SEED });
+
+  eq('same seed -> identical run', base, runSim({ seed: SEED }));
+  eq('render every frame -> identical gameplay', base, runSim({ seed: SEED, render: true, renderEvery: 1 }));
+  eq('render every 3rd frame -> identical gameplay', base, runSim({ seed: SEED, render: true, renderEvery: 3 }));
+  eq('render every 7th frame -> identical gameplay', base, runSim({ seed: SEED, render: true, renderEvery: 7 }));
+  eq('audio muted -> identical gameplay', base, runSim({ seed: SEED, mute: true }));
+  eq('audio unmuted -> identical gameplay', base, runSim({ seed: SEED, mute: false }));
+  eq('shake off -> identical gameplay', base, runSim({ seed: SEED, shakeOff: true }));
+  eq('shake on -> identical gameplay', base, runSim({ seed: SEED, shakeOff: false }));
+  eq('worst-case mix -> identical gameplay', base, runSim({ seed: SEED, render: true, renderEvery: 5, mute: true, shakeOff: true }));
+  ne('different seed -> different run', base, runSim({ seed: SEED + 1 }));
+
+  // Daily seeds are reproducible for a given date.
+  const day = runSim({ daily: true });
+  eq('daily same date -> identical run', day, runSim({ daily: true }));
+
+  report(results);
+};
+`;
+
+const ctx = vm.createContext(sandbox);
+vm.runInContext(src, ctx, { filename: 'det-bundle.js' });
+sandbox.__det((r) => {
+  console.log('\n=== LASTLIGHT determinism test ===');
+  console.log('PASSED (' + r.passed.length + '):');
+  for (const p of r.passed) console.log('  ✓ ' + p);
+  if (r.failed.length) {
+    console.log('\nFAILED (' + r.failed.length + '):');
+    for (const f of r.failed) console.log('  ✗ ' + f);
+    process.exitCode = 1;
+  } else {
+    console.log('\nALL DETERMINISM CHECKS PASSED ✓');
+  }
+});

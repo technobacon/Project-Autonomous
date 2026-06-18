@@ -18,17 +18,56 @@ function approach(cur, target, step) {
   return cur;
 }
 
-// Random helpers (Math.random based — good enough for a runs-based game).
-function rand(min, max) { return min + Math.random() * (max - min); }
-function randInt(min, max) { return Math.floor(min + Math.random() * (max - min + 1)); }
-function pick(arr) { return arr[(Math.random() * arr.length) | 0]; }
-function chance(p) { return Math.random() < p; }
+// ---------------------------------------------------------------------------
+// Randomness. Two independent streams:
+//  - RNG: the seeded GAMEPLAY stream (spawns, drops, crits, upgrade offers…).
+//    Consumed only inside the fixed-timestep simulation, so a given seed yields
+//    the same world on any machine/framerate. This is what powers Daily runs.
+//  - vrand(): a NON-seeded cosmetic stream (Math.random) for visuals/audio that
+//    must NOT perturb the gameplay stream (particles drawn in render, screen
+//    shake jitter, audio — all of which can be gated by user settings).
+// ---------------------------------------------------------------------------
+const RNG = {
+  s: 0x9e3779b9 >>> 0,
+  seed(n) { this.s = (n >>> 0) || 1; },
+  // mulberry32 — fast, decent quality, deterministic.
+  next() {
+    this.s = (this.s + 0x6D2B79F5) | 0;
+    let t = Math.imul(this.s ^ (this.s >>> 15), 1 | this.s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  },
+};
+
+// Hash a string to a 32-bit seed (for date-based Daily seeds).
+function hashStr(str) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
+// Gameplay random helpers (seeded — deterministic per RNG seed).
+function rand(min, max) { return min + RNG.next() * (max - min); }
+function randInt(min, max) { return Math.floor(min + RNG.next() * (max - min + 1)); }
+function pick(arr) { return arr[(RNG.next() * arr.length) | 0]; }
+function chance(p) { return RNG.next() < p; }
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
-    const j = (Math.random() * (i + 1)) | 0;
+    const j = (RNG.next() * (i + 1)) | 0;
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+// Cosmetic random (NOT seeded) — for render/audio/shake only.
+function vrand(min, max) { return min + Math.random() * (max - min); }
+
+// Local-date string YYYY-MM-DD, used as the Daily Challenge seed key.
+function dailyDateString(d) {
+  d = d || new Date();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return d.getFullYear() + '-' + m + '-' + day;
 }
 
 // Weighted pick: items must have a `.weight` field (or pass a weightFn).
@@ -36,7 +75,7 @@ function weightedPick(items, weightFn) {
   let total = 0;
   for (const it of items) total += (weightFn ? weightFn(it) : it.weight) || 0;
   if (total <= 0) return null;
-  let r = Math.random() * total;
+  let r = RNG.next() * total;
   for (const it of items) {
     r -= (weightFn ? weightFn(it) : it.weight) || 0;
     if (r <= 0) return it;

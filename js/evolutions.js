@@ -137,8 +137,9 @@ const EVOLVED_WEAPONS = {
     fire(game, inst) {
       const p = game.player;
       const dmg = 30 * p.might;
+      const area = p.area;
       for (let s = 0; s < 3; s++) {
-        setTimeout(() => { if (game.running) game.castChain(p.x, p.y, 18, dmg, 300 * p.area); }, s * 90);
+        game.schedule(s * 0.09, () => game.castChain(game.player.x, game.player.y, 18, dmg, 300 * area));
       }
       Audio2.blip(900, 0.14, 'sawtooth', 0.16, -320);
     },

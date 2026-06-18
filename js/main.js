@@ -43,8 +43,8 @@ const App = {
     }
   },
 
-  startRun(charId, diffIndex = 0) {
-    this.game.start(charId, diffIndex);
+  startRun(charId, diffIndex = 0, opts = {}) {
+    this.game.start(charId, diffIndex, opts);
     this.lastT = performance.now();
     this.acc = 0;
   },

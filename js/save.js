@@ -17,6 +17,7 @@ const Save = {
         haste: 0, armor: 0, luck: 0, regen: 0, revival: 0,
       },
       unlocked: { spark: true }, // characters unlocked (spark is free)
+      dailyBest: {},             // 'YYYY-MM-DD' -> { time, score }
       achievements: {},          // id -> true
       seen: { enemies: {}, weapons: {} }, // codex discovery
       maxDifficulty: 0,          // highest difficulty tier unlocked (index)
@@ -42,6 +43,7 @@ const Save = {
       const d = this.defaults();
       this.data.meta = Object.assign(d.meta, this.data.meta || {});
       this.data.unlocked = Object.assign(d.unlocked, this.data.unlocked || {});
+      this.data.dailyBest = Object.assign({}, this.data.dailyBest || {});
       this.data.achievements = Object.assign({}, this.data.achievements || {});
       this.data.seen = Object.assign(d.seen, this.data.seen || {});
       this.data.seen.enemies = Object.assign({}, this.data.seen.enemies || {});
@@ -78,6 +80,14 @@ const Save = {
     if (!this.data.seen[kind][id]) { this.data.seen[kind][id] = true; this.save(); }
   },
   isSeen(kind, id) { return !!(this.data.seen[kind] && this.data.seen[kind][id]); },
+
+  getDailyBest(date) { return this.data.dailyBest[date] || null; },
+  recordDaily(date, time, score) {
+    const prev = this.data.dailyBest[date];
+    const isNew = !prev || score > prev.score;
+    if (isNew) { this.data.dailyBest[date] = { time, score }; this.save(); }
+    return { best: this.data.dailyBest[date], isNew };
+  },
 
   unlockDifficulty(index) {
     if (index > this.data.maxDifficulty) { this.data.maxDifficulty = index; this.save(); }

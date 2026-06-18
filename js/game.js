@@ -50,6 +50,10 @@ class Game {
     this.toasts = [];
     this.activeBoss = null;
     this.pendingLevels = 0;
+    this.scheduled = [];       // sim-time delayed actions {t, fn}
+    this.seed = 0;
+    this.daily = false;
+    this.dailyDate = null;
     // Run-tracking for achievements / scoring.
     this.damageTaken = 0;
     this.firstHitTime = null;
@@ -74,19 +78,29 @@ class Game {
     c.width = 1400; c.height = 1400;
     const x = c.getContext('2d');
     for (let i = 0; i < 420; i++) {
-      const a = rand(0.15, 0.7), r = rand(0.4, 1.6);
+      const a = vrand(0.15, 0.7), r = vrand(0.4, 1.6);
       x.globalAlpha = a;
-      x.fillStyle = chance(0.15) ? '#9ad8ff' : (chance(0.2) ? '#ffd84d' : '#ffffff');
+      x.fillStyle = Math.random() < 0.15 ? '#9ad8ff' : (Math.random() < 0.2 ? '#ffd84d' : '#ffffff');
       x.beginPath();
-      x.arc(rand(0, c.width), rand(0, c.height), r, 0, TAU);
+      x.arc(vrand(0, c.width), vrand(0, c.height), r, 0, TAU);
       x.fill();
     }
     this.stars = c;
   }
 
   // ---- Lifecycle --------------------------------------------------------
-  start(charId, diffIndex = 0) {
+  start(charId, diffIndex = 0, opts = {}) {
     this.reset();
+    // Seed the deterministic gameplay RNG. Daily runs share a date-based seed
+    // (everyone faces the same world); normal runs get a fresh random seed.
+    this.daily = !!opts.daily;
+    if (this.daily) {
+      this.dailyDate = opts.date || dailyDateString();
+      this.seed = hashStr('lastlight-daily-' + this.dailyDate);
+    } else {
+      this.seed = (opts.seed != null ? opts.seed : (Date.now() ^ Math.floor(Math.random() * 0xffffffff))) >>> 0;
+    }
+    RNG.seed(this.seed);
     this.diffIndex = clamp(diffIndex, 0, DIFFICULTIES.length - 1);
     this.diff = getDifficulty(this.diffIndex);
     const char = getCharacter(charId);
@@ -98,7 +112,8 @@ class Game {
     this.state = 'playing';
     Audio2.resume();
     Audio2.startMusic(0);
-    this.toast(this.diffIndex > 0 ? this.diff.name + ' — survive.' : 'Survive.');
+    this.toast(this.daily ? 'Daily Challenge — ' + this.dailyDate
+      : (this.diffIndex > 0 ? this.diff.name + ' — survive.' : 'Survive.'));
   }
 
   // ---- Spatial grid (for radius queries) --------------------------------
@@ -411,6 +426,9 @@ class Game {
       unlockedDiff = next;
     }
 
+    // Daily Challenge best (per date).
+    if (this.daily) this.lastDaily = Save.recordDaily(this.dailyDate, this.time, this.score);
+
     // Achievements (some reward extra shards on top).
     const newly = Achievements.check(this);
     this.lastEarned = earned;
@@ -438,6 +456,17 @@ class Game {
     if (Save.data && Save.data.shakeOff) return;
     if (mag > this.shake_.mag) { this.shake_.mag = mag; this.shake_.t = t; this.shake_.max = t; }
   }
+
+  // Run a function after `delay` seconds of SIMULATION time (deterministic,
+  // pauses with the game — unlike setTimeout).
+  schedule(delay, fn) { this.scheduled.push({ t: delay, fn }); }
+  _runScheduled(dt) {
+    for (let i = this.scheduled.length - 1; i >= 0; i--) {
+      const s = this.scheduled[i];
+      s.t -= dt;
+      if (s.t <= 0) { this.scheduled.splice(i, 1); try { s.fn(); } catch (e) {} }
+    }
+  }
   toast(msg) { this.toasts.push({ msg, life: 2.6 }); if (this.toasts.length > 3) this.toasts.shift(); }
 
   // ---- Update -----------------------------------------------------------
@@ -446,6 +475,7 @@ class Game {
     dt = Math.min(dt, 0.05); // clamp huge frame gaps
     this.time += dt;
 
+    this._runScheduled(dt);    // fire any due delayed effects first
     this.buildGrid();          // grid first, so weapon queries see current foes
     this.player.update(dt);
     this.director.update(dt);
@@ -468,7 +498,7 @@ class Game {
     if (this.shake_.t > 0) {
       this.shake_.t -= dt;
       const k = this.shake_.mag * (this.shake_.t / this.shake_.max);
-      this.cam.sx = rand(-k, k); this.cam.sy = rand(-k, k);
+      this.cam.sx = vrand(-k, k); this.cam.sy = vrand(-k, k);
       if (this.shake_.t <= 0) { this.shake_.mag = 0; this.cam.sx = this.cam.sy = 0; }
     }
 
@@ -924,8 +954,8 @@ class Game {
         const steps = 4;
         for (let i = 1; i <= steps; i++) {
           const t = i / steps;
-          const jx = lerp(s.x1, s.x2, t) + (i < steps ? rand(-8, 8) : 0);
-          const jy = lerp(s.y1, s.y2, t) + (i < steps ? rand(-8, 8) : 0);
+          const jx = lerp(s.x1, s.x2, t) + (i < steps ? vrand(-8, 8) : 0);
+          const jy = lerp(s.y1, s.y2, t) + (i < steps ? vrand(-8, 8) : 0);
           ctx.lineTo(jx - cam.x, jy - cam.y);
         }
       }

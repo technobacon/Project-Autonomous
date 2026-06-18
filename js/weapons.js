@@ -165,10 +165,7 @@ const WEAPONS = {
       const kb = l >= 4 ? 320 : 160;
       const shots = l >= 7 ? 2 : 1;
       for (let s = 0; s < shots; s++) {
-        setTimeout(() => {
-          if (!game.running) return;
-          game.spawnNova(p.x, p.y, radius, dmg, kb, '#c98bff');
-        }, s * 220);
+        game.schedule(s * 0.22, () => game.spawnNova(game.player.x, game.player.y, radius, dmg, kb, '#c98bff'));
       }
       Audio2.blip(300, 0.2, 'sawtooth', 0.18, 200);
     },
@@ -191,8 +188,9 @@ const WEAPONS = {
       const jumps = 3 + (l >= 2 ? 1 : 0) + (l >= 4 ? 1 : 0) + (l >= 6 ? 2 : 0) + (l >= 8 ? 3 : 0);
       const dmg = (16 * (1 + (l >= 3 ? 0.25 : 0) + (l >= 5 ? 0.30 : 0))) * p.might;
       const shots = l >= 7 ? 2 : 1;
+      const area = p.area;
       for (let s = 0; s < shots; s++) {
-        setTimeout(() => { if (game.running) game.castChain(p.x, p.y, jumps, dmg, 240 * p.area); }, s * 120);
+        game.schedule(s * 0.12, () => game.castChain(game.player.x, game.player.y, jumps, dmg, 240 * area));
       }
       Audio2.blip(880, 0.12, 'sawtooth', 0.14, -300);
     },
