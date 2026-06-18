@@ -1,0 +1,12 @@
+{
+  "name": "lastlight",
+  "version": "1.0.0",
+  "description": "LASTLIGHT — a neon survivor-like roguelite for the browser. No build step, no dependencies, all art and audio generated at runtime.",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node tools/headless-test.js",
+    "start": "python3 -m http.server 8000"
+  },
+  "keywords": ["game", "roguelite", "survivor", "canvas", "html5", "vanilla-js"],
+  "license": "MIT"
+}
