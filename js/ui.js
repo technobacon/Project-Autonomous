@@ -101,9 +101,37 @@ const UI = {
           <div class="help-card"><h3>📜 Chronicle</h3><p>Every run is logged in your <b>History</b> — its mode, character, build, score and time — so you can track your records and revisit your best runs.</p></div>
           <div class="help-card"><h3>⚙ Options</h3><p>From the menu, toggle <b>SFX</b>, <b>Music</b>, <b>screen shake</b>, and floating <b>damage numbers</b> to taste.</p></div>
         </div>
-        <button class="btn btn-primary" id="btn-back">← Back</button>
+        <div class="menu-buttons row">
+          <button class="btn btn-primary" id="btn-back">← Back</button>
+          <button class="btn" id="btn-replay-tut">↻ Replay Tutorial</button>
+        </div>
       </div>`;
     document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
+    document.getElementById('btn-replay-tut').onclick = () => { Audio2.uiSelect(); Save.resetTutorial(); this.showIntro(() => this.showMenu()); };
+  },
+
+  // ---- First-run welcome / tutorial -------------------------------------
+  showIntro(onDone) {
+    this.clear(); this.show();
+    const done = () => { Save.data.seenIntro = true; Save.save(); Audio2.uiSelect(); (onDone || (() => this.showMenu()))(); };
+    this.root.innerHTML = `
+      <div class="screen panel intro">
+        <h1 class="title">LAST<span>LIGHT</span></h1>
+        <p class="tagline">You are the last spark of light against an endless dark.<br>Here's all you need to begin:</p>
+        <div class="intro-steps">
+          <div class="intro-step"><div class="intro-ic">🕹</div><div><h3>Move to survive</h3><p>Steer with <b>WASD</b> or <b>arrow keys</b> — or drag on a touch screen. There's no fire button: your weapons attack <b>automatically</b>. Your whole job is to <b>dodge</b>.</p></div></div>
+          <div class="intro-step"><div class="intro-ic">💎</div><div><h3>Gather &amp; grow</h3><p>Fallen foes drop <b>light shards</b>. Scoop them up to <b>level up</b>, then pick a new weapon, a weapon upgrade, or a passive boost.</p></div></div>
+          <div class="intro-step"><div class="intro-ic">⚒</div><div><h3>Build a combo</h3><p>You carry up to <b>6 weapons</b> and <b>6 passives</b>. Max a weapon beside its paired passive to unlock a powerful <b>evolution</b>.</p></div></div>
+          <div class="intro-step"><div class="intro-ic">✦</div><div><h3>Endure &amp; return</h3><p>Every run earns <b>shards</b> to spend in the <b>Sanctuary</b> on permanent upgrades and new characters. Death is just the start of the next run.</p></div></div>
+        </div>
+        <div class="menu-buttons row">
+          <button class="btn btn-primary" id="btn-intro-go">▶ Begin</button>
+          <button class="btn" id="btn-intro-skip">Skip</button>
+        </div>
+        <p class="hint">You can replay this anytime from <b>Help</b>.</p>
+      </div>`;
+    document.getElementById('btn-intro-go').onclick = done;
+    document.getElementById('btn-intro-skip').onclick = done;
   },
 
   // ---- Character select -------------------------------------------------
@@ -452,10 +480,17 @@ const UI = {
           <p>${c.desc}</p>
         </div>`;
     }).join('');
+    // First level-up ever: teach the build loop (once).
+    let coachLine = '';
+    if (!Save.tipSeen('levelup')) {
+      Save.markTip('levelup');
+      coachLine = `<p class="coach-line">➤ Stack <b>weapons</b> and <b>passives</b> into a build — pair a maxed weapon with its passive to <b>evolve</b> it.</p>`;
+    }
     this.root.innerHTML = `
       <div class="screen levelup">
         <h2 class="levelup-title">✦ LEVEL UP ✦</h2>
         <p class="levelup-sub">Choose your power${game.pendingLevels > 1 ? ` &nbsp;(${game.pendingLevels} pending)` : ''}</p>
+        ${coachLine}
         <div class="up-grid">${cards}</div>
         <p class="hint">Press 1–${choices.length} or click</p>
       </div>`;

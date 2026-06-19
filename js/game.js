@@ -78,6 +78,7 @@ class Game {
     this.biomeIndex = 0;          // which biome stage we're in (time-driven)
     this.biome = BIOMES[0];       // current biome (palette + spawn bias)
     this._biomeFlash = 0;         // cosmetic transition wash (decays)
+    this._coaching = false;       // first-run coaching tips active?
     this.activeBoss = null;
     this.pendingLevels = 0;
     this.scheduled = [];       // sim-time delayed actions {t, fn}
@@ -176,6 +177,11 @@ class Game {
     this.director = new Director(this);
     this.running = true;
     this.state = 'playing';
+    // Coach a brand-new player through the basics in standard Survival only,
+    // and only until the core tips have all been seen once.
+    this._coaching = !this.daily && this.mode === 'survival' &&
+      !(Save.tipSeen('move') && Save.tipSeen('shards') && Save.tipSeen('dodge') &&
+        Save.tipSeen('pause') && Save.tipSeen('levelup'));
     Audio2.resume();
     Audio2.startMusic(0);
     if (this.mode === 'gauntlet') {
@@ -701,7 +707,27 @@ class Game {
       if (s.t <= 0) { this.scheduled.splice(i, 1); try { s.fn(); } catch (e) {} }
     }
   }
-  toast(msg) { this.toasts.push({ msg, life: 2.6 }); if (this.toasts.length > 3) this.toasts.shift(); }
+  toast(msg, color = '#ffe9a8', life = 2.6) { this.toasts.push({ msg, life, color }); if (this.toasts.length > 3) this.toasts.shift(); }
+
+  // One-time coaching tip (shown once ever, only in standard Survival). Purely
+  // a cosmetic toast + a persisted flag — never touches the simulation.
+  coach(id, msg) {
+    if (!this._coaching || Save.tipSeen(id)) return;
+    Save.markTip(id);
+    this.toast('➤ ' + msg, '#9ff0ff', 4.4);
+  }
+
+  // Drip-feed the basics to a new player as situations arise. Cosmetic-only;
+  // self-disables once the core tips have all been seen.
+  coachUpdate() {
+    if (!this._coaching) return;
+    if (this.time > 1.2) this.coach('move', 'Move with WASD or arrows — your light fights on its own.');
+    if (this.gems.length > 0) this.coach('shards', 'Gather light shards to fill the XP bar and level up.');
+    if (this.damageTaken > 0) this.coach('dodge', 'The dark hurts on contact — keep moving to stay alive.');
+    if (this.time > 24) this.coach('pause', 'Pause anytime with Esc or P.');
+    if (Save.tipSeen('move') && Save.tipSeen('shards') && Save.tipSeen('dodge') &&
+        Save.tipSeen('pause') && Save.tipSeen('levelup')) this._coaching = false;
+  }
 
   // ---- Update -----------------------------------------------------------
   update(dt) {
@@ -710,6 +736,7 @@ class Game {
     this.time += dt;
 
     this.updateBiome(dt);      // advance the stage before spawns read its bias
+    this.coachUpdate();        // first-run coaching (cosmetic toasts only)
     this._runScheduled(dt);    // fire any due delayed effects first
     this.buildGrid();          // grid first, so weapon queries see current foes
     this.player.update(dt);
@@ -1567,7 +1594,7 @@ class Game {
     for (const t of this.toasts) {
       ctx.globalAlpha = clamp(t.life, 0, 1);
       ctx.font = 'bold 18px "Segoe UI", system-ui, sans-serif';
-      ctx.fillStyle = '#ffe9a8'; ctx.shadowBlur = 6; ctx.shadowColor = '#000';
+      ctx.fillStyle = t.color || '#ffe9a8'; ctx.shadowBlur = 6; ctx.shadowColor = '#000';
       ctx.fillText(t.msg, W / 2, ty);
       ctx.shadowBlur = 0;
       ty -= 26;

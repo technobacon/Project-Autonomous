@@ -34,6 +34,7 @@ const Save = {
       totalShardsEarned: 0,
       evolutionsMade: 0,
       seenIntro: false,
+      tips: {},                  // one-time coaching tips already shown (id -> true)
       muted: false,
       musicMuted: false,
       shakeOff: false,
@@ -54,6 +55,7 @@ const Save = {
       this.data.dailyBest = Object.assign({}, this.data.dailyBest || {});
       this.data.gauntletBest = Object.assign(d.gauntletBest, this.data.gauntletBest || {});
       this.data.history = Array.isArray(this.data.history) ? this.data.history : [];
+      this.data.tips = Object.assign({}, this.data.tips || {});
       this.data.achievements = Object.assign({}, this.data.achievements || {});
       this.data.seen = Object.assign(d.seen, this.data.seen || {});
       this.data.seen.enemies = Object.assign({}, this.data.seen.enemies || {});
@@ -99,6 +101,11 @@ const Save = {
     if (this.data.equipped.length >= this.relicSlotCount()) return this.isEquipped(id); // full
     this.data.equipped.push(id); this.save(); return true;
   },
+
+  // ---- Onboarding / coaching ----------------------------------------------
+  tipSeen(id) { return !!this.data.tips[id]; },
+  markTip(id) { if (!this.data.tips[id]) { this.data.tips[id] = true; this.save(); } },
+  resetTutorial() { this.data.seenIntro = false; this.data.tips = {}; this.save(); },
 
   hasAchievement(id) { return !!this.data.achievements[id]; },
   grantAchievement(id) { this.data.achievements[id] = true; this.save(); },

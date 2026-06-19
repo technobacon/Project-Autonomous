@@ -566,6 +566,41 @@ globalThis.__run = function(report) {
     ok('render with biome flash stays finite', Number.isFinite(g.player.x));
   });
 
+  // 11.9) Onboarding (v13): first-run intro, coaching tips, save plumbing.
+  sectionTry('onboarding: save tips + resetTutorial', () => {
+    Save.resetTutorial();
+    ok('reset clears intro + tips', Save.data.seenIntro === false && Object.keys(Save.data.tips).length === 0);
+    Save.markTip('demo'); ok('markTip/tipSeen round-trip', Save.tipSeen('demo'));
+  });
+  sectionTry('onboarding: intro screen renders', () => {
+    const g = new Game(document.getElementById('game'));
+    UI.init(document.getElementById('overlay'), g);
+    UI.showIntro(() => {});
+    ok('intro shows the Begin action', /Begin/.test(UI.root.innerHTML) && /automatically/.test(UI.root.innerHTML));
+  });
+  sectionTry('onboarding: coaching fires once, survival-only', () => {
+    Save.data.tips = {};
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 1 });
+    ok('coaching active on a fresh survival run', g._coaching === true);
+    g.toasts = []; g.time = 2; g.coachUpdate();
+    ok('move tip shown + recorded', g.toasts.some(t => /Move with/.test(t.msg)) && Save.tipSeen('move'));
+    g.coachUpdate();
+    ok('move tip not repeated', g.toasts.filter(t => /Move with/.test(t.msg)).length === 1);
+    const gd = new Game(document.getElementById('game')); gd.start('spark', 0, { daily: true, date: '2026-01-02' });
+    ok('no coaching in Daily', gd._coaching === false);
+  });
+  sectionTry('onboarding: first level-up coaches the build loop', () => {
+    Save.data.tips = {};
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 2 });
+    UI.init(document.getElementById('overlay'), g);
+    const ch = buildUpgradeChoices(g, 3);
+    UI.showLevelUp(g, ch);
+    ok('first level-up shows coach line + marks tip', /Stack/.test(UI.root.innerHTML) && Save.tipSeen('levelup'));
+    UI.showLevelUp(g, ch);
+    ok('coach line not shown again', !/Stack/.test(UI.root.innerHTML));
+    Save.data.tips = {}; Save.data.seenIntro = true; // tidy for later sections
+  });
+
   // 11.3) New content (v7): glaive (boomerang), toxin (zones), prism, Comet.
   sectionTry('content: new weapons + evolutions registered', () => {
     for (const id of ['glaive', 'toxin', 'prism']) ok('base weapon ' + id, !!getWeapon(id) && WEAPON_LIST.some(w => w.id === id));

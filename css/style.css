@@ -286,3 +286,12 @@ html, body {
 .hist-wep.evo { text-shadow: 0 0 8px currentColor; }
 .hist-tag { font-size: 12px; font-weight: 800; border: 1px solid; border-radius: 16px; padding: 1px 8px; }
 .empty-note { color: var(--muted); text-align: center; padding: 40px 10px; line-height: 1.6; }
+
+/* ---- First-run intro / tutorial ---- */
+.screen.intro { max-width: 680px; }
+.intro-steps { display: flex; flex-direction: column; gap: 14px; margin: 22px 0; text-align: left; }
+.intro-step { display: flex; gap: 14px; align-items: flex-start; background: rgba(255,255,255,0.04); border: 1px solid var(--panel-border); border-radius: 12px; padding: 12px 14px; }
+.intro-ic { font-size: 28px; line-height: 1; flex-shrink: 0; width: 34px; text-align: center; }
+.intro-step h3 { font-size: 15px; margin-bottom: 4px; color: #fff; }
+.intro-step p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.coach-line { color: #9ff0ff; font-size: 13px; margin: 2px 0 10px; opacity: 0.95; }

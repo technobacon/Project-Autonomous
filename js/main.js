@@ -27,7 +27,9 @@ const App = {
     window.addEventListener('pointerdown', unlock);
     window.addEventListener('keydown', unlock);
 
-    UI.showMenu();
+    // First-ever launch: walk the player through the basics, then the menu.
+    if (!Save.data.seenIntro) UI.showIntro(() => UI.showMenu());
+    else UI.showMenu();
     requestAnimationFrame((t) => this.loop(t));
   },
 

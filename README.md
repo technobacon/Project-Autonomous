@@ -21,6 +21,11 @@ long as you can.
 
 Works on desktop (keyboard) and mobile (drag-to-move).
 
+**New here?** The first launch opens a short, skippable **tutorial**, and your
+first run gently **coaches you** through the basics (movement, shards, dodging,
+the build loop) with one-time tips. You can replay the walkthrough anytime from
+the **Help** screen.
+
 ## 🎮 How to play
 
 - **Move** with `WASD` or the **arrow keys** (on touch devices, drag anywhere).
@@ -238,12 +243,12 @@ the Gauntlet boss-rush flow, the elite/affix/champion system, the
 boomerang/poison-pool mechanics, difficulty scaling, level-ups, pickups, the
 polish FX (nebula, projectile trails, tiered damage numbers), the time-driven
 biome progression (palette + spawn bias), the adaptive audio engine (limiter,
-combat SFX, boss-aware music), every UI screen, death, persistence, and the
-shop (260+ assertions):
+combat SFX, boss-aware music), the first-run onboarding (intro + coaching tips),
+every UI screen, death, persistence, and the shop (270+ assertions):
 
 ```bash
 npm test                          # functional + determinism suites
- node tools/headless-test.js       # functional suite (260+ assertions)
+ node tools/headless-test.js       # functional suite (270+ assertions)
 node tools/determinism-test.js    # proves Daily seeds are framerate/settings-independent
 node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```
