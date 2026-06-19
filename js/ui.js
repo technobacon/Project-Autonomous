@@ -94,6 +94,7 @@ const UI = {
           <div class="help-card"><h3>☠ Bosses</h3><p>Bosses arrive on a timer and hit hard — but drop a flood of XP and treasure. Survive past 10:00 to face the Devourer.</p></div>
           <div class="help-card"><h3>✦ Sanctuary</h3><p>Earn shards every run. Spend them in the Sanctuary on <b>permanent upgrades</b> and to <b>unlock new characters</b>.</p></div>
           <div class="help-card"><h3>🧬 Evolve</h3><p>Max a weapon <b>and</b> own its paired passive to unlock a golden <b>EVOLUTION</b> — a far more powerful form. Chase them.</p></div>
+          <div class="help-card"><h3>✷ Synergies</h3><p>Hold the right <b>weapon pairs</b> together to trigger a <b>synergy</b> — an always-on set bonus (e.g. Flame + Toxin = <b>Wildfire</b>). Active synergies show under your weapons. Discover all ${SYNERGIES.length} in the Codex.</p></div>
           <div class="help-card"><h3>🎴 Omens</h3><p>Before each run, draft a powerful <b>Omen</b> that reshapes the whole run — usually a big upside with a tradeoff. Or play with none.</p></div>
           <div class="help-card"><h3>⚔ Gauntlet</h3><p>A boss-rush mode: <b>endless rounds of bosses</b>, escalating each time, with a short breather between. You start with extra upgrades — how many rounds can you clear?</p></div>
           <div class="help-card"><h3>⭐ Elites &amp; Champions</h3><p>Glowing <b>elite</b> foes carry an affix and drop extra loot; <b>Champions</b> are named two-affix mini-bosses with a chest. Affixes: ${AFFIX_LIST.map(a => `<b style="color:${a.color}">${a.name}</b>`).join(', ')}.</p></div>
@@ -404,6 +405,14 @@ const UI = {
         <p>${seen ? (evo ? 'Evolved' : 'Weapon') : 'Undiscovered'}</p>
       </div>`;
     }).join('');
+    const synergyCards = SYNERGIES.map(s => {
+      const icons = s.members.map(id => { const w = getWeapon(id); return w ? `<span style="color:${w.color}">${w.icon}</span>` : ''; }).join('<span class="syn-plus">+</span>');
+      return `<div class="syn-card" style="--c:${s.color}">
+        <div class="syn-card-head"><span class="syn-name" style="color:${s.color}">${s.icon} ${s.name}</span><span class="syn-req">any ${s.need}</span></div>
+        <div class="syn-members">${icons}</div>
+        <p>${s.desc}</p>
+      </div>`;
+    }).join('');
     const eSeen = Object.keys(ENEMY_TYPES).filter(k => Save.isSeen('enemies', k)).length;
     const wSeen = WEAPON_LIST.filter(w => Save.isSeen('weapons', w.id)).length;
     this.root.innerHTML = `
@@ -413,6 +422,8 @@ const UI = {
         <div class="codex-grid">${enemyCards}</div>
         <h3 class="sub">Arsenal <small>(${wSeen}/${WEAPON_LIST.length} + evolutions)</small></h3>
         <div class="codex-grid">${weaponCards}</div>
+        <h3 class="sub">Synergies <small>(${SYNERGIES.length} set bonuses)</small></h3>
+        <div class="syn-grid">${synergyCards}</div>
         <button class="btn" id="btn-back">← Back</button>
       </div>`;
     document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
@@ -577,6 +588,8 @@ const UI = {
     const wlist = p.weapons.map(w => `<span class="tag" style="border-color:${w.def.color};color:${w.def.color}">${w.def.icon} ${w.def.name} L${w.level}</span>`).join('');
     const plist = Object.keys(p.passives).filter(k => p.passives[k] > 0)
       .map(k => { const d = PASSIVES[k]; return `<span class="tag" style="border-color:${d.color};color:${d.color}">${d.icon} ${d.name} L${p.passives[k]}</span>`; }).join('');
+    const syn = (p.synergies || []);
+    const slist = syn.map(s => `<span class="tag" style="border-color:${s.color};color:${s.color}" title="${s.desc}">${s.icon} ${s.name}</span>`).join('');
     this.root.innerHTML = `
       <div class="screen panel">
         <h2>Paused</h2>
@@ -588,6 +601,7 @@ const UI = {
         </div>
         <h3 class="sub">Weapons</h3><div class="tags">${wlist || '<i>none</i>'}</div>
         <h3 class="sub">Passives</h3><div class="tags">${plist || '<i>none</i>'}</div>
+        ${syn.length ? `<h3 class="sub">Synergies</h3><div class="tags">${slist}</div>` : ''}
         <div class="menu-buttons row">
           <button class="btn btn-primary" id="btn-resume">▶ Resume</button>
           <button class="btn danger" id="btn-quit">⏏ Abandon Run</button>

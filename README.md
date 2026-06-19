@@ -66,7 +66,8 @@ boomerang), **Toxic Flask** (lingering poison pools), and **Prism Cross**
 projectile speed, pickup range, max health, regen, XP gain, crit, armor, luck.
 
 You carry up to **6 weapons** and **6 passives** per run, so every game becomes
-a different build. The upgrade pool is weighted and nudged by your **Luck**.
+a different build. The upgrade pool is weighted and nudged by your **Luck**, and
+pairing the right weapons unlocks **synergies** (set bonuses — see below).
 
 ## 🧬 Weapon evolutions
 
@@ -86,6 +87,26 @@ a golden **EVOLUTION** — transforming it into a devastating new form:
 | Whirling Glaive + Velocity Rune | **Ouroboros** — an eternal ring of returning blades |
 | Toxic Flask + Wide Lens | **Pandemic** — a creeping plague that engulfs the field |
 | Prism Cross + Split Prism | **Spectrum** — a rotating storm of prismatic beams |
+
+## ✷ Weapon synergies
+
+Some weapons amplify each other. Hold the right **pair** (or any two of a small
+set) and an always-on **synergy** lights up — a free set bonus that rewards
+building around a theme, so every level-up choice carries a little extra weight:
+
+| Synergy | Needs | Bonus |
+|---|---|---|
+| 🔥 **Wildfire** | Flame + Toxin | +15% damage, +10% area |
+| ❄ **Deep Freeze** | Frost Shard + Nova | +20% projectile speed, +8% crit |
+| ⚡ **Stormcaller** | Light Bolt + Arc Lightning | +15% attack speed |
+| 🛡 **Bastion** | any 2 of Orbit / Whip / Flame | +2 armor, +10% area |
+| 👻 **Wild Hunt** | Spirit Seekers + Glaive | +1 projectile, +10% projectile speed |
+| 🌈 **Refraction** | any 2 of Prism / Nova / Arc | +10% crit, +0.5× crit damage |
+
+Evolved weapons still count as their base, active synergies show under your
+weapon row (and on the pause screen), and the full set lives in the **Codex**.
+Synergies are a pure function of your arsenal — no luck involved — so they're
+deterministic and the Daily Challenge stays fair.
 
 ## 🎴 Omens (run modifiers)
 
@@ -253,6 +274,7 @@ js/
   content.js        # characters, difficulty tiers + meta-upgrade shop
   weapons.js        # 11 base weapons (periodic, continuous, boomerang, zones)
   evolutions.js     # 11 weapon evolutions + evolution rules
+  synergies.js      # weapon set bonuses (pure function of the arsenal)
   enemies.js        # enemy archetypes + affixes + the spawn Director + bosses/champions
   upgrades.js       # passives + level-up choice generator
   achievements.js   # achievement definitions + live/game-over checker
@@ -270,20 +292,20 @@ tools/
 ## ✅ Tests
 
 A headless harness stubs the DOM/Canvas/WebAudio APIs and actually runs the
-game — a full simulated run, every weapon, all bosses, all 11 evolutions, all 30
-achievements, every omen, the relic loadout system, the run-history Chronicle,
-the lifetime-mastery system (ranks + per-hero/weapon accrual), the Gauntlet
-boss-rush flow, the elite/affix/champion system, the boomerang/poison-pool
-mechanics, difficulty scaling, level-ups, pickups, the polish FX (nebula,
-projectile trails, tiered damage numbers), the time-driven biome progression
-(palette + spawn bias + environmental hazards), the adaptive audio engine
-(limiter, combat SFX, boss-aware music), the first-run onboarding (intro +
-coaching tips), every UI screen, death, persistence, and the shop (320+
-assertions):
+game — a full simulated run, every weapon, all bosses, all 11 evolutions, the
+weapon-synergy set bonuses, all 30 achievements, every omen, the relic loadout
+system, the run-history Chronicle, the lifetime-mastery system (ranks +
+per-hero/weapon accrual), the Gauntlet boss-rush flow, the elite/affix/champion
+system, the boomerang/poison-pool mechanics, difficulty scaling, level-ups,
+pickups, the polish FX (nebula, projectile trails, tiered damage numbers), the
+time-driven biome progression (palette + spawn bias + environmental hazards),
+the adaptive audio engine (limiter, combat SFX, boss-aware music), the first-run
+onboarding (intro + coaching tips), every UI screen, death, persistence, and the
+shop (340+ assertions):
 
 ```bash
 npm test                          # functional + determinism suites
- node tools/headless-test.js       # functional suite (320+ assertions)
+ node tools/headless-test.js       # functional suite (340+ assertions)
 node tools/determinism-test.js    # proves Daily seeds are framerate/settings-independent
 node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```

@@ -101,7 +101,7 @@ sandbox.document = {
 
 // ---- Load & concatenate the game source (skip main.js auto-init) ---------
 const order = ['utils', 'audio', 'input', 'particles', 'save', 'content',
-  'weapons', 'evolutions', 'enemies', 'upgrades', 'achievements', 'modifiers', 'relics', 'player', 'game', 'ui'];
+  'weapons', 'evolutions', 'synergies', 'enemies', 'upgrades', 'achievements', 'modifiers', 'relics', 'player', 'game', 'ui'];
 let src = '';
 for (const f of order) src += fs.readFileSync(path.join(__dirname, '..', 'js', f + '.js'), 'utf8') + '\n;\n';
 
@@ -720,6 +720,62 @@ globalThis.__run = function(report) {
     UI.showMastery();
     ok('populated screen shows ranks + weapons', /Heroes/.test(UI.root.innerHTML) && /Weapons/.test(UI.root.innerHTML) && /mast-fill/.test(UI.root.innerHTML));
     Save.data.mastery = { chars: {}, weapons: {} };
+  });
+
+  // 11.12) Weapon synergies (v16): set bonuses from owned weapon archetypes.
+  const wi = id => ({ def: getWeapon(id), level: 1, timer: 0 });
+  sectionTry('synergies: registry shape + detection', () => {
+    ok('synergy list non-empty + well-formed', SYNERGIES.length >= 4 && SYNERGIES.every(s =>
+      s.id && s.name && s.icon && s.color && Array.isArray(s.members) && s.need >= 2 && s.mods));
+    ok('no synergy with zero/one weapon', activeSynergies([]).length === 0 && activeSynergies([wi('flame')]).length === 0);
+    const w = activeSynergies([wi('flame'), wi('toxin')]);
+    ok('Flame + Toxin = Wildfire', w.length === 1 && w[0].id === 'wildfire');
+    const r = activeSynergies([wi('nova'), wi('chain')]);
+    ok('any-2-of-3 set activates (Refraction)', r.some(s => s.id === 'refraction'));
+  });
+  sectionTry('synergies: evolved forms count as their base', () => {
+    const a = activeSynergies([wi('inferno'), wi('toxin')]); // inferno = evolved flame
+    ok('evolved Flame (Inferno) still triggers Wildfire', a.some(s => s.id === 'wildfire'));
+    ok('weaponBaseId maps evolved -> base', weaponBaseId('inferno') === 'flame' && weaponBaseId('bolt') === 'bolt');
+  });
+  sectionTry('synergies: recalc applies the stat bonuses', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 1 });
+    const p = g.player;
+    p.weapons = [wi('bolt')]; p.recalc(); const baseMight = p.might, baseProj = p.bonusProj;
+    p.weapons = [wi('flame'), wi('toxin')]; p.recalc();
+    ok('Wildfire active + raises damage ~15%', p.synergies.some(s => s.id === 'wildfire') && Math.abs(p.might - baseMight * 1.15) < 1e-6);
+    p.weapons = [wi('spirit'), wi('glaive')]; p.recalc();
+    ok('Wild Hunt grants +1 projectile', p.synergies.some(s => s.id === 'wildhunt') && p.bonusProj === baseProj + 1);
+    p.weapons = [wi('chain'), wi('bolt')]; p.recalc();
+    ok('Stormcaller raises attack speed', p.synergies.some(s => s.id === 'stormcaller'));
+  });
+  sectionTry('synergies: completing a set announces once', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 2 });
+    const p = g.player;
+    p.weapons = [wi('flame')]; p.recalc(); g.toasts = [];
+    p.applyUpgrade({ kind: 'weapon-new', id: 'toxin' });
+    ok('adding the partner toasts the synergy', g.toasts.some(t => /Wildfire/.test(t.msg)));
+    ok('synergy now reported active', p.synergies.some(s => s.id === 'wildfire'));
+  });
+  sectionTry('synergies: pure function of arsenal (deterministic)', () => {
+    const set1 = activeSynergies([wi('prism'), wi('nova'), wi('chain')]).map(s => s.id).sort().join();
+    const set2 = activeSynergies([wi('chain'), wi('nova'), wi('prism')]).map(s => s.id).sort().join();
+    ok('order-independent, no RNG', set1 === set2 && set1.length > 0);
+  });
+  sectionTry('synergies: Codex + Help surface them', () => {
+    const g = new Game(document.getElementById('game'));
+    UI.init(document.getElementById('overlay'), g);
+    UI.showCodex();
+    ok('Codex lists the Synergies section', /Synergies/.test(UI.root.innerHTML) && /Wildfire/.test(UI.root.innerHTML));
+    UI.showHelp();
+    ok('Help explains synergies', /Synergies/.test(UI.root.innerHTML));
+  });
+  sectionTry('synergies: shown on the pause screen when active', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 3 });
+    UI.init(document.getElementById('overlay'), g);
+    g.player.weapons = [wi('flame'), wi('toxin')]; g.player.recalc();
+    g.state = 'paused'; UI.showPause(g);
+    ok('pause panel shows active synergy', /Synergies/.test(UI.root.innerHTML) && /Wildfire/.test(UI.root.innerHTML));
   });
 
   // 11.3) New content (v7): glaive (boomerang), toxin (zones), prism, Comet.

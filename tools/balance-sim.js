@@ -36,7 +36,7 @@ sandbox.addEventListener = () => {}; sandbox.removeEventListener = () => {}; san
 const overlay = makeEl(), gameCanvas = makeCanvas();
 sandbox.document = { addEventListener() {}, createElement: () => makeCanvas(), getElementById: id => id === 'game' ? gameCanvas : (id === 'overlay' ? overlay : makeEl()) };
 
-const order = ['utils', 'audio', 'input', 'particles', 'save', 'content', 'weapons', 'evolutions', 'enemies', 'upgrades', 'achievements', 'modifiers', 'relics', 'player', 'game', 'ui'];
+const order = ['utils', 'audio', 'input', 'particles', 'save', 'content', 'weapons', 'evolutions', 'synergies', 'enemies', 'upgrades', 'achievements', 'modifiers', 'relics', 'player', 'game', 'ui'];
 let src = '';
 for (const f of order) src += fs.readFileSync(path.join(__dirname, '..', 'js', f + '.js'), 'utf8') + '\n;\n';
 

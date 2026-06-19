@@ -80,6 +80,27 @@ class Player {
     this.regen += (mod.regenBonus || 0);
     newMax = Math.round(newMax * mod.hpMul);
 
+    // Weapon synergies (set bonuses). A pure function of the current arsenal —
+    // no RNG, never persisted — so it's deterministic and Daily-fair. Applied
+    // after omens; deliberately excludes max-HP to keep recalc heal-safe.
+    this.synergies = (typeof activeSynergies === 'function') ? activeSynergies(this.weapons) : [];
+    for (const s of this.synergies) {
+      const sm = s.mods;
+      if (sm.dmgMul) this.might *= sm.dmgMul;
+      if (sm.hasteMul) this.haste *= sm.hasteMul;
+      if (sm.speedMul) this.speed *= sm.speedMul;
+      if (sm.areaMul) this.area *= sm.areaMul;
+      if (sm.projSpeedMul) this.projSpeed *= sm.projSpeedMul;
+      if (sm.pickupMul) this.pickupRange *= sm.pickupMul;
+      if (sm.xpMul) this.xpMult *= sm.xpMul;
+      if (sm.critChanceBonus) this.crit += sm.critChanceBonus;
+      if (sm.critDmgBonus) this.critMult += sm.critDmgBonus;
+      if (sm.armorBonus) this.armor += sm.armorBonus;
+      if (sm.addProj) this.bonusProj += sm.addProj;
+      if (sm.addPierce) this.bonusPierce += sm.addPierce;
+      if (sm.regenBonus) this.regen += sm.regenBonus;
+    }
+
     if (initHp) {
       this.maxHp = newMax; this.hp = newMax;
       this.revives = m('revival') + (mod.reviveBonus || 0);
@@ -101,13 +122,20 @@ class Player {
   // Apply a chosen level-up upgrade.
   applyUpgrade(choice) {
     switch (choice.kind) {
-      case 'weapon-new': this.addWeapon(choice.id); break;
+      case 'weapon-new': {
+        const before = this._synergyIdSet();
+        this.addWeapon(choice.id);
+        this.recalc();                 // a new weapon may complete a synergy
+        this._announceNewSynergies(before);
+        break;
+      }
       case 'weapon-up': { const w = this.weapon(choice.id); if (w) w.level++; break; }
       case 'evolve': {
         const idx = this.weapons.findIndex(w => w.def.id === choice.baseId);
         if (idx >= 0) this.weapons.splice(idx, 1);
         this.weapons.push({ def: getWeapon(choice.id), level: 1, timer: 0 });
         Save.markSeen('weapons', choice.id);
+        this.recalc();                 // keep synergy bonuses applied post-evolve
         this.game.onEvolve(choice);
         break;
       }
@@ -124,6 +152,17 @@ class Player {
         this.hp = this.maxHp;
         this.game.toast('+15 shards');
         break;
+    }
+  }
+
+  // Currently-active synergy ids (recalc keeps this.synergies fresh).
+  _synergyIdSet() { return new Set((this.synergies || []).map(s => s.id)); }
+
+  // Toast any synergy that just became active (cosmetic; toasts aren't part of
+  // hashed sim state, so this never affects determinism).
+  _announceNewSynergies(beforeSet) {
+    for (const s of (this.synergies || [])) {
+      if (!beforeSet.has(s.id)) this.game.toast(s.icon + ' ' + s.name + ' synergy!', s.color, 3.4);
     }
   }
 

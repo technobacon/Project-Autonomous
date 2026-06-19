@@ -1719,6 +1719,25 @@ class Game {
       wx += 34;
     }
 
+    // Active synergy chips (set bonuses), tucked beneath the weapon row.
+    const syn = (p.synergies && p.synergies.length) ? p.synergies : null;
+    if (syn) {
+      let sx = 12; const sy = wy + 36;
+      ctx.font = 'bold 12px "Segoe UI", system-ui, sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      for (const s of syn) {
+        const label = s.icon + ' ' + s.name;
+        const w = ctx.measureText(label).width + 14;
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.fillRect(sx, sy, w, 20);
+        ctx.strokeStyle = s.color; ctx.lineWidth = 1.5; ctx.strokeRect(sx, sy, w, 20);
+        ctx.fillStyle = s.color;
+        ctx.fillText(label, sx + 7, sy + 11);
+        sx += w + 6;
+      }
+      ctx.textBaseline = 'top';
+    }
+
     // Gauntlet round indicator.
     if (this.mode === 'gauntlet') {
       ctx.textAlign = 'center'; ctx.font = 'bold 15px "Segoe UI", system-ui, sans-serif';

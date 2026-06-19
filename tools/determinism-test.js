@@ -36,7 +36,7 @@ sandbox.addEventListener = () => {}; sandbox.removeEventListener = () => {}; san
 const overlay = makeEl(), gameCanvas = makeCanvas();
 sandbox.document = { addEventListener() {}, createElement: () => makeCanvas(), getElementById: id => id === 'game' ? gameCanvas : (id === 'overlay' ? overlay : makeEl()) };
 
-const order = ['utils', 'audio', 'input', 'particles', 'save', 'content', 'weapons', 'evolutions', 'enemies', 'upgrades', 'achievements', 'modifiers', 'relics', 'player', 'game', 'ui'];
+const order = ['utils', 'audio', 'input', 'particles', 'save', 'content', 'weapons', 'evolutions', 'synergies', 'enemies', 'upgrades', 'achievements', 'modifiers', 'relics', 'player', 'game', 'ui'];
 let src = '';
 for (const f of order) src += fs.readFileSync(path.join(__dirname, '..', 'js', f + '.js'), 'utf8') + '\n;\n';
 
@@ -78,7 +78,8 @@ globalThis.__det = function(report) {
       g.player.x.toFixed(3), g.player.y.toFixed(3), g.enemies.length, ehp.toFixed(2),
       ex.toFixed(2), ey.toFixed(2), g.gems.length, g.projectiles.length,
       g.eliteKills, g.championKills, g.enemyProjectiles.length, g.zones.length,
-      g.hazards.length, hx.toFixed(2), hy.toFixed(2), hp].join('|');
+      g.hazards.length, hx.toFixed(2), hy.toFixed(2), hp,
+      (g.player.synergies || []).map(s => s.id).join(','), g.player.weapons.length].join('|');
   }
 
   const results = { passed: [], failed: [] };
