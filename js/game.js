@@ -105,6 +105,8 @@ class Game {
     this.daily = false;
     this.dailyDate = null;
     this.mode = 'survival';    // 'survival' | 'gauntlet' (boss rush)
+    this.trial = null;         // active Trial definition (challenge run), or null
+    this.trialWon = false;
     this.gauntletRound = 0;    // round currently in progress
     this.gauntletCleared = 0;  // highest round fully cleared
     this.mods = defaultMods(); // run modifier ("omen") effects
@@ -171,6 +173,8 @@ class Game {
     // Seed the deterministic gameplay RNG. Daily runs share a date-based seed
     // (everyone faces the same world); normal runs get a fresh random seed.
     this.daily = !!opts.daily;
+    this.trial = (opts.trial && typeof getTrial === 'function') ? getTrial(opts.trial) : null;
+    this.trialWon = false;
     this.mode = opts.mode === 'gauntlet' ? 'gauntlet' : 'survival';
     if (this.daily) {
       this.dailyDate = opts.date || dailyDateString();
@@ -179,14 +183,22 @@ class Game {
       this.seed = (opts.seed != null ? opts.seed : (Date.now() ^ Math.floor(Math.random() * 0xffffffff))) >>> 0;
     }
     RNG.seed(this.seed);
-    // Apply the drafted run modifier ("omen") before the player is built so its
-    // stat tweaks are baked into recalc().
-    this.omen = getModifier(opts.omen);
-    this.mods = buildMods(opts.omen);
-    // Equipped relics fold their effects into the same modifier pipeline. The
-    // Daily Challenge ignores relics so its leaderboard stays fair for everyone.
-    this.relics = (this.daily || opts.noRelics) ? [] : Save.equippedRelics();
-    applyRelics(this.mods, this.relics);
+    // Build the run modifiers. A Trial forces its own rule twist and ignores
+    // omens AND relics, so each is a fixed, comparable challenge. Otherwise the
+    // drafted omen and equipped relics fold into the same pipeline (the Daily
+    // ignores relics so its leaderboard stays fair).
+    if (this.trial) {
+      this.omen = null;
+      this.mods = defaultMods();
+      Object.assign(this.mods, this.trial.mods || {});
+      this.relics = [];
+      diffIndex = this.trial.diff || 0;
+    } else {
+      this.omen = getModifier(opts.omen);
+      this.mods = buildMods(opts.omen);
+      this.relics = (this.daily || opts.noRelics) ? [] : Save.equippedRelics();
+      applyRelics(this.mods, this.relics);
+    }
     this.diffIndex = clamp(diffIndex, 0, DIFFICULTIES.length - 1);
     this.diff = getDifficulty(this.diffIndex);
     const char = getCharacter(charId);
@@ -198,12 +210,14 @@ class Game {
     this.state = 'playing';
     // Coach a brand-new player through the basics in standard Survival only,
     // and only until the core tips have all been seen once.
-    this._coaching = !this.daily && this.mode === 'survival' &&
+    this._coaching = !this.daily && !this.trial && this.mode === 'survival' &&
       !(Save.tipSeen('move') && Save.tipSeen('shards') && Save.tipSeen('dodge') &&
         Save.tipSeen('pause') && Save.tipSeen('levelup'));
     Audio2.resume();
     Audio2.startMusic(0);
-    if (this.mode === 'gauntlet') {
+    if (this.trial) {
+      this.toast(this.trial.icon + ' ' + this.trial.name + ' — ' + trialGoalText(this.trial), this.trial.color, 3.6);
+    } else if (this.mode === 'gauntlet') {
       this.toast('⚔ GAUNTLET — endless bosses await.');
       this.onLevelUp(3); // opening picks so you arrive armed for the first boss
     } else {
@@ -639,7 +653,10 @@ class Game {
     }));
     return {
       t: Date.now(),
-      mode: this.daily ? 'daily' : this.mode,
+      mode: this.trial ? 'trial' : (this.daily ? 'daily' : this.mode),
+      trialId: this.trial ? this.trial.id : null,
+      trialName: this.trial ? this.trial.name : null,
+      trialWon: !!this.trialWon,
       char: p && p.char ? p.char.id : 'spark',
       charName: p && p.char ? p.char.name : 'Spark',
       charColor: p && p.char ? p.char.color : '#ffd84d',
@@ -678,7 +695,10 @@ class Game {
       : Math.floor((this.time / 8 + this.kills * 0.25 + this.bossKills * 30)
         * this.player.shardMult * this.diff.reward);
     Save.addShards(earned);
-    Save.recordRun(this.time, this.score, this.kills, this.bossKills);
+    // Trials keep their own books (no best-time/score pollution of standard
+    // records) but still feed run/kill totals and the chronicle.
+    if (this.trial) Save.recordTrialRun(this.kills, this.bossKills);
+    else Save.recordRun(this.time, this.score, this.kills, this.bossKills);
     if (this.mode === 'gauntlet') this.lastGauntlet = Save.recordGauntlet(this.gauntletCleared, this.score);
     const snap = this.runSnapshot(earned);
     Save.recordHistory(snap);
@@ -701,6 +721,36 @@ class Game {
     this.lastNewAchievements = newly;
     this.lastUnlockedDiff = unlockedDiff;
     setTimeout(() => UI.showGameOver(this), 900);
+  }
+
+  // A Trial's objective was met — end the run in victory.
+  trialVictory() {
+    this.running = false;
+    this.state = 'gameover';
+    this.trialWon = true;
+    Audio2.stopMusic();
+    Audio2.victory();
+    const p = this.player;
+    this.particles.burst(p.x, p.y, 80, { color: this.trial.color, speed: rand(120, 460), life: rand(0.6, 1.4) });
+    this.shake(10, 0.5);
+
+    // First clear pays full; replays pay a small bounty.
+    const first = !Save.isTrialDone(this.trial.id);
+    const reward = first ? this.trial.reward : Math.max(10, Math.round(this.trial.reward * 0.25));
+    Save.completeTrial(this.trial.id);
+    Save.addShards(reward);
+    Save.recordTrialRun(this.kills, this.bossKills);
+    const snap = this.runSnapshot(reward);
+    Save.recordHistory(snap);
+    Save.recordMastery(snap);
+
+    const newly = Achievements.check(this);
+    this.lastEarned = reward;
+    this.lastTrialFirst = first;
+    this.lastNewAchievements = newly;
+    this.lastUnlockedDiff = null;
+    this.lastGauntlet = null;
+    setTimeout(() => UI.showGameOver(this), 700);
   }
 
   togglePause() {
@@ -805,6 +855,9 @@ class Game {
     Audio2.setBossMode(bossish);
     const dens = clamp(this.enemies.length / 140, 0, 0.2);
     Audio2.setIntensity(clamp(this.time / 360 + (this.activeBoss ? 0.45 : 0) + (champ ? 0.2 : 0) + dens, 0, 1));
+
+    // Trial victory: the objective met ends the run in triumph.
+    if (this.trial && this.state === 'playing' && trialGoalMet(this.trial, this)) this.trialVictory();
   }
 
   updateEnemies(dt) {
@@ -1680,6 +1733,13 @@ class Game {
       ctx.globalAlpha = 0.85;
       ctx.fillText('❖ ' + this.biome.name, W / 2, 46);
       ctx.globalAlpha = 1;
+    }
+    // Trial objective + progress (under the biome line).
+    if (this.trial) {
+      ctx.font = 'bold 12px "Segoe UI", system-ui, sans-serif';
+      ctx.fillStyle = this.trial.color; ctx.shadowBlur = 4; ctx.shadowColor = '#000';
+      ctx.fillText(this.trial.icon + ' ' + trialGoalText(this.trial) + '  ·  ' + trialProgressText(this.trial, this), W / 2, this.activeBoss ? 64 : 62);
+      ctx.shadowBlur = 0;
     }
 
     // Kills + score (right top).

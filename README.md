@@ -199,9 +199,9 @@ detonates). Affixes stack on the new foes too, so a *Shielded Bomber* or a
 
 ## 🏆 Achievements, difficulty & the Codex
 
-- **30 achievements** with shard rewards and long-term goals — survive 15:00 to
+- **32 achievements** with shard rewards and long-term goals — survive 15:00 to
   unlock the secret character **Void**; hunt elites, slay a Champion, collect
-  relics, climb the mastery ranks.
+  relics, climb the mastery ranks, clear the Trials.
 - **Ascension difficulties** — Normal → Hard → Nightmare → Abyss. Each scales
   enemies *and* shard rewards up, and unlocks by surviving a threshold on the
   tier below.
@@ -254,6 +254,27 @@ RNG stream is fully isolated from anything cosmetic, so framerate, audio mute,
 and screen-shake settings **cannot** change the outcome. This is verified by a
 dedicated determinism test (see below).
 
+## 🎯 Trials of Light
+
+Beyond freeform survival, **Trials** are curated challenge runs — each with a
+fixed rule-twist and a concrete **win condition**, turning the open-ended loop
+into structured goals you can actually *complete*:
+
+| Trial | Twist | Objective |
+|---|---|---|
+| 🕯 **Kindling** | none — a gentle first test | Survive 3:30 |
+| 💥 **Glass Gauntlet** | double damage, quarter health | Survive 5:00 |
+| 🐜 **The Swarm** | twice the foes (frailer), more XP | Slay 800 |
+| 🐢 **Tortoise** | 60% move speed, sturdier, faster foes | Survive 5:30 |
+| 🩸 **Bloodlust** | Berserker on Hard | Survive 6:00 |
+| 🌑 **Ascendant Trial** | Nightmare + 50% more foes | Score 80,000 |
+
+Trials force their own character, difficulty and rules and **ignore Omens and
+Relics**, so each is a fixed, comparable test of skill. Clearing one is saved
+and pays a one-time shard **bounty** (replays pay a small one); two achievements
+reward clearing your first and *all* of them. Your live objective and progress
+show at the top of the screen.
+
 ---
 
 ## 🛠 Project layout
@@ -280,6 +301,7 @@ js/
   achievements.js   # achievement definitions + live/game-over checker
   modifiers.js      # "omens" — drafted per-run modifiers
   relics.js         # permanent, equippable run modifiers (loadout)
+  trials.js         # Trials of Light: fixed-rule challenge runs + win conditions
   player.js         # player entity, stat recalculation, leveling
   game.js           # engine: world, biomes + hazards, camera, collision, combat, render, HUD
   ui.js             # DOM overlays: menu, shop, level-up, achievements, codex…
@@ -293,19 +315,20 @@ tools/
 
 A headless harness stubs the DOM/Canvas/WebAudio APIs and actually runs the
 game — a full simulated run, every weapon, all bosses, all 11 evolutions, the
-weapon-synergy set bonuses, all 30 achievements, every omen, the relic loadout
+weapon-synergy set bonuses, all 32 achievements, every omen, the relic loadout
 system, the run-history Chronicle, the lifetime-mastery system (ranks +
-per-hero/weapon accrual), the Gauntlet boss-rush flow, the elite/affix/champion
-system, the boomerang/poison-pool mechanics, difficulty scaling, level-ups,
-pickups, the polish FX (nebula, projectile trails, tiered damage numbers), the
-time-driven biome progression (palette + spawn bias + environmental hazards),
-the adaptive audio engine (limiter, combat SFX, boss-aware music), the first-run
-onboarding (intro + coaching tips), every UI screen, death, persistence, and the
-shop (340+ assertions):
+per-hero/weapon accrual), the Trials of Light (rule twists + win/fail paths),
+the Gauntlet boss-rush flow, the elite/affix/champion system, the
+boomerang/poison-pool mechanics, difficulty scaling, level-ups, pickups, the
+polish FX (nebula, projectile trails, tiered damage numbers), the time-driven
+biome progression (palette + spawn bias + environmental hazards), the adaptive
+audio engine (limiter, combat SFX, boss-aware music), the first-run onboarding
+(intro + coaching tips), every UI screen, death, persistence, and the shop (370+
+assertions):
 
 ```bash
 npm test                          # functional + determinism suites
- node tools/headless-test.js       # functional suite (340+ assertions)
+ node tools/headless-test.js       # functional suite (370+ assertions)
 node tools/determinism-test.js    # proves Daily seeds are framerate/settings-independent
 node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```

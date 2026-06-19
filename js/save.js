@@ -59,6 +59,7 @@ const Save = {
       gauntletBest: { rounds: 0, score: 0 }, // boss-rush record
       history: [],               // recent run snapshots (most-recent first)
       mastery: { chars: {}, weapons: {} }, // lifetime per-character / per-weapon totals
+      trials: {},                // completed Trial ids (id -> true)
       runs: 0,
       totalKills: 0,
       bossKills: 0,
@@ -89,6 +90,7 @@ const Save = {
       this.data.mastery = Object.assign({ chars: {}, weapons: {} }, this.data.mastery || {});
       this.data.mastery.chars = Object.assign({}, this.data.mastery.chars || {});
       this.data.mastery.weapons = Object.assign({}, this.data.mastery.weapons || {});
+      this.data.trials = Object.assign({}, this.data.trials || {});
       this.data.tips = Object.assign({}, this.data.tips || {});
       this.data.achievements = Object.assign({}, this.data.achievements || {});
       this.data.seen = Object.assign(d.seen, this.data.seen || {});
@@ -215,6 +217,19 @@ const Save = {
     this.data.bossKills += bosses;
     if (time > this.data.bestTime) this.data.bestTime = time;
     if (score > this.data.bestScore) this.data.bestScore = score;
+    this.save();
+  },
+
+  // ---- Trials --------------------------------------------------------------
+  isTrialDone(id) { return !!(this.data.trials && this.data.trials[id]); },
+  completeTrial(id) { if (!this.data.trials) this.data.trials = {}; this.data.trials[id] = true; this.save(); },
+  trialsDone() { return this.data.trials ? Object.keys(this.data.trials).length : 0; },
+  // A Trial run feeds run/kill totals (for achievements) but deliberately does
+  // NOT touch best time/score, keeping the standard records about standard play.
+  recordTrialRun(kills, bosses) {
+    this.data.runs++;
+    this.data.totalKills += kills;
+    this.data.bossKills += bosses;
     this.save();
   },
 

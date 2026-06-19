@@ -101,7 +101,7 @@ sandbox.document = {
 
 // ---- Load & concatenate the game source (skip main.js auto-init) ---------
 const order = ['utils', 'audio', 'input', 'particles', 'save', 'content',
-  'weapons', 'evolutions', 'synergies', 'enemies', 'upgrades', 'achievements', 'modifiers', 'relics', 'player', 'game', 'ui'];
+  'weapons', 'evolutions', 'synergies', 'enemies', 'upgrades', 'achievements', 'modifiers', 'relics', 'trials', 'player', 'game', 'ui'];
 let src = '';
 for (const f of order) src += fs.readFileSync(path.join(__dirname, '..', 'js', f + '.js'), 'utf8') + '\n;\n';
 
@@ -776,6 +776,80 @@ globalThis.__run = function(report) {
     g.player.weapons = [wi('flame'), wi('toxin')]; g.player.recalc();
     g.state = 'paused'; UI.showPause(g);
     ok('pause panel shows active synergy', /Synergies/.test(UI.root.innerHTML) && /Wildfire/.test(UI.root.innerHTML));
+  });
+
+  // 11.13) Trials of Light (v17): fixed-rule challenge runs + win conditions.
+  sectionTry('trials: registry shape + goal helpers', () => {
+    ok('trial list non-empty + well-formed', TRIALS.length >= 4 && TRIALS.every(t =>
+      t.id && t.name && t.icon && t.color && t.char && t.mods && t.win &&
+      ['survive', 'kills', 'score', 'bosses'].includes(t.win.type) && t.win.value > 0 && t.reward > 0));
+    const k = getTrial('kindling');
+    ok('goal text reads naturally', /Survive/.test(trialGoalText(k)));
+    ok('getTrial resolves + misses cleanly', getTrial('kindling') === k && getTrial('nope') === null);
+  });
+  sectionTry('trials: start forces config, ignores omens & relics', () => {
+    Save.data.relics = { volatile: true }; Save.data.equipped = ['volatile'];
+    const g = new Game(document.getElementById('game'));
+    g.start('spark', 0, { trial: 'glass' });
+    ok('trial set on the game', g.trial && g.trial.id === 'glass');
+    ok('omens + relics disabled', g.omen === null && g.relics.length === 0);
+    ok('rule twist folded into mods', Math.abs(g.mods.dmgMul - 2.0) < 1e-9 && Math.abs(g.mods.hpMul - 0.25) < 1e-9);
+    // Compare against a clean (no-trial, no-relic) baseline so meta levels cancel.
+    Save.data.equipped = [];
+    const base = new Game(document.getElementById('game')); base.start('spark', 0, {});
+    ok('twist reaches the player', Math.abs(g.player.might - base.player.might * 2.0) < 1e-4);
+    Save.data.relics = {}; Save.data.equipped = [];
+  });
+  sectionTry('trials: meeting the objective wins the run', () => {
+    Save.data.trials = {}; Save.data.tips = { move: true, shards: true, dodge: true, pause: true, levelup: true };
+    const sh = Save.data.shards;
+    const g = new Game(document.getElementById('game'));
+    g.start('spark', 0, { trial: 'kindling' });
+    ok('not won at the start', !trialGoalMet(g.trial, g) && !g.trialWon);
+    g.time = g.trial.win.value;   // on the threshold; next tick crosses it
+    g.update(1 / 60);
+    ok('crossing the goal triggers victory', g.trialWon === true && g.state === 'gameover');
+    ok('clear is persisted + rewarded', Save.isTrialDone('kindling') && Save.data.shards >= sh + g.trial.reward);
+    Save.data.trials = {};
+  });
+  sectionTry('trials: a kills objective is detected', () => {
+    const g = new Game(document.getElementById('game'));
+    g.start('spark', 0, { trial: 'swarm' });
+    ok('kills objective starts unmet', !trialGoalMet(g.trial, g));
+    g.kills = g.trial.win.value;
+    ok('reaching the kill count meets it', trialGoalMet(g.trial, g) && trialCurrent(g.trial, g) === g.kills);
+  });
+  sectionTry('trials: failing records the run but no clear', () => {
+    Save.data.trials = {}; const runs0 = Save.data.runs, bt0 = Save.data.bestTime;
+    const g = new Game(document.getElementById('game'));
+    g.start('spark', 0, { trial: 'tortoise' });
+    g.time = 30; g.kills = 12;
+    g.player.invuln = 0; g.player.revives = 0; g.player.hurt(1e9);
+    ok('death did not complete the trial', !Save.isTrialDone('tortoise') && !g.trialWon);
+    ok('run counted but best-time untouched', Save.data.runs === runs0 + 1 && Save.data.bestTime === bt0);
+    ok('chronicle tags it as a trial', Save.data.history[0] && Save.data.history[0].mode === 'trial');
+    Save.data.trials = {};
+  });
+  sectionTry('trials: achievements gate on completion', () => {
+    Save.data.trials = {}; Save.data.achievements = {};
+    ok('Trialist + Trial Master defined', !!getAchievement('trialist') && !!getAchievement('trialmaster'));
+    const ctx0 = Achievements.context(null);
+    ok('none done => trialsDone 0', ctx0.trialsDone === 0 && ctx0.trialsTotal === TRIALS.length);
+    for (const t of TRIALS) Save.completeTrial(t.id);
+    const ctx1 = Achievements.context(null);
+    ok('all done satisfies Trial Master', getAchievement('trialmaster').check(ctx1) === true);
+    Save.data.trials = {}; Save.data.achievements = {};
+  });
+  sectionTry('trials: screens render (list + victory)', () => {
+    const g = new Game(document.getElementById('game'));
+    UI.init(document.getElementById('overlay'), g);
+    Save.data.trials = {};
+    UI.showTrials();
+    ok('Trials screen lists challenges', /Trials of Light/.test(UI.root.innerHTML) && /Glass Gauntlet/.test(UI.root.innerHTML) && /Begin/.test(UI.root.innerHTML));
+    g.start('spark', 0, { trial: 'kindling' }); g.trialWon = true; g.lastTrialFirst = true; g.lastEarned = 50;
+    UI.showGameOver(g);
+    ok('victory screen frames a win', /Trial Complete/.test(UI.root.innerHTML));
+    Save.data.trials = {};
   });
 
   // 11.3) New content (v7): glaive (boomerang), toxin (zones), prism, Comet.

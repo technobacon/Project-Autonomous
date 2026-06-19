@@ -25,6 +25,10 @@ const UI = {
     return g && g.rounds > 0 ? ` <span class="shard-chip">best R${g.rounds}</span>` : '';
   },
 
+  _trialsChip() {
+    return ` <span class="shard-chip">${Save.trialsDone()}/${TRIALS.length}</span>`;
+  },
+
   clear() { this.root.innerHTML = ''; this.root.className = 'overlay'; this._omens = null; },
   show() { this.root.style.display = 'flex'; },
   hide() { this.root.style.display = 'none'; },
@@ -41,6 +45,7 @@ const UI = {
           <button class="btn btn-primary" id="btn-play">▶ PLAY</button>
           <button class="btn" id="btn-gauntlet">⚔ GAUNTLET${this._gauntletChip()}</button>
           <button class="btn" id="btn-daily">🗓 DAILY CHALLENGE${this._dailyChip()}</button>
+          <button class="btn" id="btn-trials">🎯 TRIALS${this._trialsChip()}</button>
           <button class="btn" id="btn-shop">⚙ SANCTUARY <span class="shard-chip">✦ ${formatNum(d.shards)}</span></button>
           <button class="btn" id="btn-relics">🔮 RELICS <span class="shard-chip">${Save.relicCount()}/${RELIC_LIST.length}</span></button>
           <div class="menu-buttons row">
@@ -68,6 +73,7 @@ const UI = {
     document.getElementById('btn-play').onclick = () => { Audio2.uiSelect(); this.showCharacterSelect('survival'); };
     document.getElementById('btn-gauntlet').onclick = () => { Audio2.uiSelect(); this.showCharacterSelect('gauntlet'); };
     document.getElementById('btn-daily').onclick = () => { Audio2.uiSelect(); this.hide(); App.startRun('spark', 0, { daily: true }); };
+    document.getElementById('btn-trials').onclick = () => { Audio2.uiSelect(); this.showTrials(); };
     document.getElementById('btn-shop').onclick = () => { Audio2.uiSelect(); this.showShop(); };
     document.getElementById('btn-relics').onclick = () => { Audio2.uiSelect(); this.showRelics(); };
     document.getElementById('btn-ach').onclick = () => { Audio2.uiSelect(); this.showAchievements(); };
@@ -97,6 +103,7 @@ const UI = {
           <div class="help-card"><h3>✷ Synergies</h3><p>Hold the right <b>weapon pairs</b> together to trigger a <b>synergy</b> — an always-on set bonus (e.g. Flame + Toxin = <b>Wildfire</b>). Active synergies show under your weapons. Discover all ${SYNERGIES.length} in the Codex.</p></div>
           <div class="help-card"><h3>🎴 Omens</h3><p>Before each run, draft a powerful <b>Omen</b> that reshapes the whole run — usually a big upside with a tradeoff. Or play with none.</p></div>
           <div class="help-card"><h3>⚔ Gauntlet</h3><p>A boss-rush mode: <b>endless rounds of bosses</b>, escalating each time, with a short breather between. You start with extra upgrades — how many rounds can you clear?</p></div>
+          <div class="help-card"><h3>🎯 Trials</h3><p><b>${TRIALS.length} fixed-rule challenges</b>, each with a twist and a clear objective (survive, slay, or score). They ignore Omens & Relics — pure skill. Clear one for a shard bounty.</p></div>
           <div class="help-card"><h3>⭐ Elites &amp; Champions</h3><p>Glowing <b>elite</b> foes carry an affix and drop extra loot; <b>Champions</b> are named two-affix mini-bosses with a chest. Affixes: ${AFFIX_LIST.map(a => `<b style="color:${a.color}">${a.name}</b>`).join(', ')}.</p></div>
           <div class="help-card"><h3>🗓 Daily</h3><p>A <b>seeded</b> run that's the same for everyone today. Pure skill — beat your own best score each day.</p></div>
           <div class="help-card"><h3>🔮 Relics</h3><p>Spend shards to <b>unlock relics</b> (some gated behind achievements), then <b>equip</b> a few into your loadout for permanent bonuses. Collect more to earn extra slots.</p></div>
@@ -275,6 +282,7 @@ const UI = {
   _modeChip(r) {
     if (r.mode === 'daily') return `<span class="hist-mode" style="color:#9ad8ff;border-color:#9ad8ff">🗓 Daily</span>`;
     if (r.mode === 'gauntlet') return `<span class="hist-mode" style="color:#ffd84d;border-color:#ffd84d">⚔ Gauntlet</span>`;
+    if (r.mode === 'trial') return `<span class="hist-mode" style="color:#ff86c8;border-color:#ff86c8">🎯 ${r.trialWon ? '✓ ' : ''}${r.trialName || 'Trial'}</span>`;
     return `<span class="hist-mode" style="color:${r.diffColor || '#7affc4'};border-color:${r.diffColor || '#7affc4'}">✦ ${r.diff > 0 ? r.diffName : 'Survival'}</span>`;
   },
 
@@ -382,6 +390,52 @@ const UI = {
         <div class="wep-grid">${weps}</div>
         <button class="btn" id="btn-back">← Back</button>
       </div>`;
+    document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
+  },
+
+  // ---- Trials of Light --------------------------------------------------
+  showTrials() {
+    this.clear(); this.show();
+    const done = Save.trialsDone();
+    const cards = TRIALS.map(t => {
+      const cleared = Save.isTrialDone(t.id);
+      const ch = getCharacter(t.char);
+      const diff = getDifficulty(t.diff || 0);
+      return `
+        <div class="trial-card ${cleared ? 'cleared' : ''}" style="--c:${t.color}">
+          <div class="trial-top">
+            <span class="trial-name" style="color:${t.color}">${t.icon} ${t.name}</span>
+            ${cleared ? '<span class="trial-done">✓ Cleared</span>' : ''}
+          </div>
+          <p class="trial-desc">${t.desc}</p>
+          <div class="trial-meta">
+            <span class="trial-goal">🎯 ${trialGoalText(t)}</span>
+            <span class="trial-tag" style="color:${ch ? ch.color : '#fff'}">${ch ? ch.name : 'Spark'}</span>
+            ${t.diff ? `<span class="trial-tag" style="color:${diff.color};border-color:${diff.color}">${diff.name}</span>` : ''}
+            <span class="trial-reward">✦ ${t.reward}</span>
+          </div>
+          <button class="btn ${cleared ? '' : 'btn-primary'}" data-trial="${t.id}">${cleared ? '↺ Replay' : '▶ Begin'}</button>
+        </div>`;
+    }).join('');
+    this.root.innerHTML = `
+      <div class="screen panel wide">
+        <div class="panel-head">
+          <h2>Trials of Light</h2>
+          <span class="shard-chip big">${done} / ${TRIALS.length}</span>
+        </div>
+        <p class="trial-intro">Fixed-rule challenges with a clear objective. They ignore Omens and Relics — pure skill. First clear pays the full bounty.</p>
+        <div class="trial-grid">${cards}</div>
+        <button class="btn" id="btn-back">← Back</button>
+      </div>`;
+    this.root.querySelectorAll('[data-trial]').forEach(btn => {
+      btn.onclick = () => {
+        const t = getTrial(btn.getAttribute('data-trial'));
+        if (!t) return;
+        Audio2.uiSelect(); this.hide();
+        const charId = Save.isUnlocked(t.char) ? t.char : 'spark';
+        App.startRun(charId, t.diff || 0, { trial: t.id });
+      };
+    });
     document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
   },
 
@@ -624,8 +678,16 @@ const UI = {
         <div class="tags">${newAch.map(a => `<span class="tag" style="border-color:#ffd84d;color:#ffd84d">${a.icon} ${a.name}${a.reward ? ' +' + a.reward + '✦' : ''}</span>`).join('')}</div>
       </div>` : '';
     const diffBlock = game.lastUnlockedDiff ? `<p class="new-best" style="color:${game.lastUnlockedDiff.color}">▲ ${game.lastUnlockedDiff.name} difficulty unlocked!</p>` : '';
+    const trial = game.trial || null;
+    const trialBlock = trial
+      ? `<p class="new-best" style="color:${trial.color}">${game.trialWon
+          ? (game.lastTrialFirst ? '★ Trial Cleared — first time! ★' : '✓ Trial cleared again')
+          : 'Objective: ' + trialGoalText(trial)}</p>`
+      : '';
     const gauntlet = game.mode === 'gauntlet';
-    const diffTag = game.daily
+    const diffTag = trial
+      ? `<span class="diff-chip" style="color:${trial.color};border-color:${trial.color}">${trial.icon} Trial: ${trial.name}</span>`
+      : game.daily
       ? `<span class="diff-chip" style="color:#9ad8ff;border-color:#9ad8ff">🗓 Daily ${game.dailyDate}</span>`
       : gauntlet
         ? `<span class="diff-chip" style="color:#ffd84d;border-color:#ffd84d">⚔ Gauntlet${game.diffIndex > 0 ? ' · ' + game.diff.name : ''}</span>`
@@ -639,10 +701,12 @@ const UI = {
     const dailyBlock = (game.daily && game.lastDaily)
       ? `<p class="new-best" ${game.lastDaily.isNew ? '' : 'style="color:var(--muted)"'}>${game.lastDaily.isNew ? '★ New Daily Best!' : 'Daily best: ' + formatNum(game.lastDaily.best.score) + ' (' + formatTime(game.lastDaily.best.time) + ')'}</p>`
       : '';
+    const title = game.trialWon ? 'Trial Complete!' : (trial ? 'Trial Failed' : 'The light fades…');
     this.root.innerHTML = `
       <div class="screen panel">
-        <h2 class="gameover-title">The light fades…</h2>
+        <h2 class="gameover-title" ${game.trialWon ? `style="color:${trial.color}"` : ''}>${title}</h2>
         ${diffTag} ${omenTag} ${relicTag}
+        ${trialBlock}
         ${dailyBlock}
         ${gauntletBlock}
         ${!game.daily && !gauntlet && newBest ? '<p class="new-best">★ New Best Time! ★</p>' : ''}
@@ -667,9 +731,14 @@ const UI = {
     document.getElementById('btn-history').onclick = () => { Audio2.uiSelect(); this.showHistory(); };
     const wasDaily = game.daily;
     const wasMode = game.mode;
-    document.getElementById('btn-retry').onclick = () => {
+    const wasTrial = trial ? trial.id : null;
+    const wasChar = (game.player && game.player.char) ? game.player.char.id : 'spark';
+    const retryBtn = document.getElementById('btn-retry');
+    if (wasTrial) retryBtn.textContent = '↺ Retry Trial';
+    retryBtn.onclick = () => {
       Audio2.uiSelect(); this.hide();
-      if (wasDaily) App.startRun('spark', 0, { daily: true });
+      if (wasTrial) App.startRun(wasChar, trial.diff || 0, { trial: wasTrial });
+      else if (wasDaily) App.startRun('spark', 0, { daily: true });
       else this.showCharacterSelect(wasMode);
     };
     document.getElementById('btn-menu').onclick = () => { Audio2.uiMove(); this.showMenu(); };

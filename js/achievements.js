@@ -35,6 +35,8 @@ const ACHIEVEMENTS = [
   { id: 'attuned',      icon: '🧿', name: 'Attuned',              desc: 'Fill your relic loadout.',               reward: 40,  check: c => c.relicLoadoutFull },
   { id: 'adept',        icon: '🎖', name: 'Adept',                desc: 'Reach Adept mastery with any hero.',     reward: 50,  check: c => c.topCharMastery >= 2 },
   { id: 'grandmaster',  icon: '🏅', name: 'Grandmaster',          desc: 'Reach Master mastery with any hero.',    reward: 120, check: c => c.topCharMastery >= 4 },
+  { id: 'trialist',     icon: '🎯', name: 'Trialist',             desc: 'Complete a Trial of Light.',             reward: 50,  check: c => c.trialsDone >= 1 },
+  { id: 'trialmaster',  icon: '🎓', name: 'Trial Master',         desc: 'Complete every Trial of Light.',         reward: 200, check: c => c.trialsTotal > 0 && c.trialsDone >= c.trialsTotal },
 ];
 
 function getAchievement(id) { return ACHIEVEMENTS.find(a => a.id === id); }
@@ -66,6 +68,8 @@ const Achievements = {
       enemiesSeen: Object.keys(ENEMY_TYPES).every(k => Save.isSeen('enemies', k)),
       topCharMastery: CHARACTERS.reduce((best, ch) =>
         Math.max(best, masteryRank(charMasteryPoints(Save.charStats(ch.id))).index), 0),
+      trialsDone: Save.trialsDone(),
+      trialsTotal: (typeof TRIALS !== 'undefined') ? TRIALS.length : 0,
     };
   },
 

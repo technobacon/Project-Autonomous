@@ -324,3 +324,18 @@ html, body {
 .syn-members { font-size: 22px; margin: 6px 0 4px; display: flex; align-items: center; gap: 4px; }
 .syn-plus { color: var(--muted); font-size: 14px; margin: 0 2px; }
 .syn-card p { font-size: 12px; color: var(--muted); line-height: 1.5; margin-top: 4px; }
+
+/* ---- Trials of Light ---- */
+.trial-intro { color: var(--muted); font-size: 13px; margin: 4px 0 12px; max-width: 640px; text-align: center; align-self: center; }
+.trial-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; width: 100%; }
+.trial-card { background: rgba(255,255,255,0.04); border: 1px solid var(--c, var(--panel-border)); border-radius: 12px; padding: 14px; text-align: left; display: flex; flex-direction: column; gap: 8px; box-shadow: inset 0 0 20px rgba(255,255,255,0.03); }
+.trial-card.cleared { box-shadow: inset 0 0 20px rgba(122,255,196,0.06); }
+.trial-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.trial-name { font-weight: 700; font-size: 16px; }
+.trial-done { font-size: 11px; color: #7affc4; border: 1px solid #7affc4; border-radius: 999px; padding: 1px 8px; }
+.trial-desc { font-size: 12px; color: var(--muted); line-height: 1.5; flex: 1; }
+.trial-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 11px; }
+.trial-goal { color: #ffd84d; font-weight: 600; }
+.trial-tag { border: 1px solid var(--panel-border); border-radius: 999px; padding: 1px 8px; }
+.trial-reward { color: #ffe14d; margin-left: auto; font-weight: 700; }
+.trial-card .btn { margin-top: 2px; }
