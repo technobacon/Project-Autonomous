@@ -57,6 +57,9 @@ class Game {
     this.seed = 0;
     this.daily = false;
     this.dailyDate = null;
+    this.mode = 'survival';    // 'survival' | 'gauntlet' (boss rush)
+    this.gauntletRound = 0;    // round currently in progress
+    this.gauntletCleared = 0;  // highest round fully cleared
     this.mods = defaultMods(); // run modifier ("omen") effects
     this.omen = null;
     // Run-tracking for achievements / scoring.
@@ -119,6 +122,7 @@ class Game {
     // Seed the deterministic gameplay RNG. Daily runs share a date-based seed
     // (everyone faces the same world); normal runs get a fresh random seed.
     this.daily = !!opts.daily;
+    this.mode = opts.mode === 'gauntlet' ? 'gauntlet' : 'survival';
     if (this.daily) {
       this.dailyDate = opts.date || dailyDateString();
       this.seed = hashStr('lastlight-daily-' + this.dailyDate);
@@ -141,8 +145,13 @@ class Game {
     this.state = 'playing';
     Audio2.resume();
     Audio2.startMusic(0);
-    this.toast(this.daily ? 'Daily Challenge — ' + this.dailyDate
-      : (this.diffIndex > 0 ? this.diff.name + ' — survive.' : 'Survive.'));
+    if (this.mode === 'gauntlet') {
+      this.toast('⚔ GAUNTLET — endless bosses await.');
+      this.onLevelUp(3); // opening picks so you arrive armed for the first boss
+    } else {
+      this.toast(this.daily ? 'Daily Challenge — ' + this.dailyDate
+        : (this.diffIndex > 0 ? this.diff.name + ' — survive.' : 'Survive.'));
+    }
   }
 
   // ---- Spatial grid (for radius queries) --------------------------------
@@ -459,10 +468,15 @@ class Game {
     this.particles.burst(this.player.x, this.player.y, 70, { color: this.player.char.color, speed: rand(100, 400), life: rand(0.6, 1.3) });
 
     // Compute shards earned and persist progression (difficulty boosts reward).
-    const earned = Math.floor((this.time / 8 + this.kills * 0.25 + this.bossKills * 30)
-      * this.player.shardMult * this.diff.reward);
+    // Gauntlet pays out by rounds cleared; survival by time + slaughter.
+    const earned = this.mode === 'gauntlet'
+      ? Math.floor((this.gauntletCleared * 45 + this.kills * 0.2 + this.bossKills * 12)
+        * this.player.shardMult * this.diff.reward)
+      : Math.floor((this.time / 8 + this.kills * 0.25 + this.bossKills * 30)
+        * this.player.shardMult * this.diff.reward);
     Save.addShards(earned);
     Save.recordRun(this.time, this.score, this.kills, this.bossKills);
+    if (this.mode === 'gauntlet') this.lastGauntlet = Save.recordGauntlet(this.gauntletCleared, this.score);
 
     // Ascension: surviving the unlock threshold opens the next difficulty.
     const next = DIFFICULTIES[this.diffIndex + 1];
@@ -1207,11 +1221,19 @@ class Game {
       wx += 34;
     }
 
+    // Gauntlet round indicator.
+    if (this.mode === 'gauntlet') {
+      ctx.textAlign = 'center'; ctx.font = 'bold 15px "Segoe UI", system-ui, sans-serif';
+      ctx.fillStyle = '#ffd84d'; ctx.shadowBlur = 6; ctx.shadowColor = '#000';
+      ctx.fillText('⚔ ROUND ' + Math.max(1, this.gauntletRound), W / 2, 48);
+      ctx.shadowBlur = 0;
+    }
+
     // Boss banner.
     if (this.activeBoss && !this.activeBoss.dead) {
       ctx.textAlign = 'center'; ctx.font = 'bold 16px "Segoe UI", system-ui, sans-serif';
       ctx.fillStyle = '#ff6b8a';
-      ctx.fillText('☠ ' + this.activeBoss.type.name, W / 2, 48);
+      ctx.fillText('☠ ' + this.activeBoss.type.name, W / 2, this.mode === 'gauntlet' ? 68 : 48);
     }
 
     // Toasts (center-ish).

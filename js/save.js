@@ -23,6 +23,7 @@ const Save = {
       maxDifficulty: 0,          // highest difficulty tier unlocked (index)
       bestTime: 0,               // longest survival, seconds
       bestScore: 0,
+      gauntletBest: { rounds: 0, score: 0 }, // boss-rush record
       runs: 0,
       totalKills: 0,
       bossKills: 0,
@@ -45,6 +46,7 @@ const Save = {
       this.data.meta = Object.assign(d.meta, this.data.meta || {});
       this.data.unlocked = Object.assign(d.unlocked, this.data.unlocked || {});
       this.data.dailyBest = Object.assign({}, this.data.dailyBest || {});
+      this.data.gauntletBest = Object.assign(d.gauntletBest, this.data.gauntletBest || {});
       this.data.achievements = Object.assign({}, this.data.achievements || {});
       this.data.seen = Object.assign(d.seen, this.data.seen || {});
       this.data.seen.enemies = Object.assign({}, this.data.seen.enemies || {});
@@ -88,6 +90,13 @@ const Save = {
     const isNew = !prev || score > prev.score;
     if (isNew) { this.data.dailyBest[date] = { time, score }; this.save(); }
     return { best: this.data.dailyBest[date], isNew };
+  },
+
+  recordGauntlet(rounds, score) {
+    const prev = this.data.gauntletBest || { rounds: 0, score: 0 };
+    const isNew = rounds > prev.rounds || (rounds === prev.rounds && score > prev.score);
+    if (isNew) { this.data.gauntletBest = { rounds, score }; this.save(); }
+    return { best: this.data.gauntletBest, isNew };
   },
 
   unlockDifficulty(index) {

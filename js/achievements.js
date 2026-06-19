@@ -27,6 +27,8 @@ const ACHIEVEMENTS = [
   { id: 'archivist',    icon: '📖', name: 'Archivist',          desc: 'Discover every foe in the Codex.',       reward: 40,  check: c => c.enemiesSeen },
   { id: 'omened',       icon: '🎴', name: 'Fate Sealed',         desc: 'Reach 5:00 with an Omen active.',        reward: 40,  check: c => c.omen && c.time >= 300 },
   { id: 'cursed_glory', icon: '🩸', name: 'Cursed Glory',        desc: 'Reach 8:00 with the Berserker Omen.',    reward: 80,  check: c => c.omenId === 'berserk' && c.time >= 480 },
+  { id: 'gladiator',    icon: '⚔', name: 'Gladiator',           desc: 'Clear 5 rounds of the Gauntlet.',        reward: 60,  check: c => c.gauntletRound >= 5 },
+  { id: 'champion',     icon: '🏛', name: 'Champion of Light',    desc: 'Clear 10 rounds of the Gauntlet.',       reward: 120, check: c => c.gauntletRound >= 10 },
 ];
 
 function getAchievement(id) { return ACHIEVEMENTS.find(a => a.id === id); }
@@ -47,6 +49,7 @@ const Achievements = {
       difficultyIndex: game ? (game.diffIndex || 0) : 0,
       omen: game ? !!game.omen : false,
       omenId: game && game.omen ? game.omen.id : null,
+      gauntletRound: game ? (game.gauntletCleared || 0) : 0,
       save: s,
       baseCharsUnlocked: CHARACTERS.filter(c => !c.secret && Save.isUnlocked(c.id)).length,
       enemiesSeen: Object.keys(ENEMY_TYPES).every(k => Save.isSeen('enemies', k)),

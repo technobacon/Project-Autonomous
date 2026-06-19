@@ -328,6 +328,54 @@ globalThis.__run = function(report) {
     UI.showOmenDraft('spark', 0);   // builds without error
   });
 
+  // 11.5) Gauntlet (boss-rush) mode (v6).
+  // Auto-resolve a fresh game's level-up screens (the opening Gauntlet picks
+  // arrive during start(), so this must be installed before start()).
+  const autoPick = (gm) => {
+    gm.openLevelUp = function () {
+      if (this.pendingLevels <= 0) { this.state = 'playing'; this.running = true; return; }
+      const ch = buildUpgradeChoices(this, 3);
+      this.player.applyUpgrade(ch[0]);
+      this.pendingLevels--;
+      if (this.pendingLevels > 0) this.openLevelUp();
+      else { this.state = 'playing'; this.running = true; }
+    };
+  };
+  sectionTry('gauntlet: boss-rush flow', () => {
+    const g = new Game(document.getElementById('game'));
+    autoPick(g);
+    g.start('spark', 0, { mode: 'gauntlet' });
+    ok('mode is gauntlet', g.mode === 'gauntlet');
+    ok('opening picks resolved (playing)', g.state === 'playing');
+    // Arm the player so bosses die quickly, and keep them alive for the test.
+    g.player.maxWeapons = 99;
+    for (const id of Object.keys(WEAPONS)) g.player.addWeapon(id);
+    for (const w of g.player.weapons) w.level = w.def.maxLevel;
+    g.player.passives.power = PASSIVES.power.max; g.player.recalc();
+    let sawBoss = false;
+    for (let i = 0; i < 60 * 60 && g.gauntletCleared < 2; i++) {
+      g.player.invuln = 9999; // immortal for the duration of the harness
+      g.update(1 / 60);
+      if (g.enemies.some(e => e.boss)) sawBoss = true;
+      for (const e of g.enemies) if (e.boss) g.dealDamage(e, 1e7, g.player.x, g.player.y, 0);
+    }
+    ok('gauntlet spawned a boss', sawBoss);
+    ok('gauntlet cleared >= 2 rounds', g.gauntletCleared >= 2);
+    ok('round counter advanced', g.gauntletRound >= g.gauntletCleared);
+  });
+  sectionTry('gauntlet: records + achievement', () => {
+    const r = Save.recordGauntlet(3, 1000);
+    ok('recordGauntlet stores a best', Save.data.gauntletBest.rounds >= 3 && r.best.rounds >= 3);
+    ok('gauntletBest default present', typeof Save.defaults().gauntletBest.rounds === 'number');
+    Save.data.achievements = {};
+    const g = new Game(document.getElementById('game')); autoPick(g); g.start('spark', 0, { mode: 'gauntlet' });
+    g.gauntletCleared = 5;
+    Achievements.check(g);
+    ok('gladiator unlocks at 5 rounds', Save.hasAchievement('gladiator'));
+    g.gauntletCleared = 10; Achievements.check(g);
+    ok('champion unlocks at 10 rounds', Save.hasAchievement('champion'));
+  });
+
   // 12) Visual / game-feel polish (v5): nebula, projectile trails, tiered
   //     damage numbers (+ their cap), and the option toggle.
   sectionTry('polish: background nebula built', () => {

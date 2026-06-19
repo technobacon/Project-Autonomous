@@ -100,6 +100,7 @@ class Director {
 
   update(dt) {
     const g = this.game;
+    if (g.mode === 'gauntlet') { this._updateGauntlet(dt); return; }
     const min = g.time / 60;
 
     // Scheduled bosses.
@@ -179,6 +180,59 @@ class Director {
       this.game.spawnEnemy(type.id, cx + Math.cos(a) * r, cy + Math.sin(a) * r,
         this.hpScale(min) * 0.9, this.dmgScale(min));
     }
+  }
+
+  // ---- Gauntlet (boss-rush) mode ----------------------------------------
+  // Back-to-back boss rounds with escalating scale and light add pressure to
+  // keep the player levelling. Endless: it ends only when the player falls.
+  _updateGauntlet(dt) {
+    const g = this.game;
+    if (this.gState === undefined) { this.gState = 'intermission'; this.gTimer = 3.0; this.round = 0; this.addTimer = 0; g.gauntletRound = 0; }
+
+    if (this.gState === 'intermission') {
+      this.gTimer -= dt;
+      if (this.gTimer <= 0) {
+        this.round++; g.gauntletRound = this.round;
+        this._spawnGauntletRound(this.round);
+        this.gState = 'fight';
+      }
+    } else { // fight
+      // Occasional adds (capped) so the player keeps gaining XP between hits.
+      this.addTimer -= dt;
+      if (this.addTimer <= 0 && g.enemies.length < 55) {
+        this.addTimer = Math.max(0.6, 2.0 - this.round * 0.07);
+        const pseudoMin = Math.min(8, 0.6 + this.round * 0.5);
+        const batch = 1 + Math.floor(this.round / 3);
+        for (let i = 0; i < batch && g.enemies.length < 55; i++) {
+          const type = this.pickType(pseudoMin);
+          const pos = g.offscreenPoint();
+          g.spawnEnemy(type.id, pos.x, pos.y, this.hpScale(pseudoMin) * 0.8, this.dmgScale(pseudoMin));
+        }
+      }
+      // Round is cleared once every boss is down.
+      if (!g.enemies.some(e => e.boss)) {
+        this.gState = 'intermission';
+        this.gTimer = 3.5;
+        g.gauntletCleared = this.round;
+        g.player.heal(g.player.maxHp * 0.25); // breather reward
+        g.toast('✦ Round ' + this.round + ' cleared!');
+      }
+    }
+  }
+
+  _spawnGauntletRound(round) {
+    const keys = ['warden', 'colossus', 'devourer'];
+    const count = round >= 6 ? 2 : 1;        // double bosses in later rounds
+    const scale = 1 + (round - 1) * 0.5;     // escalating boss HP
+    const dmg = 1 + (round - 1) * 0.12;
+    for (let i = 0; i < count; i++) {
+      const id = keys[(round - 1 + i) % keys.length];
+      const def = BOSSES[id];
+      const pos = this.game.offscreenPoint(0.9);
+      const e = this.game.spawnEnemy(id, pos.x, pos.y, scale, dmg, def);
+      if (e) { e.boss = true; this.game.onBossSpawn(e); }
+    }
+    this.game.toast('☠ Round ' + round + ' — survive!');
   }
 
   spawnBoss(id, mult = 1) {

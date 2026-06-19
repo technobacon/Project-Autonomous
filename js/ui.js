@@ -20,6 +20,11 @@ const UI = {
     return best ? ` <span class="shard-chip">best ${formatTime(best.time)}</span>` : '';
   },
 
+  _gauntletChip() {
+    const g = Save.data.gauntletBest;
+    return g && g.rounds > 0 ? ` <span class="shard-chip">best R${g.rounds}</span>` : '';
+  },
+
   clear() { this.root.innerHTML = ''; this.root.className = 'overlay'; this._omens = null; },
   show() { this.root.style.display = 'flex'; },
   hide() { this.root.style.display = 'none'; },
@@ -34,6 +39,7 @@ const UI = {
         <p class="tagline">A spark of light against the endless dark.<br>Survive as long as you can.</p>
         <div class="menu-buttons">
           <button class="btn btn-primary" id="btn-play">▶ PLAY</button>
+          <button class="btn" id="btn-gauntlet">⚔ GAUNTLET${this._gauntletChip()}</button>
           <button class="btn" id="btn-daily">🗓 DAILY CHALLENGE${this._dailyChip()}</button>
           <button class="btn" id="btn-shop">⚙ SANCTUARY <span class="shard-chip">✦ ${formatNum(d.shards)}</span></button>
           <div class="menu-buttons row">
@@ -56,7 +62,8 @@ const UI = {
         </div>
         <p class="hint">Move: WASD / Arrows • Pause: Esc/P • Weapons fire automatically</p>
       </div>`;
-    document.getElementById('btn-play').onclick = () => { Audio2.uiSelect(); this.showCharacterSelect(); };
+    document.getElementById('btn-play').onclick = () => { Audio2.uiSelect(); this.showCharacterSelect('survival'); };
+    document.getElementById('btn-gauntlet').onclick = () => { Audio2.uiSelect(); this.showCharacterSelect('gauntlet'); };
     document.getElementById('btn-daily').onclick = () => { Audio2.uiSelect(); this.hide(); App.startRun('spark', 0, { daily: true }); };
     document.getElementById('btn-shop').onclick = () => { Audio2.uiSelect(); this.showShop(); };
     document.getElementById('btn-ach').onclick = () => { Audio2.uiSelect(); this.showAchievements(); };
@@ -82,6 +89,7 @@ const UI = {
           <div class="help-card"><h3>✦ Sanctuary</h3><p>Earn shards every run. Spend them in the Sanctuary on <b>permanent upgrades</b> and to <b>unlock new characters</b>.</p></div>
           <div class="help-card"><h3>🧬 Evolve</h3><p>Max a weapon <b>and</b> own its paired passive to unlock a golden <b>EVOLUTION</b> — a far more powerful form. Chase them.</p></div>
           <div class="help-card"><h3>🎴 Omens</h3><p>Before each run, draft a powerful <b>Omen</b> that reshapes the whole run — usually a big upside with a tradeoff. Or play with none.</p></div>
+          <div class="help-card"><h3>⚔ Gauntlet</h3><p>A boss-rush mode: <b>endless rounds of bosses</b>, escalating each time, with a short breather between. You start with extra upgrades — how many rounds can you clear?</p></div>
           <div class="help-card"><h3>🗓 Daily</h3><p>A <b>seeded</b> run that's the same for everyone today. Pure skill — beat your own best score each day.</p></div>
           <div class="help-card"><h3>⚙ Options</h3><p>From the menu, toggle <b>SFX</b>, <b>Music</b>, <b>screen shake</b>, and floating <b>damage numbers</b> to taste.</p></div>
         </div>
@@ -93,8 +101,10 @@ const UI = {
   // ---- Character select -------------------------------------------------
   _charUnlocked(c) { return c.secret ? Save.hasAchievement(c.achievement) : Save.isUnlocked(c.id); },
 
-  showCharacterSelect() {
+  showCharacterSelect(mode) {
     this.clear(); this.show();
+    if (mode) this._mode = mode;
+    if (!this._mode) this._mode = 'survival';
     if (this._selectedDiff == null) this._selectedDiff = 0;
     this._selectedDiff = clamp(this._selectedDiff, 0, Save.data.maxDifficulty);
 
@@ -131,7 +141,7 @@ const UI = {
     this.root.innerHTML = `
       <div class="screen panel wide">
         <div class="panel-head">
-          <h2>Choose your Light</h2>
+          <h2>${this._mode === 'gauntlet' ? '⚔ Gauntlet — Choose your Light' : 'Choose your Light'}</h2>
           <span class="shard-chip big">✦ ${formatNum(Save.data.shards)}</span>
         </div>
         <div class="diff-row">${diffBtns}</div>
@@ -143,7 +153,7 @@ const UI = {
       b.onclick = () => { this._selectedDiff = +b.dataset.i; Audio2.uiMove(); this.showCharacterSelect(); };
     });
     this.root.querySelectorAll('.select-btn').forEach(b => {
-      b.onclick = () => { Audio2.uiSelect(); this.showOmenDraft(b.dataset.id, this._selectedDiff); };
+      b.onclick = () => { Audio2.uiSelect(); this.showOmenDraft(b.dataset.id, this._selectedDiff, this._mode); };
     });
     this.root.querySelectorAll('.unlock-btn').forEach(b => {
       b.onclick = () => {
@@ -156,8 +166,9 @@ const UI = {
   },
 
   // ---- Omen draft (run modifier) ----------------------------------------
-  showOmenDraft(charId, diffIndex) {
+  showOmenDraft(charId, diffIndex, mode) {
     this.clear(); this.show();
+    mode = mode || 'survival';
     const omens = draftOmens(3);
     const cards = omens.map((o, i) => `
       <div class="omen-card" data-i="${i}" style="--c:${o.color}">
@@ -177,7 +188,7 @@ const UI = {
         </div>
         <p class="hint">Press 1–${omens.length}, or play with no omen</p>
       </div>`;
-    const launch = (omenId) => { this._omens = null; Audio2.uiSelect(); this.hide(); App.startRun(charId, diffIndex, { omen: omenId }); };
+    const launch = (omenId) => { this._omens = null; Audio2.uiSelect(); this.hide(); App.startRun(charId, diffIndex, { omen: omenId, mode }); };
     this._omenLaunch = launch; this._omens = omens;
     this.root.querySelectorAll('.omen-card').forEach(card => {
       card.onmouseenter = () => Audio2.uiMove();
@@ -383,9 +394,15 @@ const UI = {
         <div class="tags">${newAch.map(a => `<span class="tag" style="border-color:#ffd84d;color:#ffd84d">${a.icon} ${a.name}${a.reward ? ' +' + a.reward + '✦' : ''}</span>`).join('')}</div>
       </div>` : '';
     const diffBlock = game.lastUnlockedDiff ? `<p class="new-best" style="color:${game.lastUnlockedDiff.color}">▲ ${game.lastUnlockedDiff.name} difficulty unlocked!</p>` : '';
+    const gauntlet = game.mode === 'gauntlet';
     const diffTag = game.daily
       ? `<span class="diff-chip" style="color:#9ad8ff;border-color:#9ad8ff">🗓 Daily ${game.dailyDate}</span>`
-      : (game.diffIndex > 0 ? `<span class="diff-chip" style="color:${game.diff.color};border-color:${game.diff.color}">${game.diff.name}</span>` : '');
+      : gauntlet
+        ? `<span class="diff-chip" style="color:#ffd84d;border-color:#ffd84d">⚔ Gauntlet${game.diffIndex > 0 ? ' · ' + game.diff.name : ''}</span>`
+        : (game.diffIndex > 0 ? `<span class="diff-chip" style="color:${game.diff.color};border-color:${game.diff.color}">${game.diff.name}</span>` : '');
+    const gauntletBlock = (gauntlet && game.lastGauntlet)
+      ? `<p class="new-best" ${game.lastGauntlet.isNew ? '' : 'style="color:var(--muted)"'}>${game.lastGauntlet.isNew ? '★ New Gauntlet Best — Round ' + game.gauntletCleared + '!' : 'Gauntlet best: Round ' + game.lastGauntlet.best.rounds}</p>`
+      : '';
     const omenTag = game.omen ? `<span class="diff-chip" style="color:${game.omen.color};border-color:${game.omen.color}">${game.omen.icon} ${game.omen.name}</span>` : '';
     const dailyBlock = (game.daily && game.lastDaily)
       ? `<p class="new-best" ${game.lastDaily.isNew ? '' : 'style="color:var(--muted)"'}>${game.lastDaily.isNew ? '★ New Daily Best!' : 'Daily best: ' + formatNum(game.lastDaily.best.score) + ' (' + formatTime(game.lastDaily.best.time) + ')'}</p>`
@@ -395,10 +412,11 @@ const UI = {
         <h2 class="gameover-title">The light fades…</h2>
         ${diffTag} ${omenTag}
         ${dailyBlock}
-        ${!game.daily && newBest ? '<p class="new-best">★ New Best Time! ★</p>' : ''}
+        ${gauntletBlock}
+        ${!game.daily && !gauntlet && newBest ? '<p class="new-best">★ New Best Time! ★</p>' : ''}
         ${diffBlock}
         <div class="go-stats">
-          <div class="go-big"><span>Survived</span><b>${formatTime(game.time)}</b></div>
+          <div class="go-big"><span>${gauntlet ? 'Rounds Cleared' : 'Survived'}</span><b>${gauntlet ? game.gauntletCleared : formatTime(game.time)}</b></div>
           <div class="go-row">
             <div><span>Score</span><b>${formatNum(game.score)}</b></div>
             <div><span>Kills</span><b>${formatNum(game.kills)}</b></div>
@@ -414,10 +432,11 @@ const UI = {
         </div>
       </div>`;
     const wasDaily = game.daily;
+    const wasMode = game.mode;
     document.getElementById('btn-retry').onclick = () => {
       Audio2.uiSelect(); this.hide();
       if (wasDaily) App.startRun('spark', 0, { daily: true });
-      else this.showCharacterSelect();
+      else this.showCharacterSelect(wasMode);
     };
     document.getElementById('btn-menu').onclick = () => { Audio2.uiMove(); this.showMenu(); };
   },

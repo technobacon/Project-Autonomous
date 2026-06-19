@@ -99,7 +99,7 @@ stays bit-for-bit fair. Prefer it cleaner? Toggle **screen shake** and
 
 ## 🏆 Achievements, difficulty & the Codex
 
-- **22 achievements** with shard rewards and long-term goals — survive 15:00 to
+- **24 achievements** with shard rewards and long-term goals — survive 15:00 to
   unlock the secret character **Void**.
 - **Ascension difficulties** — Normal → Hard → Nightmare → Abyss. Each scales
   enemies *and* shard rewards up, and unlocks by surviving a threshold on the
@@ -108,6 +108,15 @@ stays bit-for-bit fair. Prefer it cleaner? Toggle **screen shake** and
   and evolutions.
 - **Options** — toggle SFX, music, screen shake, and floating damage numbers
   (accessibility / clarity).
+
+## ⚔ Gauntlet (boss rush)
+
+A separate mode for when you want pure pressure: **endless rounds of bosses**,
+back to back, each round tougher than the last (and from round 6, two at once).
+You start with a few **opening upgrades** so you arrive armed, get a short
+breather and a heal between rounds, and chase a single number — **how many
+rounds can you clear?** Your best round is saved and shown on the menu. Omens
+and ascension difficulties stack on top for an even steeper climb.
 
 ## 🗓 Daily Challenge
 
@@ -156,14 +165,14 @@ tools/
 ## ✅ Tests
 
 A headless harness stubs the DOM/Canvas/WebAudio APIs and actually runs the
-game — a full simulated run, every weapon, all bosses, all 8 evolutions, all 22
-achievements, every omen, difficulty scaling, level-ups, pickups, the polish FX
-(nebula, projectile trails, tiered damage numbers), every UI screen, death,
-persistence, and the shop (140+ assertions):
+game — a full simulated run, every weapon, all bosses, all 8 evolutions, all 24
+achievements, every omen, the Gauntlet boss-rush flow, difficulty scaling,
+level-ups, pickups, the polish FX (nebula, projectile trails, tiered damage
+numbers), every UI screen, death, persistence, and the shop (150+ assertions):
 
 ```bash
 npm test                          # functional + determinism suites
-node tools/headless-test.js       # functional suite (140+ assertions)
+node tools/headless-test.js       # functional suite (150+ assertions)
 node tools/determinism-test.js    # proves Daily seeds are framerate/settings-independent
 node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```
