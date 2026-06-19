@@ -86,16 +86,28 @@ hit), *Vampiric* (heal on kill), *Greed* (+80% shards, tougher foes), *Colossal*
 *Featherweight*, *Executioner*, *Bulwark*, *Abundance*, and more. Every run
 opens differently.
 
+## ✨ Game feel
+
+LASTLIGHT leans into **juice**: a slow drifting **nebula** behind the parallax
+starfield, **comet trails** on every projectile, **tiered floating damage
+numbers** that grow and heat up with the size of the hit (with a punchy pop),
+bright **impact flashes**, a **look-ahead camera** that eases toward where
+you're heading, and a red **edge-flash** the instant you take a hit. All of it
+is cosmetic and isolated from the seeded simulation, so the Daily Challenge
+stays bit-for-bit fair. Prefer it cleaner? Toggle **screen shake** and
+**damage numbers** off in the menu.
+
 ## 🏆 Achievements, difficulty & the Codex
 
-- **20 achievements** with shard rewards and long-term goals — survive 15:00 to
+- **22 achievements** with shard rewards and long-term goals — survive 15:00 to
   unlock the secret character **Void**.
 - **Ascension difficulties** — Normal → Hard → Nightmare → Abyss. Each scales
   enemies *and* shard rewards up, and unlocks by surviving a threshold on the
   tier below.
 - **Codex** — a bestiary + arsenal that fills in as you discover foes, weapons,
   and evolutions.
-- **Options** — toggle SFX, music, and screen shake (accessibility).
+- **Options** — toggle SFX, music, screen shake, and floating damage numbers
+  (accessibility / clarity).
 
 ## 🗓 Daily Challenge
 
@@ -144,13 +156,14 @@ tools/
 ## ✅ Tests
 
 A headless harness stubs the DOM/Canvas/WebAudio APIs and actually runs the
-game — a full simulated run, every weapon, all bosses, all 8 evolutions, the 20
-achievements, difficulty scaling, level-ups, pickups, every UI screen, death,
-persistence, and the shop (90+ assertions):
+game — a full simulated run, every weapon, all bosses, all 8 evolutions, all 22
+achievements, every omen, difficulty scaling, level-ups, pickups, the polish FX
+(nebula, projectile trails, tiered damage numbers), every UI screen, death,
+persistence, and the shop (140+ assertions):
 
 ```bash
 npm test                          # functional + determinism suites
-node tools/headless-test.js       # functional suite (90+ assertions)
+node tools/headless-test.js       # functional suite (140+ assertions)
 node tools/determinism-test.js    # proves Daily seeds are framerate/settings-independent
 node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```

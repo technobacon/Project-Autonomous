@@ -328,6 +328,51 @@ globalThis.__run = function(report) {
     UI.showOmenDraft('spark', 0);   // builds without error
   });
 
+  // 12) Visual / game-feel polish (v5): nebula, projectile trails, tiered
+  //     damage numbers (+ their cap), and the option toggle.
+  sectionTry('polish: background nebula built', () => {
+    const g = new Game(document.getElementById('game'));
+    ok('nebula blobs exist', Array.isArray(g.nebula) && g.nebula.length > 0);
+    ok('camLead exists', g.camLead && typeof g.camLead.x === 'number');
+  });
+  sectionTry('polish: projectile trails populate + render', () => {
+    Save.data.dmgNumbers = true;
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 7 });
+    for (let k = 0; k < 24; k++) g.spawnEnemy('drifter', g.player.x + Math.cos(k) * 90, g.player.y + Math.sin(k) * 90, 1, 1);
+    let sawTrail = false, sawText = false;
+    for (let i = 0; i < 120; i++) {
+      g.update(1 / 60); g.render();
+      if (g.projectiles.some(pr => pr.trail && pr.trail.length >= 4)) sawTrail = true;
+      if (g.particles.texts.length > 0) sawText = true;
+    }
+    ok('a projectile carries a motion trail', sawTrail);
+    ok('damage numbers produced floating text', sawText);
+  });
+  sectionTry('polish: damage-number toggle suppresses text', () => {
+    Save.data.dmgNumbers = false;
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 9 });
+    const e = g.spawnEnemy('brute', g.player.x + 30, g.player.y, 6, 1);
+    g.particles.texts.length = 0;
+    g.dealDamage(e, 20, g.player.x, g.player.y, 0);
+    ok('no damage text when toggle off', g.particles.texts.length === 0);
+    Save.data.dmgNumbers = true;
+    g.dealDamage(e, 20, g.player.x, g.player.y, 0);
+    ok('damage text when toggle on', g.particles.texts.length > 0);
+  });
+  sectionTry('polish: floating-text cap holds', () => {
+    const ps = new Particles();
+    for (let i = 0; i < ps.maxTexts + 200; i++) ps.text(0, 0, '' + i, {});
+    ok('text count capped at maxTexts', ps.texts.length <= ps.maxTexts);
+  });
+  sectionTry('polish: hurt flash + render stay finite', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 3 });
+    g.player.invuln = 0; g.player.hurt(5);
+    ok('hitFlash set after hurt', g.player.hitFlash > 0);
+    g.render(); // exercises _drawHurtFlash + nebula + trails
+    ok('player finite after flashed render', Number.isFinite(g.player.x) && Number.isFinite(g.player.hp));
+  });
+  ok('dmgNumbers default is on', Save.defaults().dmgNumbers === true);
+
   report(results, { frames, maxEnemiesSeen, kills: game.kills, score: game.score, levelUps: levelUpsHandled,
     evolutions: EVOLUTIONS.length, achievements: ACHIEVEMENTS.length, omens: MODIFIER_LIST.length });
 };

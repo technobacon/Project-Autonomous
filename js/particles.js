@@ -9,6 +9,7 @@ class Particles {
     this.texts = [];
     this.pool = new Pool(() => ({}));
     this.max = 700;
+    this.maxTexts = 70;   // cap floating text so big hordes stay readable + fast
   }
 
   clear() { this.list.length = 0; this.texts.length = 0; }
@@ -50,13 +51,18 @@ class Particles {
   }
 
   text(x, y, str, opts = {}) {
+    // Evict the oldest floating text once we hit the cap (keeps the screen
+    // legible and rendering cheap when thousands of hits land per second).
+    if (this.texts.length >= this.maxTexts) this.texts.shift();
     this.texts.push({
       x, y, str,
+      vx: opts.vx !== undefined ? opts.vx : 0,
       vy: opts.vy !== undefined ? opts.vy : -42,
       life: opts.life || 0.9,
       maxLife: opts.life || 0.9,
       color: opts.color || '#fff',
       size: opts.size || 14,
+      pop: opts.pop !== undefined ? opts.pop : 1, // peak scale for the spawn pop
     });
   }
 
@@ -80,7 +86,9 @@ class Particles {
       const t = this.texts[i];
       t.life -= dt;
       t.y += t.vy * dt;
+      t.x += t.vx * dt;
       t.vy *= (1 - 1.5 * dt);
+      t.vx *= (1 - 3 * dt);
       if (t.life <= 0) this.texts.splice(i, 1);
     }
   }
@@ -107,8 +115,12 @@ class Particles {
     ctx.textBaseline = 'middle';
     for (const t of this.texts) {
       const a = clamp(t.life / t.maxLife, 0, 1);
-      ctx.globalAlpha = a;
-      ctx.font = `bold ${t.size}px "Segoe UI", system-ui, sans-serif`;
+      // Spawn "pop": overshoot then settle over the first ~18% of life.
+      const age = 1 - a;
+      const grow = age < 0.18 ? clamp(age / 0.18, 0, 1) : 1;
+      const scale = (t.pop || 1) * (0.5 + 0.5 * grow) * (age < 0.18 ? (1 + (1 - grow) * 0.25) : 1);
+      ctx.globalAlpha = a < 0.35 ? a / 0.35 : 1; // fade only at the tail end
+      ctx.font = `bold ${(t.size * scale).toFixed(1)}px "Segoe UI", system-ui, sans-serif`;
       ctx.fillStyle = t.color;
       ctx.shadowBlur = 4; ctx.shadowColor = '#000';
       ctx.fillText(t.str, t.x - cam.x, t.y - cam.y);

@@ -12,6 +12,7 @@ class Game {
     this.view = { w: 800, h: 600 };
     this.world = { w: 2600, h: 2600 };
     this.cam = { x: 0, y: 0, sx: 0, sy: 0 }; // sx/sy = shake offset
+    this.camLead = { x: 0, y: 0 };           // smoothed look-ahead offset
     this.maxEnemies = 340;
 
     this.running = false;
@@ -28,6 +29,8 @@ class Game {
 
     // Pre-render the starfield to an offscreen canvas (parallax background).
     this._buildStars();
+    // Procedural drifting nebula clouds (cosmetic; never touches the seeded RNG).
+    this._buildNebula();
   }
 
   reset() {
@@ -88,6 +91,26 @@ class Game {
       x.fill();
     }
     this.stars = c;
+  }
+
+  _buildNebula() {
+    // A handful of big soft colour blobs that drift slowly behind the stars.
+    // Positions/tints use vrand (cosmetic) so they never affect determinism.
+    const palette = [
+      [88, 120, 255], [150, 90, 255], [60, 200, 220], [255, 90, 150], [120, 160, 255],
+    ];
+    this.nebula = [];
+    for (let i = 0; i < 7; i++) {
+      const c = palette[Math.floor(vrand(0, palette.length)) % palette.length];
+      this.nebula.push({
+        x: vrand(0, 2200), y: vrand(0, 2200),
+        r: vrand(260, 520),
+        col: c,
+        a: vrand(0.05, 0.12),
+        dx: vrand(-7, 7), dy: vrand(-7, 7),     // slow drift (px/s)
+        ph: vrand(0, TAU), sp: vrand(0.05, 0.16), // gentle breathing
+      });
+    }
   }
 
   // ---- Lifecycle --------------------------------------------------------
@@ -293,7 +316,19 @@ class Game {
     e.flash = 0.08;
     const a = angleTo(fromX, fromY, e.x, e.y);
     this.particles.spray(e.x, e.y, a, crit ? 8 : 4, 0.6, { color: e.color, speed: rand(60, 160), life: 0.4 });
-    if (crit) this.particles.text(e.x, e.y - e.radius, Math.round(dmg) + '!', { color: '#fff36b', size: 15 });
+    // Bright impact flash at the point of contact (cosmetic — no seeded RNG).
+    this.particles.spawn(e.x, e.y, { color: crit ? '#fff36b' : '#ffffff',
+      size: crit ? 6 : 3.5, life: 0.12, speed: 0, angle: 0, drag: 0, glow: true });
+    // Tiered floating damage numbers (bigger/hotter as the hit gets stronger).
+    if (Save.data && Save.data.dmgNumbers) {
+      const r = Math.round(dmg);
+      let col = '#dfe9ff', size = 12;
+      if (crit) { col = '#fff36b'; size = 18; }
+      else if (r >= 120) { col = '#ff9d3c'; size = 16; }
+      else if (r >= 45) { col = '#ffe14d'; size = 14; }
+      this.particles.text(e.x + vrand(-5, 5), e.y - e.radius - 2, r + (crit ? '!' : ''),
+        { color: col, size, vx: vrand(-20, 20), vy: vrand(-62, -38), pop: crit ? 1.25 : 1 });
+    }
     if (kb > 0) {
       const massFactor = e.boss ? 0.06 : clamp(16 / e.radius, 0.3, 1.4);
       e.vx += Math.cos(a) * kb * massFactor;
@@ -503,9 +538,15 @@ class Game {
     for (let i = this.whips.length - 1; i >= 0; i--) { this.whips[i].life -= dt; if (this.whips[i].life <= 0) this.whips.splice(i, 1); }
     for (let i = this.toasts.length - 1; i >= 0; i--) { this.toasts[i].life -= dt; if (this.toasts[i].life <= 0) this.toasts.splice(i, 1); }
 
-    // Camera follow + shake.
-    this.cam.x = clamp(this.player.x - this.view.w / 2, 0, Math.max(0, this.world.w - this.view.w));
-    this.cam.y = clamp(this.player.y - this.view.h / 2, 0, Math.max(0, this.world.h - this.view.h));
+    // Camera follow with a gentle look-ahead toward the direction of travel,
+    // smoothed so quick direction changes don't snap. (Cosmetic — the camera is
+    // never part of the simulation state.)
+    const lead = 52;
+    const k = Math.min(1, 3.5 * dt);
+    this.camLead.x += (this.player.moveDir.x * lead - this.camLead.x) * k;
+    this.camLead.y += (this.player.moveDir.y * lead - this.camLead.y) * k;
+    this.cam.x = clamp(this.player.x + this.camLead.x - this.view.w / 2, 0, Math.max(0, this.world.w - this.view.w));
+    this.cam.y = clamp(this.player.y + this.camLead.y - this.view.h / 2, 0, Math.max(0, this.world.h - this.view.h));
     if (this.shake_.t > 0) {
       this.shake_.t -= dt;
       const k = this.shake_.mag * (this.shake_.t / this.shake_.max);
@@ -667,6 +708,12 @@ class Game {
       }
       pr.x += pr.vx * dt; pr.y += pr.vy * dt;
 
+      // Record a short motion trail (cosmetic; flat [x,y,…] ring buffer).
+      if (pr.trail) {
+        pr.trail.push(pr.x, pr.y);
+        if (pr.trail.length > 12) pr.trail.splice(0, pr.trail.length - 12);
+      }
+
       if (pr.life <= 0 ||
           pr.x < -margin || pr.y < -margin ||
           pr.x > this.world.w + margin || pr.y > this.world.h + margin) {
@@ -821,11 +868,35 @@ class Game {
       this._drawChains(ctx, cam);
       this.particles.drawText(ctx, cam);
       this._drawVignette(ctx);
+      this._drawHurtFlash(ctx);
       this._drawHUD(ctx);
     }
   }
 
   _drawBackground(ctx, cam) {
+    // Drifting nebula clouds (deep parallax, additive glow). Animated by the
+    // simulation clock so it stays perfectly deterministic.
+    if (this.nebula) {
+      const t = this.time;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      for (const n of this.nebula) {
+        const nx = (n.x + n.dx * t) - cam.x * 0.12;
+        const ny = (n.y + n.dy * t) - cam.y * 0.12;
+        const breathe = 1 + Math.sin(n.ph + t * n.sp) * 0.12;
+        const r = n.r * breathe;
+        // Skip blobs fully off-screen (cheap cull).
+        if (nx + r < 0 || ny + r < 0 || nx - r > this.view.w || ny - r > this.view.h) continue;
+        const g = ctx.createRadialGradient(nx, ny, 0, nx, ny, r);
+        const [cr, cg, cb] = n.col;
+        g.addColorStop(0, `rgba(${cr},${cg},${cb},${n.a})`);
+        g.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(nx, ny, r, 0, TAU); ctx.fill();
+      }
+      ctx.restore();
+    }
+
     // Parallax starfield (tiled).
     const s = this.stars;
     const px = -(cam.x * 0.3) % s.width;
@@ -917,8 +988,26 @@ class Game {
 
   _drawProjectiles(ctx, cam) {
     ctx.save();
+    ctx.lineCap = 'round';
     for (const pr of this.projectiles) {
       const x = pr.x - cam.x, y = pr.y - cam.y;
+      // Comet trail — a tapering, fading streak behind the projectile head.
+      const tr = pr.trail;
+      if (tr && tr.length >= 4) {
+        const pts = tr.length / 2;
+        ctx.shadowBlur = 0;
+        for (let k = 0; k < pts - 1; k++) {
+          const f = k / (pts - 1);            // 0 = oldest, 1 = newest
+          ctx.globalAlpha = f * 0.5;
+          ctx.strokeStyle = pr.glow;
+          ctx.lineWidth = pr.radius * (0.3 + f * 1.1);
+          ctx.beginPath();
+          ctx.moveTo(tr[k * 2] - cam.x, tr[k * 2 + 1] - cam.y);
+          ctx.lineTo(tr[k * 2 + 2] - cam.x, tr[k * 2 + 3] - cam.y);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      }
       ctx.shadowBlur = 12; ctx.shadowColor = pr.glow;
       ctx.fillStyle = pr.color;
       ctx.beginPath(); ctx.arc(x, y, pr.radius, 0, TAU); ctx.fill();
@@ -1041,6 +1130,20 @@ class Game {
       g2.addColorStop(1, `rgba(255,0,40,${a})`);
       ctx.fillStyle = g2; ctx.fillRect(0, 0, this.view.w, this.view.h);
     }
+  }
+
+  _drawHurtFlash(ctx) {
+    // A quick red edge-flash the instant the player takes a hit (render-only,
+    // driven by the sim-side hitFlash timer so it can't desync the world).
+    const p = this.player;
+    if (!p || p.hitFlash <= 0) return;
+    const a = clamp(p.hitFlash / 0.3, 0, 1);
+    const g = ctx.createRadialGradient(this.view.w / 2, this.view.h / 2, this.view.h * 0.25,
+      this.view.w / 2, this.view.h / 2, this.view.h * 0.72);
+    g.addColorStop(0, 'rgba(255,40,70,0)');
+    g.addColorStop(1, `rgba(255,40,70,${0.5 * a})`);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, this.view.w, this.view.h);
   }
 
   _drawHUD(ctx) {

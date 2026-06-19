@@ -32,6 +32,7 @@ const Save = {
       muted: false,
       musicMuted: false,
       shakeOff: false,
+      dmgNumbers: true,          // floating damage numbers (game-feel)
     };
   },
 

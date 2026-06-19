@@ -52,6 +52,7 @@ const UI = {
           <button class="mini" id="btn-sfx">${Audio2.muted ? '🔇' : '🔊'} SFX</button>
           <button class="mini" id="btn-music">${Audio2.musicMuted ? '🎵̶' : '🎵'} Music</button>
           <button class="mini" id="btn-shake">${d.shakeOff ? '⬚' : '⬛'} Shake</button>
+          <button class="mini" id="btn-dmg">${d.dmgNumbers ? '🔢' : '⬚'} Damage #</button>
         </div>
         <p class="hint">Move: WASD / Arrows • Pause: Esc/P • Weapons fire automatically</p>
       </div>`;
@@ -64,6 +65,7 @@ const UI = {
     document.getElementById('btn-sfx').onclick = (e) => { Audio2.resume(); const m = Audio2.toggleMute(); Save.data.muted = m; Save.save(); e.target.textContent = (m ? '🔇' : '🔊') + ' SFX'; };
     document.getElementById('btn-music').onclick = (e) => { Audio2.resume(); const m = Audio2.toggleMusic(); Save.data.musicMuted = m; Save.save(); e.target.textContent = (m ? '🎵̶' : '🎵') + ' Music'; };
     document.getElementById('btn-shake').onclick = (e) => { Save.data.shakeOff = !Save.data.shakeOff; Save.save(); e.target.textContent = (Save.data.shakeOff ? '⬚' : '⬛') + ' Shake'; Audio2.uiMove(); };
+    document.getElementById('btn-dmg').onclick = (e) => { Save.data.dmgNumbers = !Save.data.dmgNumbers; Save.save(); e.target.textContent = (Save.data.dmgNumbers ? '🔢' : '⬚') + ' Damage #'; Audio2.uiMove(); };
   },
 
   showHelp() {
@@ -81,6 +83,7 @@ const UI = {
           <div class="help-card"><h3>🧬 Evolve</h3><p>Max a weapon <b>and</b> own its paired passive to unlock a golden <b>EVOLUTION</b> — a far more powerful form. Chase them.</p></div>
           <div class="help-card"><h3>🎴 Omens</h3><p>Before each run, draft a powerful <b>Omen</b> that reshapes the whole run — usually a big upside with a tradeoff. Or play with none.</p></div>
           <div class="help-card"><h3>🗓 Daily</h3><p>A <b>seeded</b> run that's the same for everyone today. Pure skill — beat your own best score each day.</p></div>
+          <div class="help-card"><h3>⚙ Options</h3><p>From the menu, toggle <b>SFX</b>, <b>Music</b>, <b>screen shake</b>, and floating <b>damage numbers</b> to taste.</p></div>
         </div>
         <button class="btn btn-primary" id="btn-back">← Back</button>
       </div>`;
