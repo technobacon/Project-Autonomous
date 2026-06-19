@@ -634,7 +634,7 @@ class Game {
   runSnapshot(earned) {
     const p = this.player;
     const weapons = (p && p.weapons ? p.weapons : []).map(w => ({
-      icon: w.def.icon, color: w.def.color, level: w.level,
+      id: w.def.id, icon: w.def.icon, color: w.def.color, level: w.level,
       evo: !!(typeof EVOLVED_WEAPONS !== 'undefined' && EVOLVED_WEAPONS[w.def.id]),
     }));
     return {
@@ -680,7 +680,9 @@ class Game {
     Save.addShards(earned);
     Save.recordRun(this.time, this.score, this.kills, this.bossKills);
     if (this.mode === 'gauntlet') this.lastGauntlet = Save.recordGauntlet(this.gauntletCleared, this.score);
-    Save.recordHistory(this.runSnapshot(earned));
+    const snap = this.runSnapshot(earned);
+    Save.recordHistory(snap);
+    Save.recordMastery(snap); // lifetime per-character / per-weapon totals
 
     // Ascension: surviving the unlock threshold opens the next difficulty.
     const next = DIFFICULTIES[this.diffIndex + 1];

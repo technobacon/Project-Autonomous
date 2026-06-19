@@ -178,8 +178,9 @@ detonates). Affixes stack on the new foes too, so a *Shielded Bomber* or a
 
 ## 🏆 Achievements, difficulty & the Codex
 
-- **28 achievements** with shard rewards and long-term goals — survive 15:00 to
-  unlock the secret character **Void**; hunt elites, slay a Champion, collect relics.
+- **30 achievements** with shard rewards and long-term goals — survive 15:00 to
+  unlock the secret character **Void**; hunt elites, slay a Champion, collect
+  relics, climb the mastery ranks.
 - **Ascension difficulties** — Normal → Hard → Nightmare → Abyss. Each scales
   enemies *and* shard rewards up, and unlocks by surviving a threshold on the
   tier below.
@@ -197,6 +198,19 @@ Omen and equipped Relics, plus score, kills, level and time. Your headline
 records (best time, best score, best Gauntlet round, total runs) sit at the top.
 Open it from the menu or straight from the game-over screen to track your
 progress and revisit your best builds.
+
+## 🎖 Mastery (lifetime progression)
+
+Beyond any single run, every game you finish builds **lifetime mastery**. Each
+**hero** accumulates kills, time survived, bosses felled and runs played into
+mastery points, climbing a rank ladder — **Untrained → Initiate → Adept →
+Veteran → Master → Ascendant** — shown with a progress bar toward the next rank.
+Every **weapon** you wield earns its own track too, lit up by how often you've
+used it, the levels you've reached and the evolutions you've unlocked (a 0–5★
+rating). Two achievements reward the climb (reach **Adept**, then **Master**,
+with any hero). It's a deliberate long-game: a reason to keep returning to a
+favourite hero, and to give every weapon a real run. Mastery is pure
+record-keeping — it's never read by the simulation, so it can't tip the Daily.
 
 ## ⚔ Gauntlet (boss rush)
 
@@ -256,19 +270,20 @@ tools/
 ## ✅ Tests
 
 A headless harness stubs the DOM/Canvas/WebAudio APIs and actually runs the
-game — a full simulated run, every weapon, all bosses, all 11 evolutions, all 28
+game — a full simulated run, every weapon, all bosses, all 11 evolutions, all 30
 achievements, every omen, the relic loadout system, the run-history Chronicle,
-the Gauntlet boss-rush flow, the elite/affix/champion system, the
-boomerang/poison-pool mechanics, difficulty scaling, level-ups, pickups, the
-polish FX (nebula, projectile trails, tiered damage numbers), the time-driven
-biome progression (palette + spawn bias + environmental hazards), the adaptive
-audio engine (limiter, combat SFX, boss-aware music), the first-run onboarding
-(intro + coaching tips), every UI screen, death, persistence, and the shop
-(300+ assertions):
+the lifetime-mastery system (ranks + per-hero/weapon accrual), the Gauntlet
+boss-rush flow, the elite/affix/champion system, the boomerang/poison-pool
+mechanics, difficulty scaling, level-ups, pickups, the polish FX (nebula,
+projectile trails, tiered damage numbers), the time-driven biome progression
+(palette + spawn bias + environmental hazards), the adaptive audio engine
+(limiter, combat SFX, boss-aware music), the first-run onboarding (intro +
+coaching tips), every UI screen, death, persistence, and the shop (320+
+assertions):
 
 ```bash
 npm test                          # functional + determinism suites
- node tools/headless-test.js       # functional suite (300+ assertions)
+ node tools/headless-test.js       # functional suite (320+ assertions)
 node tools/determinism-test.js    # proves Daily seeds are framerate/settings-independent
 node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```

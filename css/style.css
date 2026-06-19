@@ -295,3 +295,22 @@ html, body {
 .intro-step h3 { font-size: 15px; margin-bottom: 4px; color: #fff; }
 .intro-step p { font-size: 13px; color: var(--muted); line-height: 1.5; }
 .coach-line { color: #9ff0ff; font-size: 13px; margin: 2px 0 10px; opacity: 0.95; }
+
+/* ---- Lifetime Mastery screen ---- */
+.mast-section { width: 100%; text-align: left; margin: 14px 0 8px; color: var(--muted); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+.mast-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; width: 100%; }
+.mast-card { background: rgba(255,255,255,0.04); border: 1px solid var(--panel-border); border-radius: 12px; padding: 12px 14px; text-align: left; }
+.mast-card.locked { opacity: 0.55; }
+.mast-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.mast-hero { font-weight: 700; font-size: 15px; }
+.mast-rank { font-size: 11px; border: 1px solid; border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+.mast-bar { height: 6px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin: 9px 0 5px; }
+.mast-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+.mast-sub { font-size: 11px; color: var(--muted); }
+.mast-stats { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; font-size: 12px; color: #cdd6f4; }
+.wep-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; width: 100%; }
+.wep-mast { display: flex; flex-direction: column; align-items: center; gap: 3px; background: rgba(255,255,255,0.04); border: 1px solid var(--panel-border); border-radius: 10px; padding: 10px 6px; }
+.wep-mast.dim { opacity: 0.4; }
+.wep-ic { font-size: 22px; line-height: 1; }
+.wep-stars { font-size: 12px; color: #ffd84d; letter-spacing: 1px; }
+.wep-runs { font-size: 11px; color: var(--muted); }

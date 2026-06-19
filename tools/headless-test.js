@@ -669,6 +669,59 @@ globalThis.__run = function(report) {
     ok('render survives with hazards present', (g.render(), Number.isFinite(g.player.x)));
   });
 
+  // 11.11) Lifetime Mastery (v15): per-hero / per-weapon totals, ranks, goals.
+  sectionTry('mastery: ranks climb with points', () => {
+    ok('rank ladder is ordered', MASTERY_RANKS.length >= 4 && MASTERY_RANKS[0].min === 0 && MASTERY_RANKS[1].min > 0);
+    ok('zero points = lowest rank', masteryRank(0).index === 0);
+    ok('huge points = top rank', masteryRank(1e9).index === MASTERY_RANKS.length - 1 && masteryRank(1e9).prog === 1);
+    const r = masteryRank(MASTERY_RANKS[1].min);
+    ok('crossing a threshold advances + resets progress', r.index === 1 && r.prog >= 0 && r.prog < 1);
+    ok('char points reward kills/time/bosses/runs', charMasteryPoints({ kills: 100, time: 200, bosses: 2, runs: 3 }) === 100 + 100 + 80 + 60);
+  });
+  sectionTry('mastery: recordMastery accumulates per hero + weapon', () => {
+    Save.data.mastery = { chars: {}, weapons: {} };
+    Save.recordMastery({ char: 'ember', kills: 50, time: 120, bosses: 1, score: 9000, weapons: [{ id: 'flame', level: 8, evo: true }, { id: 'bolt', level: 4, evo: false }] });
+    Save.recordMastery({ char: 'ember', kills: 30, time: 80, bosses: 0, score: 4000, weapons: [{ id: 'flame', level: 6, evo: false }] });
+    const c = Save.charStats('ember');
+    ok('hero totals sum across runs', c.runs === 2 && c.kills === 80 && c.time === 200 && c.bosses === 1);
+    ok('hero best score keeps the max', c.bestScore === 9000 && c.bestTime === 120);
+    const fw = Save.weaponStats('flame');
+    ok('weapon use + evolutions + maxLevel tracked', fw.runs === 2 && fw.evolved === 1 && fw.maxLevel === 8);
+    ok('a second weapon is tracked independently', Save.weaponStats('bolt').runs === 1);
+  });
+  sectionTry('mastery: a real game-over folds into mastery', () => {
+    Save.data.mastery = { chars: {}, weapons: {} };
+    const g = new Game(document.getElementById('game')); g.start('frost', 0, { seed: 21 });
+    for (let i = 0; i < 60 * 6; i++) g.update(1 / 60);
+    g.kills = 40; g.player.invuln = 0; g.player.revives = 0; g.player.hurt(1e9);
+    const c = Save.charStats('frost');
+    ok('death recorded a run for the played hero', c && c.runs === 1);
+    ok('snapshot carried weapon ids into mastery', Object.keys(Save.data.mastery.weapons).length >= 1);
+  });
+  sectionTry('mastery: ranks gate the new achievements', () => {
+    Save.data.mastery = { chars: {}, weapons: {} };
+    Save.data.achievements = {};
+    const ctxLow = Achievements.context(null);
+    ok('no mastery => topCharMastery 0', ctxLow.topCharMastery === 0);
+    Save.data.mastery.chars.spark = { runs: 99, kills: 99999, time: 99999, bosses: 99, bestTime: 0, bestScore: 0 };
+    const ctxHigh = Achievements.context(null);
+    ok('deep mastery lifts topCharMastery to Master+', ctxHigh.topCharMastery >= 4);
+    ok('Adept + Grandmaster achievements exist', !!getAchievement('adept') && !!getAchievement('grandmaster'));
+    ok('Grandmaster check passes at Master rank', getAchievement('grandmaster').check(ctxHigh) === true);
+    Save.data.mastery = { chars: {}, weapons: {} }; Save.data.achievements = {};
+  });
+  sectionTry('mastery: screen renders empty and populated', () => {
+    const g = new Game(document.getElementById('game'));
+    UI.init(document.getElementById('overlay'), g);
+    Save.data.mastery = { chars: {}, weapons: {} };
+    UI.showMastery();
+    ok('empty state prompts a first run', /begin earning mastery/i.test(UI.root.innerHTML));
+    Save.recordMastery({ char: 'spark', kills: 200, time: 300, bosses: 2, score: 5000, weapons: [{ id: 'bolt', level: 8, evo: true }] });
+    UI.showMastery();
+    ok('populated screen shows ranks + weapons', /Heroes/.test(UI.root.innerHTML) && /Weapons/.test(UI.root.innerHTML) && /mast-fill/.test(UI.root.innerHTML));
+    Save.data.mastery = { chars: {}, weapons: {} };
+  });
+
   // 11.3) New content (v7): glaive (boomerang), toxin (zones), prism, Comet.
   sectionTry('content: new weapons + evolutions registered', () => {
     for (const id of ['glaive', 'toxin', 'prism']) ok('base weapon ' + id, !!getWeapon(id) && WEAPON_LIST.some(w => w.id === id));

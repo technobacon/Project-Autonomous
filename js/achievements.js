@@ -33,6 +33,8 @@ const ACHIEVEMENTS = [
   { id: 'champion_slayer', icon: '⚜', name: 'Champion Slayer',    desc: 'Defeat a Champion.',                     reward: 60,  check: c => c.championKills >= 1 },
   { id: 'relic_hunter', icon: '🔮', name: 'Relic Hunter',         desc: 'Unlock 6 relics.',                       reward: 60,  check: c => c.relicsUnlocked >= 6 },
   { id: 'attuned',      icon: '🧿', name: 'Attuned',              desc: 'Fill your relic loadout.',               reward: 40,  check: c => c.relicLoadoutFull },
+  { id: 'adept',        icon: '🎖', name: 'Adept',                desc: 'Reach Adept mastery with any hero.',     reward: 50,  check: c => c.topCharMastery >= 2 },
+  { id: 'grandmaster',  icon: '🏅', name: 'Grandmaster',          desc: 'Reach Master mastery with any hero.',    reward: 120, check: c => c.topCharMastery >= 4 },
 ];
 
 function getAchievement(id) { return ACHIEVEMENTS.find(a => a.id === id); }
@@ -62,6 +64,8 @@ const Achievements = {
       baseCharsUnlocked: CHARACTERS.filter(c => !c.secret && Save.isUnlocked(c.id)).length,
       baseCharsTotal: CHARACTERS.filter(c => !c.secret).length,
       enemiesSeen: Object.keys(ENEMY_TYPES).every(k => Save.isSeen('enemies', k)),
+      topCharMastery: CHARACTERS.reduce((best, ch) =>
+        Math.max(best, masteryRank(charMasteryPoints(Save.charStats(ch.id))).index), 0),
     };
   },
 

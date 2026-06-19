@@ -46,6 +46,7 @@ const UI = {
           <div class="menu-buttons row">
             <button class="btn" id="btn-ach">🏆 ${Save.achievementCount()}/${ACHIEVEMENTS.length}</button>
             <button class="btn" id="btn-codex">📖 CODEX</button>
+            <button class="btn" id="btn-mastery">🎖 MASTERY</button>
             <button class="btn" id="btn-history">📜 HISTORY</button>
             <button class="btn" id="btn-help">? HELP</button>
           </div>
@@ -71,6 +72,7 @@ const UI = {
     document.getElementById('btn-relics').onclick = () => { Audio2.uiSelect(); this.showRelics(); };
     document.getElementById('btn-ach').onclick = () => { Audio2.uiSelect(); this.showAchievements(); };
     document.getElementById('btn-codex').onclick = () => { Audio2.uiSelect(); this.showCodex(); };
+    document.getElementById('btn-mastery').onclick = () => { Audio2.uiSelect(); this.showMastery(); };
     document.getElementById('btn-history').onclick = () => { Audio2.uiSelect(); this.showHistory(); };
     document.getElementById('btn-help').onclick = () => { Audio2.uiSelect(); this.showHelp(); };
     document.getElementById('btn-sfx').onclick = (e) => { Audio2.resume(); const m = Audio2.toggleMute(); Save.data.muted = m; Save.save(); e.target.textContent = (m ? '🔇' : '🔊') + ' SFX'; };
@@ -100,6 +102,7 @@ const UI = {
           <div class="help-card"><h3>🌌 Biomes</h3><p>The world <b>shifts biome</b> every few minutes — new palette, new skies, and a lean toward different foes. The sequence is the same for a given seed, so the Daily stays fair.</p></div>
           <div class="help-card"><h3>⚠ Hazards</h3><p>Each biome past the first brings an <b>environmental hazard</b> — meteor strikes, frost pools, gloom, a bloodstorm. They're always <b>telegraphed</b> and hurt foes too: watch for the warning ring and <b>step out</b>.</p></div>
           <div class="help-card"><h3>📜 Chronicle</h3><p>Every run is logged in your <b>History</b> — its mode, character, build, score and time — so you can track your records and revisit your best runs.</p></div>
+          <div class="help-card"><h3>🎖 Mastery</h3><p>Every run builds <b>lifetime mastery</b> for the hero you played and the weapons you wielded. Climb the rank ladder — <b>Initiate → Ascendant</b> — for each one. A long-game goal beyond any single score.</p></div>
           <div class="help-card"><h3>⚙ Options</h3><p>From the menu, toggle <b>SFX</b>, <b>Music</b>, <b>screen shake</b>, and floating <b>damage numbers</b> to taste.</p></div>
         </div>
         <div class="menu-buttons row">
@@ -319,6 +322,63 @@ const UI = {
         </div>
         ${records}
         <div class="hist-list">${rows}</div>
+        <button class="btn" id="btn-back">← Back</button>
+      </div>`;
+    document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
+  },
+
+  // ---- Lifetime Mastery -------------------------------------------------
+  showMastery() {
+    this.clear(); this.show();
+    // Heroes worth showing: every non-secret character, plus any unlocked
+    // secret one. Each gets a rank badge + progress bar toward the next rank.
+    const heroes = CHARACTERS.filter(c => !c.secret || Save.isUnlocked(c.id));
+    const charCards = heroes.map(ch => {
+      const s = Save.charStats(ch.id);
+      const pts = charMasteryPoints(s);
+      const rk = masteryRank(pts);
+      const toNext = rk.next ? Math.max(0, rk.next.min - pts) : 0;
+      const locked = !Save.isUnlocked(ch.id);
+      return `
+        <div class="mast-card ${locked ? 'locked' : ''}">
+          <div class="mast-head">
+            <span class="mast-hero" style="color:${ch.color}">${locked ? '🔒 ' : ''}${ch.name}</span>
+            <span class="mast-rank" style="color:${rk.color};border-color:${rk.color}">${rk.name}</span>
+          </div>
+          <div class="mast-bar"><div class="mast-fill" style="width:${Math.round(rk.prog * 100)}%;background:${rk.color}"></div></div>
+          <div class="mast-sub">${rk.next ? `${formatNum(pts)} pts · ${formatNum(toNext)} to ${rk.next.name}` : `${formatNum(pts)} pts · max rank`}</div>
+          <div class="mast-stats">
+            <span>${s ? s.runs : 0} runs</span>
+            <span>☠ ${formatNum(s ? s.kills : 0)}</span>
+            <span>⏱ ${formatTime(s ? s.bestTime : 0)}</span>
+            <span>👑 ${formatNum(s ? s.bosses : 0)}</span>
+          </div>
+        </div>`;
+    }).join('');
+    // Weapon mastery: every base (non-evolved) weapon, lit by lifetime use.
+    const weps = WEAPON_LIST.filter(w => !w.evolved).map(w => {
+      const ws = Save.weaponStats(w.id);
+      const used = ws && ws.runs > 0;
+      const stars = Math.min(5, Math.floor(weaponMasteryPoints(ws) / 120));
+      return `
+        <div class="wep-mast ${used ? '' : 'dim'}" title="${w.name}">
+          <span class="wep-ic" style="color:${w.color}">${w.icon}</span>
+          <span class="wep-stars">${used ? '★'.repeat(stars) + '☆'.repeat(5 - stars) : '—'}</span>
+          <span class="wep-runs">${used ? ws.runs + '× · ' + (ws.evolved ? '🧬' + ws.evolved : 'Lv' + ws.maxLevel) : 'unused'}</span>
+        </div>`;
+    }).join('');
+    const playedAny = heroes.some(ch => Save.charStats(ch.id));
+    this.root.innerHTML = `
+      <div class="screen panel wide">
+        <div class="panel-head">
+          <h2>Mastery</h2>
+          <span class="shard-chip big">${Save.data.runs} run${Save.data.runs === 1 ? '' : 's'}</span>
+        </div>
+        ${playedAny ? '' : '<p class="empty-note">Play a run to begin earning mastery with your heroes and weapons.</p>'}
+        <h3 class="mast-section">Heroes</h3>
+        <div class="mast-grid">${charCards}</div>
+        <h3 class="mast-section">Weapons</h3>
+        <div class="wep-grid">${weps}</div>
         <button class="btn" id="btn-back">← Back</button>
       </div>`;
     document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };

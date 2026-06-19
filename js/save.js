@@ -5,6 +5,36 @@
 // codex (discovered enemies/weapons), and options.
 // ===========================================================================
 
+// ---- Lifetime mastery ranks -------------------------------------------------
+// Mastery accrues across every run (meta only — never read by the simulation,
+// so it can't influence fairness or determinism). A character earns "mastery
+// points" from cumulative kills, time survived, bosses felled and runs played;
+// those points climb through named ranks, giving a long-horizon goal for each
+// hero beyond a single run's high score.
+const MASTERY_RANKS = [
+  { name: 'Untrained', min: 0,     color: '#9aa6c4' },
+  { name: 'Initiate',  min: 250,   color: '#9ad8ff' },
+  { name: 'Adept',     min: 900,   color: '#7affc4' },
+  { name: 'Veteran',   min: 2400,  color: '#ffd84d' },
+  { name: 'Master',    min: 5500,  color: '#ff9a4d' },
+  { name: 'Ascendant', min: 12000, color: '#ff6b8a' },
+];
+function charMasteryPoints(s) {
+  if (!s) return 0;
+  return Math.floor((s.kills || 0) + (s.time || 0) / 2 + (s.bosses || 0) * 40 + (s.runs || 0) * 20);
+}
+function weaponMasteryPoints(s) {
+  if (!s) return 0;
+  return Math.floor((s.runs || 0) * 12 + (s.evolved || 0) * 80 + (s.maxLevel || 0) * 8);
+}
+function masteryRank(points) {
+  let idx = 0;
+  for (let i = 0; i < MASTERY_RANKS.length; i++) if (points >= MASTERY_RANKS[i].min) idx = i;
+  const cur = MASTERY_RANKS[idx], next = MASTERY_RANKS[idx + 1] || null;
+  const prog = next ? clamp((points - cur.min) / (next.min - cur.min), 0, 1) : 1;
+  return { index: idx, name: cur.name, color: cur.color, min: cur.min, next, prog, points };
+}
+
 const Save = {
   KEY: 'lastlight.save.v1',
   HISTORY_CAP: 30,           // how many recent runs to keep in the chronicle
@@ -28,6 +58,7 @@ const Save = {
       bestScore: 0,
       gauntletBest: { rounds: 0, score: 0 }, // boss-rush record
       history: [],               // recent run snapshots (most-recent first)
+      mastery: { chars: {}, weapons: {} }, // lifetime per-character / per-weapon totals
       runs: 0,
       totalKills: 0,
       bossKills: 0,
@@ -55,6 +86,9 @@ const Save = {
       this.data.dailyBest = Object.assign({}, this.data.dailyBest || {});
       this.data.gauntletBest = Object.assign(d.gauntletBest, this.data.gauntletBest || {});
       this.data.history = Array.isArray(this.data.history) ? this.data.history : [];
+      this.data.mastery = Object.assign({ chars: {}, weapons: {} }, this.data.mastery || {});
+      this.data.mastery.chars = Object.assign({}, this.data.mastery.chars || {});
+      this.data.mastery.weapons = Object.assign({}, this.data.mastery.weapons || {});
       this.data.tips = Object.assign({}, this.data.tips || {});
       this.data.achievements = Object.assign({}, this.data.achievements || {});
       this.data.seen = Object.assign(d.seen, this.data.seen || {});
@@ -147,6 +181,32 @@ const Save = {
     }
     this.save();
     return snap;
+  },
+
+  // ---- Lifetime mastery ----------------------------------------------------
+  charStats(id) { return (this.data.mastery && this.data.mastery.chars[id]) || null; },
+  weaponStats(id) { return (this.data.mastery && this.data.mastery.weapons[id]) || null; },
+  // Fold a finished run's snapshot into the lifetime mastery totals. Called at
+  // game over alongside recordHistory; pure record-keeping (never read by sim).
+  recordMastery(snap) {
+    if (!this.data.mastery) this.data.mastery = { chars: {}, weapons: {} };
+    const m = this.data.mastery;
+    const cid = snap.char || 'spark';
+    const c = m.chars[cid] || (m.chars[cid] = { runs: 0, kills: 0, time: 0, bosses: 0, bestTime: 0, bestScore: 0 });
+    c.runs++;
+    c.kills += snap.kills || 0;
+    c.time += snap.time || 0;
+    c.bosses += snap.bosses || 0;
+    if ((snap.time || 0) > c.bestTime) c.bestTime = snap.time || 0;
+    if ((snap.score || 0) > c.bestScore) c.bestScore = snap.score || 0;
+    for (const w of (snap.weapons || [])) {
+      if (!w.id) continue;
+      const ws = m.weapons[w.id] || (m.weapons[w.id] = { runs: 0, evolved: 0, maxLevel: 0 });
+      ws.runs++;
+      if (w.evo) ws.evolved++;
+      if ((w.level || 0) > ws.maxLevel) ws.maxLevel = w.level || 0;
+    }
+    this.save();
   },
 
   recordRun(time, score, kills, bosses) {
