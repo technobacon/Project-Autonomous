@@ -601,6 +601,74 @@ globalThis.__run = function(report) {
     Save.data.tips = {}; Save.data.seenIntro = true; // tidy for later sections
   });
 
+  // 11.10) Biome hazards (v14): telegraphed strikes + lingering fields.
+  sectionTry('hazards: registry shape per biome', () => {
+    const verge = BIOMES.find(b => b.id === 'verge');
+    ok('the opening Verge has no hazard', !verge.hazard);
+    for (const b of BIOMES.filter(x => x.hazard)) {
+      const h = b.hazard;
+      ok(b.id + ' hazard well-formed', (h.kind === 'strike' || h.kind === 'field') &&
+        Array.isArray(h.every) && Array.isArray(h.radius) && typeof h.warn === 'number' &&
+        typeof h.name === 'string' && typeof h.icon === 'string');
+    }
+  });
+  sectionTry('hazards: none spawn in the Verge', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 3 });
+    for (let i = 0; i < 60 * 30; i++) g.update(1 / 60); // 30s, all within the Verge
+    ok('no hazards while in the calm opening stage', g.hazards.length === 0 && g.biome.id === 'verge');
+  });
+  sectionTry('hazards: a strike telegraphs then detonates AoE', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 5 });
+    const hz = BIOMES.find(b => b.id === 'emberwaste').hazard;
+    g.spawnHazard(hz);
+    const h = g.hazards[0];
+    ok('begins in the warning phase', h.phase === 'warn' && h.dmg > 0);
+    const e = g.spawnEnemy('brute', h.x, h.y, 6, 1); const ehp = e.hp;
+    g.player.x = h.x; g.player.y = h.y; g.player.invuln = 0; const php = g.player.hp;
+    g.buildGrid();
+    g.updateHazards(hz.warn + 0.02); // cross the telegraph -> detonate
+    ok('strike resolved (player + foe both hit)', g.player.hp < php && e.hp < ehp);
+    ok('strike leaves the warn phase', h.phase === 'fade');
+  });
+  sectionTry('hazards: a field lingers, damaging + slowing inside', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 6 });
+    const hz = BIOMES.find(b => b.id === 'glacier').hazard;
+    g.spawnHazard(hz);
+    const h = g.hazards[0];
+    g.updateHazards(hz.warn + 0.01); // warn -> active
+    ok('field becomes active after the warning', h.phase === 'active');
+    const e = g.spawnEnemy('drifter', h.x, h.y, 6, 1); const ehp = e.hp;
+    g.player.x = h.x; g.player.y = h.y; g.player.invuln = 0; const php = g.player.hp;
+    g.buildGrid();
+    g.updateHazards(0.26); // one damage tick
+    ok('field ticks damage to player + foe', g.player.hp < php && e.hp < ehp);
+    ok('field slows foes inside it', e.slowAmount >= hz.slow - 1e-9 && e.slowTimer > 0);
+  });
+  sectionTry('hazards: dodging out of a strike avoids all damage', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 7 });
+    const hz = BIOMES.find(b => b.id === 'bloodmoon').hazard;
+    g.spawnHazard(hz);
+    const h = g.hazards[0];
+    g.player.x = h.x + h.r + 400; g.player.y = h.y; g.player.invuln = 0; const php = g.player.hp;
+    g.buildGrid();
+    g.updateHazards(hz.warn + 0.02);
+    ok('a player clear of the ring takes no hit', g.player.hp === php);
+  });
+  sectionTry('hazards: entering a hazardous biome arms + warns', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 8 });
+    g.toasts = []; g.time = BIOME_SECONDS + 0.1; g.updateBiome(0.1); // -> Emberwaste
+    ok('hazard timer armed on entry', g._hazardTimer > 0);
+    ok('a hazard warning toast is shown', g.toasts.some(t => /Emberfall/.test(t.msg)));
+  });
+  sectionTry('hazards: live run inside a hazard biome stays finite', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 9 });
+    g.time = BIOME_SECONDS * 4 + 1; // deep into a hazardous (Bloodmoon) stage
+    let spawned = false;
+    for (let i = 0; i < 60 * 12; i++) { g.update(1 / 60); if (g.hazards.length) spawned = true; if (!g.player.alive) break; }
+    ok('hazards actually spawn in a hazardous biome', spawned);
+    ok('render survives with hazards present', (g.render(), Number.isFinite(g.player.x)));
+  });
+
   // 11.3) New content (v7): glaive (boomerang), toxin (zones), prism, Comet.
   sectionTry('content: new weapons + evolutions registered', () => {
     for (const id of ['glaive', 'toxin', 'prism']) ok('base weapon ' + id, !!getWeapon(id) && WEAPON_LIST.some(w => w.id === id));

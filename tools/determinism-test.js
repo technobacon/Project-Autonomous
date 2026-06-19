@@ -57,6 +57,9 @@ globalThis.__det = function(report) {
     // Deterministic, input-only movement (a pure function of the step index).
     Input.moveVector = () => ({ x: Math.cos(step * 0.13) * 0.8, y: Math.sin(step * 0.17) * 0.8 });
     game.start('spark', 0, o.daily ? { daily: true, date: '2026-06-18' } : { seed: o.seed });
+    // Optionally jump the clock forward to exercise a later (hazardous) biome
+    // without simulating the full lead-up. Deterministic for a given (seed, warp).
+    if (o.warp) game.time = o.warp;
     for (let i = 0; i < o.steps; i++) {
       step = i;
       game.update(1 / 60);
@@ -69,10 +72,13 @@ globalThis.__det = function(report) {
   function hashState(g) {
     let ehp = 0, ex = 0, ey = 0;
     for (const e of g.enemies) { ehp += e.hp; ex += e.x; ey += e.y; }
+    let hx = 0, hy = 0, hp = '';
+    for (const h of g.hazards) { hx += h.x; hy += h.y; hp += h.phase[0]; }
     return [g.time.toFixed(3), g.kills, g.score, g.player.level, g.player.hp.toFixed(3),
       g.player.x.toFixed(3), g.player.y.toFixed(3), g.enemies.length, ehp.toFixed(2),
       ex.toFixed(2), ey.toFixed(2), g.gems.length, g.projectiles.length,
-      g.eliteKills, g.championKills, g.enemyProjectiles.length, g.zones.length].join('|');
+      g.eliteKills, g.championKills, g.enemyProjectiles.length, g.zones.length,
+      g.hazards.length, hx.toFixed(2), hy.toFixed(2), hp].join('|');
   }
 
   const results = { passed: [], failed: [] };
@@ -96,6 +102,12 @@ globalThis.__det = function(report) {
   // Daily seeds are reproducible for a given date.
   const day = runSim({ daily: true });
   eq('daily same date -> identical run', day, runSim({ daily: true }));
+
+  // Environmental hazards live in the sim path: warping into a hazardous biome
+  // (Glacial Rift, ~300s) must reproduce the exact same hazard sequence.
+  const haz = runSim({ seed: SEED, warp: 305, steps: 1200 });
+  eq('hazards deterministic (same seed, warped biome)', haz, runSim({ seed: SEED, warp: 305, steps: 1200 }));
+  ne('hazards differ by seed (warped biome)', haz, runSim({ seed: SEED + 7, warp: 305, steps: 1200 }));
 
   report(results);
 };

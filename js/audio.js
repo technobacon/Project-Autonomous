@@ -139,6 +139,9 @@ const Audio2 = {
   championWarn() { [150, 188, 252].forEach((f, i) => setTimeout(() => this.blip(f, 0.45, 'sawtooth', 0.2, 70), i * 110)); this.noise(0.55, 0.16, 420); },
   // A soft, airy swell when the world shifts into a new biome.
   biomeShift() { [392, 523, 659].forEach((f, i) => setTimeout(() => this.blip(f, 0.5, 'sine', 0.12, 40), i * 90)); },
+  // An environmental hazard detonating — a low, gritty thud. Gated so a dense
+  // Bloodstorm of strikes stays punchy instead of a wall of noise.
+  hazardHit()  { if (!this._gate('hazard', 70)) return; this.noise(0.22, 0.20, 600); this.blip(vrand(90, 120), 0.18, 'square', 0.16, -50); },
 
   // ---- Procedural music -------------------------------------------------
   // An evolving minor arpeggio whose tempo, brightness and harmony respond to

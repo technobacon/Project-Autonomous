@@ -6,21 +6,38 @@
 
 // Biomes: the world visibly transforms as a run endures. The active biome is a
 // pure function of elapsed time (deterministic — Daily stays fair), driving the
-// background palette/nebula tint AND a mild spawn bias toward thematic foes
-// (which archetypes appear, never the difficulty curve). After the list it
-// cycles, so a long run keeps shifting scenery.
+// background palette/nebula tint, a mild spawn bias toward thematic foes (which
+// archetypes appear, never the difficulty curve) AND a signature environmental
+// hazard (see below). After the list it cycles, so a long run keeps shifting.
+//
+// Hazards make each stage mechanically distinct, not just a repaint. Every one
+// is telegraphed (a warning phase before it bites) so it rewards the same
+// move-to-survive instinct the whole game runs on, and every one hurts foes too
+// — the world is dangerous to everything, not just the player. Two mechanics:
+//   • 'strike' — a telegraphed impact: a warning ring, then a single AoE blast.
+//   • 'field'  — a lingering area that damages (and may slow) anything inside.
+// The Verge (the opening stage) has none, keeping the first ~2.5 min clean for
+// newcomers. Spawn timing/positions use the seeded sim RNG → fully deterministic.
 const BIOME_SECONDS = 150; // ~2.5 minutes per biome
 const BIOMES = [
   { id: 'verge', name: 'The Verge', base: '#05060d', grid: 'rgba(80,110,200,0.07)', accent: '#9ad8ff',
-    nebula: [[88, 120, 255], [150, 90, 255], [120, 160, 255]], bias: {} },
+    nebula: [[88, 120, 255], [150, 90, 255], [120, 160, 255]], bias: {}, hazard: null },
   { id: 'emberwaste', name: 'Emberwaste', base: '#0d0604', grid: 'rgba(200,90,40,0.08)', accent: '#ff9a4d',
-    nebula: [[255, 120, 60], [255, 80, 40], [200, 60, 30]], bias: { charger: 1.7, runner: 1.4 } },
+    nebula: [[255, 120, 60], [255, 80, 40], [200, 60, 30]], bias: { charger: 1.7, runner: 1.4 },
+    hazard: { kind: 'strike', name: 'Emberfall', icon: '☄', warnTip: 'meteors rain — dodge the rings',
+      every: [2.4, 3.8], count: [1, 2], radius: [70, 112], warn: 1.15, dmg: 15, color: '#ff7a3c' } },
   { id: 'glacier', name: 'Glacial Rift', base: '#040a0e', grid: 'rgba(90,180,220,0.08)', accent: '#9ff0ff',
-    nebula: [[80, 200, 230], [120, 220, 255], [180, 240, 255]], bias: { brute: 1.7, drifter: 1.4 } },
+    nebula: [[80, 200, 230], [120, 220, 255], [180, 240, 255]], bias: { brute: 1.7, drifter: 1.4 },
+    hazard: { kind: 'field', name: 'Frost Fields', icon: '❄', warnTip: 'frost pools slow and bite',
+      every: [3.0, 4.4], count: [1, 1], radius: [96, 134], warn: 0.85, dur: 5.0, dot: 7, slow: 0.5, color: '#9fe8ff' } },
   { id: 'hollow', name: 'The Hollows', base: '#080510', grid: 'rgba(150,90,220,0.08)', accent: '#c89bff',
-    nebula: [[150, 90, 255], [120, 60, 200], [200, 120, 255]], bias: { wraith: 1.7, stalker: 1.7 } },
+    nebula: [[150, 90, 255], [120, 60, 200], [200, 120, 255]], bias: { wraith: 1.7, stalker: 1.7 },
+    hazard: { kind: 'field', name: 'Gloom', icon: '◍', warnTip: 'gloom pools eat the light — keep out',
+      every: [2.6, 3.9], count: [1, 2], radius: [80, 118], warn: 0.7, dur: 4.5, dot: 12, slow: 0, color: '#b58bff' } },
   { id: 'bloodmoon', name: 'Bloodmoon', base: '#0e0406', grid: 'rgba(220,60,90,0.09)', accent: '#ff6b8a',
-    nebula: [[255, 70, 110], [220, 40, 80], [255, 120, 150]], bias: { bomber: 1.6, swarm: 1.5 } },
+    nebula: [[255, 70, 110], [220, 40, 80], [255, 120, 150]], bias: { bomber: 1.6, swarm: 1.5 },
+    hazard: { kind: 'strike', name: 'Bloodstorm', icon: '✷', warnTip: 'a storm of strikes — stay mobile',
+      every: [1.5, 2.6], count: [1, 3], radius: [82, 122], warn: 0.95, dmg: 17, color: '#ff5d7a' } },
 ];
 function biomeForTime(t) { return BIOMES[Math.floor(Math.max(0, t) / BIOME_SECONDS) % BIOMES.length]; }
 function biomeIndexForTime(t) { return Math.floor(Math.max(0, t) / BIOME_SECONDS); }
@@ -76,8 +93,10 @@ class Game {
     this.shake_ = { mag: 0, t: 0 };
     this.toasts = [];
     this.biomeIndex = 0;          // which biome stage we're in (time-driven)
-    this.biome = BIOMES[0];       // current biome (palette + spawn bias)
+    this.biome = BIOMES[0];       // current biome (palette + spawn bias + hazard)
     this._biomeFlash = 0;         // cosmetic transition wash (decays)
+    this.hazards = [];            // active environmental hazards (seeded; in-sim)
+    this._hazardTimer = 0;        // countdown to the next hazard spawn (seeded)
     this._coaching = false;       // first-run coaching tips active?
     this.activeBoss = null;
     this.pendingLevels = 0;
@@ -599,10 +618,15 @@ class Game {
     this.biomeIndex = idx;
     this.biome = BIOMES[idx % BIOMES.length];
     this._buildNebula();           // cosmetic retint (vrand only)
+    // Grace period before the new stage's hazard begins (seeded for fairness),
+    // so entering a biome never lands an instant unavoidable hit.
+    this._hazardTimer = this.biome.hazard ? rand(2.0, 3.5) : 0;
     if (!first) {
       this._biomeFlash = 1;
       this.toast('❖ Entering ' + this.biome.name);
       Audio2.biomeShift();
+      const hz = this.biome.hazard;
+      if (hz) this.toast(hz.icon + ' ' + hz.name + ' — ' + hz.warnTip, hz.color, 4.0);
     }
   }
 
@@ -746,6 +770,7 @@ class Game {
     this.updateEnemyProjectiles(dt);
     this.updateNovas(dt);
     this.updateZones(dt);
+    this.updateHazards(dt);
     this.updateGems(dt);
     this.updatePickups(dt);
     this.particles.update(dt);
@@ -1066,6 +1091,84 @@ class Game {
     }
   }
 
+  // ---- Environmental hazards -------------------------------------------
+  // Drive the current biome's signature hazard. Spawn cadence and positions
+  // come from the seeded sim RNG (rand/randInt), so a seed reproduces the exact
+  // same sequence of strikes — Daily and replays stay perfectly fair.
+  updateHazards(dt) {
+    const hz = this.biome && this.biome.hazard;
+    if (hz && this.player && this.player.alive) {
+      this._hazardTimer -= dt;
+      if (this._hazardTimer <= 0) {
+        this._hazardTimer = rand(hz.every[0], hz.every[1]);
+        const n = hz.count ? randInt(hz.count[0], hz.count[1]) : 1;
+        for (let k = 0; k < n; k++) this.spawnHazard(hz);
+      }
+    }
+    // Advance every live hazard regardless of biome, so one mid-flight when the
+    // stage changes still resolves cleanly.
+    for (let i = this.hazards.length - 1; i >= 0; i--) {
+      const h = this.hazards[i];
+      h.t += dt;
+      if (h.phase === 'warn') {
+        if (h.t >= h.warn) {
+          h.t = 0;
+          if (h.kind === 'strike') { this._detonateStrike(h); h.phase = 'fade'; }
+          else { h.phase = 'active'; }
+        }
+      } else if (h.phase === 'active') {
+        // Lingering field: tick damage/slow to anything standing inside.
+        h.tick -= dt;
+        if (h.tick <= 0) {
+          h.tick = 0.25;
+          this._fieldTick(h);
+        }
+        if (h.t >= h.dur) { h.phase = 'fade'; h.t = 0; }
+      } else { // 'fade' — brief visual settle, then gone.
+        if (h.t >= h.fade) this.hazards.splice(i, 1);
+      }
+    }
+  }
+
+  spawnHazard(hz) {
+    // Aim near the player (a band around them) so hazards are relevant but
+    // always dodgeable. Strikes can land where the player stands — that's the
+    // point: keep moving. Clamped to the world.
+    const ang = rand(0, TAU);
+    const dist = rand(0, 300);
+    const r = rand(hz.radius[0], hz.radius[1]);
+    const x = clamp(this.player.x + Math.cos(ang) * dist, 40, this.world.w - 40);
+    const y = clamp(this.player.y + Math.sin(ang) * dist, 40, this.world.h - 40);
+    this.hazards.push({
+      kind: hz.kind, x, y, r, color: hz.color,
+      dmg: hz.dmg || 0, dot: hz.dot || 0, slow: hz.slow || 0,
+      warn: hz.warn, dur: hz.dur || 0, fade: hz.kind === 'strike' ? 0.35 : 0.5,
+      phase: 'warn', t: 0, tick: 0,
+    });
+  }
+
+  _detonateStrike(h) {
+    // One-shot AoE: hits the player and every foe in range. Telegraphed, so a
+    // standing player has had ~1s of warning to clear out.
+    const p = this.player;
+    if (p.alive && dist2(h.x, h.y, p.x, p.y) <= h.r * h.r) p.hurt(h.dmg);
+    for (const e of this.enemiesInRadius(h.x, h.y, h.r)) {
+      this.dealDamage(e, h.dmg * 1.5, h.x, h.y, 180, true);
+    }
+    this.nova(h.x, h.y, h.r, 0, 0, h.color); // cosmetic shock ring (0 dmg; also shakes)
+    Audio2.hazardHit();
+    this.particles.burst(h.x, h.y, 14, { color: h.color, speed: rand(120, 300), life: 0.5 });
+  }
+
+  _fieldTick(h) {
+    const p = this.player;
+    if (p.alive && dist2(h.x, h.y, p.x, p.y) <= h.r * h.r) p.hurt(h.dot * 0.25);
+    for (const e of this.enemiesInRadius(h.x, h.y, h.r)) {
+      this.dealDamage(e, h.dot * 0.25, h.x, h.y, 0, true);
+      if (h.slow > 0 && !e.dead) { e.slowAmount = Math.max(e.slowAmount, h.slow); e.slowTimer = Math.max(e.slowTimer, 0.5); }
+    }
+  }
+
   updateGems(dt) {
     const p = this.player;
     const range = p.pickupRange;
@@ -1151,6 +1254,7 @@ class Game {
 
     if (this.player) {
       this._drawWorldBounds(ctx, cam);
+      this._drawHazards(ctx, cam);
       this._drawZones(ctx, cam);
       this._drawGems(ctx, cam);
       this._drawPickups(ctx, cam);
@@ -1369,6 +1473,46 @@ class Game {
       ctx.lineWidth = 6 * a + 2;
       ctx.shadowBlur = 20; ctx.shadowColor = n.color;
       ctx.beginPath(); ctx.arc(n.x - cam.x, n.y - cam.y, n.r, 0, TAU); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  _drawHazards(ctx, cam) {
+    ctx.save();
+    for (const h of this.hazards) {
+      const x = h.x - cam.x, y = h.y - cam.y;
+      if (x < -h.r - 20 || y < -h.r - 20 || x > this.view.w + h.r + 20 || y > this.view.h + h.r + 20) continue;
+      if (h.phase === 'warn') {
+        // Telegraph: a brightening boundary ring plus a closing "incoming" ring
+        // that converges on the impact point as the warning runs out.
+        const prog = clamp(h.t / h.warn, 0, 1);
+        const pulse = 0.5 + 0.5 * Math.sin(this.time * 14);
+        ctx.globalAlpha = 0.25 + 0.45 * prog;
+        ctx.fillStyle = h.color + '22';
+        ctx.beginPath(); ctx.arc(x, y, h.r, 0, TAU); ctx.fill();
+        ctx.globalAlpha = 0.5 + 0.5 * prog;
+        ctx.strokeStyle = h.color;
+        ctx.lineWidth = 2 + 2 * pulse;
+        ctx.beginPath(); ctx.arc(x, y, h.r, 0, TAU); ctx.stroke();
+        ctx.globalAlpha = 0.7 * (1 - prog) + 0.3;
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(x, y, h.r * (1 - prog * 0.85), 0, TAU); ctx.stroke();
+      } else {
+        // Active field / settling strike: soft radial body, fading out.
+        const a = h.phase === 'fade' ? clamp(1 - h.t / h.fade, 0, 1)
+          : clamp(1 - (h.t / h.dur) * 0.5, 0.4, 1);
+        const r = h.r * (1 + Math.sin(h.t * 4) * 0.05);
+        const g = ctx.createRadialGradient(x, y, r * 0.12, x, y, r);
+        g.addColorStop(0, h.color + '77');
+        g.addColorStop(0.65, h.color + '2a');
+        g.addColorStop(1, h.color + '00');
+        ctx.globalAlpha = 0.5 + 0.4 * a;
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+        ctx.globalAlpha = 0.4 * a;
+        ctx.strokeStyle = h.color; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke();
+      }
     }
     ctx.restore();
   }

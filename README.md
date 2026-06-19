@@ -140,6 +140,25 @@ favours brutes, the Hollows crawl with wraiths and stalkers…) — it changes
 long run keeps changing scenery. Because the active biome is a pure function of
 elapsed time, it's identical for a given seed — the Daily Challenge stays fair.
 
+Each biome past the opening also carries a **signature hazard** — an
+environmental danger that turns the stage from a repaint into its own arena:
+
+- **Emberwaste — *Emberfall*:** meteors rain down. A warning ring blooms, then
+  the impact detonates in an AoE blast.
+- **Glacial Rift — *Frost Fields*:** chilling pools open and linger, slowing and
+  biting anything that stands in them.
+- **The Hollows — *Gloom*:** patches of devouring dark settle on the field and
+  eat at the light while you're inside.
+- **Bloodmoon — *Bloodstorm*:** a relentless, fast cadence of strikes — keep
+  moving or get caught.
+
+Every hazard is **telegraphed** (a warning phase before it bites), hurts
+**enemies as well as you**, and is always dodgeable — so it rewards the same
+move-to-survive instinct the whole game runs on. *The Verge* (the first ~2½
+minutes) stays clean, easing newcomers in. Spawn timing and positions come from
+the seeded simulation, so hazards are perfectly reproducible — the Daily stays
+fair.
+
 ## ⭐ Elites & Champions
 
 The dark isn't just fodder. Any foe can spawn as a glowing **elite** — scaled
@@ -226,7 +245,7 @@ js/
   modifiers.js      # "omens" — drafted per-run modifiers
   relics.js         # permanent, equippable run modifiers (loadout)
   player.js         # player entity, stat recalculation, leveling
-  game.js           # engine: world, biomes, camera, collision, combat, render, HUD
+  game.js           # engine: world, biomes + hazards, camera, collision, combat, render, HUD
   ui.js             # DOM overlays: menu, shop, level-up, achievements, codex…
   main.js           # bootstrap + fixed-timestep loop + global keys
 tools/
@@ -242,13 +261,14 @@ achievements, every omen, the relic loadout system, the run-history Chronicle,
 the Gauntlet boss-rush flow, the elite/affix/champion system, the
 boomerang/poison-pool mechanics, difficulty scaling, level-ups, pickups, the
 polish FX (nebula, projectile trails, tiered damage numbers), the time-driven
-biome progression (palette + spawn bias), the adaptive audio engine (limiter,
-combat SFX, boss-aware music), the first-run onboarding (intro + coaching tips),
-every UI screen, death, persistence, and the shop (270+ assertions):
+biome progression (palette + spawn bias + environmental hazards), the adaptive
+audio engine (limiter, combat SFX, boss-aware music), the first-run onboarding
+(intro + coaching tips), every UI screen, death, persistence, and the shop
+(300+ assertions):
 
 ```bash
 npm test                          # functional + determinism suites
- node tools/headless-test.js       # functional suite (270+ assertions)
+ node tools/headless-test.js       # functional suite (300+ assertions)
 node tools/determinism-test.js    # proves Daily seeds are framerate/settings-independent
 node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```
