@@ -77,11 +77,12 @@ class Player {
     this.critMult += mod.critDmgBonus;
     this.armor += mod.armorBonus;
     this.luck += mod.luckBonus;
+    this.regen += (mod.regenBonus || 0);
     newMax = Math.round(newMax * mod.hpMul);
 
     if (initHp) {
       this.maxHp = newMax; this.hp = newMax;
-      this.revives = m('revival');
+      this.revives = m('revival') + (mod.reviveBonus || 0);
     } else {
       this.maxHp = newMax;
     }

@@ -264,3 +264,8 @@ html, body {
   .title { letter-spacing: 3px; }
   .stats-row { gap: 14px; }
 }
+
+/* Relics: equipped state on the shop-card layout. */
+.relic-card.equipped { border-color: var(--c, #c9a8ff); box-shadow: 0 0 0 1px var(--c, #c9a8ff), 0 0 18px -6px var(--c, #c9a8ff); }
+.shop-buy.relic-eq.on { background: var(--c, #c9a8ff); color: #0a0b12; border-color: var(--c, #c9a8ff); }
+.relic-card.locked { opacity: 0.78; }

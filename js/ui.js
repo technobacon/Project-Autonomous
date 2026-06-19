@@ -42,6 +42,7 @@ const UI = {
           <button class="btn" id="btn-gauntlet">⚔ GAUNTLET${this._gauntletChip()}</button>
           <button class="btn" id="btn-daily">🗓 DAILY CHALLENGE${this._dailyChip()}</button>
           <button class="btn" id="btn-shop">⚙ SANCTUARY <span class="shard-chip">✦ ${formatNum(d.shards)}</span></button>
+          <button class="btn" id="btn-relics">🔮 RELICS <span class="shard-chip">${Save.relicCount()}/${RELIC_LIST.length}</span></button>
           <div class="menu-buttons row">
             <button class="btn" id="btn-ach">🏆 ${Save.achievementCount()}/${ACHIEVEMENTS.length}</button>
             <button class="btn" id="btn-codex">📖 CODEX</button>
@@ -66,6 +67,7 @@ const UI = {
     document.getElementById('btn-gauntlet').onclick = () => { Audio2.uiSelect(); this.showCharacterSelect('gauntlet'); };
     document.getElementById('btn-daily').onclick = () => { Audio2.uiSelect(); this.hide(); App.startRun('spark', 0, { daily: true }); };
     document.getElementById('btn-shop').onclick = () => { Audio2.uiSelect(); this.showShop(); };
+    document.getElementById('btn-relics').onclick = () => { Audio2.uiSelect(); this.showRelics(); };
     document.getElementById('btn-ach').onclick = () => { Audio2.uiSelect(); this.showAchievements(); };
     document.getElementById('btn-codex').onclick = () => { Audio2.uiSelect(); this.showCodex(); };
     document.getElementById('btn-help').onclick = () => { Audio2.uiSelect(); this.showHelp(); };
@@ -92,6 +94,7 @@ const UI = {
           <div class="help-card"><h3>⚔ Gauntlet</h3><p>A boss-rush mode: <b>endless rounds of bosses</b>, escalating each time, with a short breather between. You start with extra upgrades — how many rounds can you clear?</p></div>
           <div class="help-card"><h3>⭐ Elites &amp; Champions</h3><p>Glowing <b>elite</b> foes carry an affix and drop extra loot; <b>Champions</b> are named two-affix mini-bosses with a chest. Affixes: ${AFFIX_LIST.map(a => `<b style="color:${a.color}">${a.name}</b>`).join(', ')}.</p></div>
           <div class="help-card"><h3>🗓 Daily</h3><p>A <b>seeded</b> run that's the same for everyone today. Pure skill — beat your own best score each day.</p></div>
+          <div class="help-card"><h3>🔮 Relics</h3><p>Spend shards to <b>unlock relics</b> (some gated behind achievements), then <b>equip</b> a few into your loadout for permanent bonuses. Collect more to earn extra slots.</p></div>
           <div class="help-card"><h3>⚙ Options</h3><p>From the menu, toggle <b>SFX</b>, <b>Music</b>, <b>screen shake</b>, and floating <b>damage numbers</b> to taste.</p></div>
         </div>
         <button class="btn btn-primary" id="btn-back">← Back</button>
@@ -314,6 +317,61 @@ const UI = {
     };
   },
 
+  // ---- Relics (permanent equippable modifiers) --------------------------
+  showRelics() {
+    this.clear(); this.show();
+    const slots = Save.relicSlotCount();
+    const used = Save.equippedRelics().length;
+    const cards = RELIC_LIST.map(r => {
+      const owned = Save.isRelicUnlocked(r.id);
+      const equipped = Save.isEquipped(r.id);
+      const gate = r.achievement ? getAchievement(r.achievement) : null;
+      const gateMet = !gate || Save.hasAchievement(r.achievement);
+      const affordable = Save.data.shards >= r.cost;
+      let action;
+      if (owned) action = `<button class="shop-buy relic-eq ${equipped ? 'on' : ''}" data-eq="${r.id}">${equipped ? '✓ Equipped' : 'Equip'}</button>`;
+      else if (!gateMet) action = `<div class="shop-buy maxed-tag">🔒 ${gate.name}</div>`;
+      else action = `<button class="shop-buy ${affordable ? '' : 'disabled'}" data-buy="${r.id}">✦ ${r.cost}</button>`;
+      return `
+        <div class="shop-card relic-card ${owned ? '' : 'locked'} ${equipped ? 'equipped' : ''}" style="--c:${r.color}">
+          <div class="shop-icon" style="color:${r.color}">${owned || gateMet ? r.icon : '🔒'}</div>
+          <div class="shop-info">
+            <h3 style="color:${owned || gateMet ? r.color : ''}">${r.name}</h3>
+            <p>${r.desc}</p>
+            ${gate && !owned ? `<p class="hint">Unlocks via: ${gate.name}</p>` : ''}
+          </div>
+          ${action}
+        </div>`;
+    }).join('');
+    this.root.innerHTML = `
+      <div class="screen panel wide">
+        <div class="panel-head">
+          <h2>Relics</h2>
+          <span class="shard-chip big">✦ ${formatNum(Save.data.shards)}</span>
+        </div>
+        <p class="tagline small">Unlock relics, then equip up to <b>${slots}</b> — <b>${used}/${slots}</b> slots used. Collect more relics to earn slots. (The Daily Challenge ignores relics.)</p>
+        <div class="shop-grid">${cards}</div>
+        <button class="btn" id="btn-back">← Back</button>
+      </div>`;
+    this.root.querySelectorAll('.shop-buy[data-buy]').forEach(b => {
+      b.onclick = () => {
+        const r = getRelic(b.dataset.buy);
+        if (r && !Save.isRelicUnlocked(r.id) && Save.data.shards >= r.cost && Save.spendShards(r.cost)) {
+          Save.unlockRelic(r.id); Audio2.buy(); this.showRelics();
+        } else Audio2.deny();
+      };
+    });
+    this.root.querySelectorAll('.shop-buy[data-eq]').forEach(b => {
+      b.onclick = () => {
+        const was = Save.isEquipped(b.dataset.eq);
+        const now = Save.toggleEquip(b.dataset.eq);
+        if (!was && !now) Audio2.deny(); else Audio2.uiSelect(); // deny = loadout full
+        this.showRelics();
+      };
+    });
+    document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
+  },
+
   // ---- Level up ---------------------------------------------------------
   showLevelUp(game, choices) {
     this.clear(); this.show();
@@ -405,13 +463,15 @@ const UI = {
       ? `<p class="new-best" ${game.lastGauntlet.isNew ? '' : 'style="color:var(--muted)"'}>${game.lastGauntlet.isNew ? '★ New Gauntlet Best — Round ' + game.gauntletCleared + '!' : 'Gauntlet best: Round ' + game.lastGauntlet.best.rounds}</p>`
       : '';
     const omenTag = game.omen ? `<span class="diff-chip" style="color:${game.omen.color};border-color:${game.omen.color}">${game.omen.icon} ${game.omen.name}</span>` : '';
+    const relicTag = (game.relics && game.relics.length)
+      ? `<span class="diff-chip" style="color:#c9a8ff;border-color:#c9a8ff">🔮 ${game.relics.map(id => { const r = getRelic(id); return r ? r.icon : ''; }).join(' ')}</span>` : '';
     const dailyBlock = (game.daily && game.lastDaily)
       ? `<p class="new-best" ${game.lastDaily.isNew ? '' : 'style="color:var(--muted)"'}>${game.lastDaily.isNew ? '★ New Daily Best!' : 'Daily best: ' + formatNum(game.lastDaily.best.score) + ' (' + formatTime(game.lastDaily.best.time) + ')'}</p>`
       : '';
     this.root.innerHTML = `
       <div class="screen panel">
         <h2 class="gameover-title">The light fades…</h2>
-        ${diffTag} ${omenTag}
+        ${diffTag} ${omenTag} ${relicTag}
         ${dailyBlock}
         ${gauntletBlock}
         ${!game.daily && !gauntlet && newBest ? '<p class="new-best">★ New Best Time! ★</p>' : ''}

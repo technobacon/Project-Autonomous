@@ -100,7 +100,7 @@ sandbox.document = {
 
 // ---- Load & concatenate the game source (skip main.js auto-init) ---------
 const order = ['utils', 'audio', 'input', 'particles', 'save', 'content',
-  'weapons', 'evolutions', 'enemies', 'upgrades', 'achievements', 'modifiers', 'player', 'game', 'ui'];
+  'weapons', 'evolutions', 'enemies', 'upgrades', 'achievements', 'modifiers', 'relics', 'player', 'game', 'ui'];
 let src = '';
 for (const f of order) src += fs.readFileSync(path.join(__dirname, '..', 'js', f + '.js'), 'utf8') + '\n;\n';
 
@@ -407,6 +407,56 @@ globalThis.__run = function(report) {
     g.eliteKills = 25; g.championKills = 1; Achievements.check(g);
     ok('elite_hunter unlocks', Save.hasAchievement('elite_hunter'));
     ok('champion_slayer unlocks', Save.hasAchievement('champion_slayer'));
+  });
+
+  // 11.45) Relics (v9): unlock/equip loadout + effects fold into game.mods.
+  sectionTry('relics: registry + slot ramp', () => {
+    ok('RELIC_LIST non-empty', RELIC_LIST.length >= 12 && !!getRelic('glass_lens'));
+    ok('slot ramp 2/3/4 capped', relicSlots(0) === 2 && relicSlots(4) === 3 && relicSlots(8) === 4 && relicSlots(99) === 4);
+  });
+  sectionTry('relics: applyRelics folds into mods', () => {
+    const m = defaultMods(); applyRelics(m, ['glass_lens', 'titan_heart']);
+    ok('glass lens raises damage', Math.abs(m.dmgMul - 1.25) < 1e-9);
+    ok('relics stack hp mults', Math.abs(m.hpMul - (0.85 * 1.30)) < 1e-9);
+    const m2 = defaultMods(); applyRelics(m2, ['phoenix_feather', 'mending_root']);
+    ok('phoenix adds revive', m2.reviveBonus === 1);
+    ok('mending adds regen', Math.abs(m2.regenBonus - 1.0) < 1e-9);
+  });
+  sectionTry('relics: save unlock/equip + slot cap', () => {
+    Save.data.relics = {}; Save.data.equipped = [];
+    ['glass_lens', 'titan_heart', 'chrono_core', 'feathercharm', 'magnetar'].forEach(id => Save.unlockRelic(id));
+    ok('5 relics -> 3 slots', Save.relicSlotCount() === 3);
+    Save.toggleEquip('glass_lens'); Save.toggleEquip('titan_heart'); Save.toggleEquip('chrono_core');
+    ok('3 equipped', Save.equippedRelics().length === 3);
+    Save.toggleEquip('feathercharm');
+    ok('cannot exceed slots', !Save.isEquipped('feathercharm') && Save.equippedRelics().length === 3);
+    Save.toggleEquip('glass_lens');
+    ok('unequip frees a slot', Save.equippedRelics().length === 2 && !Save.isEquipped('glass_lens'));
+  });
+  sectionTry('relics: applied at run start, daily ignores them', () => {
+    Save.data.relics = {}; Save.data.equipped = [];
+    const g0 = new Game(document.getElementById('game')); g0.start('spark', 0, { seed: 2 });
+    const baseMax = g0.player.maxHp;
+    Save.unlockRelic('titan_heart'); Save.toggleEquip('titan_heart');
+    const g1 = new Game(document.getElementById('game')); g1.start('spark', 0, { seed: 2 });
+    ok('titan heart raises maxHp', g1.player.maxHp > baseMax);
+    ok('relic active in run', g1.relics.indexOf('titan_heart') >= 0);
+    Save.unlockRelic('phoenix_feather'); Save.toggleEquip('phoenix_feather');
+    const g2 = new Game(document.getElementById('game')); g2.start('spark', 0, { seed: 2 });
+    ok('phoenix grants a revive', g2.player.revives >= 1);
+    const gd = new Game(document.getElementById('game')); gd.start('spark', 0, { daily: true, date: '2026-06-18' });
+    ok('daily ignores relics', gd.relics.length === 0);
+  });
+  sectionTry('relics: achievements (hunter + attuned)', () => {
+    Save.data.achievements = {}; Save.data.relics = {}; Save.data.equipped = [];
+    ['glass_lens', 'titan_heart', 'chrono_core', 'feathercharm', 'magnetar', 'wide_eye'].forEach(id => Save.unlockRelic(id));
+    Achievements.check(new Game(document.getElementById('game')));
+    ok('relic_hunter unlocks at 6', Save.hasAchievement('relic_hunter'));
+    Save.toggleEquip('glass_lens'); Save.toggleEquip('titan_heart'); Save.toggleEquip('chrono_core');
+    Achievements.check(new Game(document.getElementById('game')));
+    ok('attuned unlocks on full loadout', Save.hasAchievement('attuned'));
+    // Clean up so equipped relics don't leak into later sections.
+    Save.data.relics = {}; Save.data.equipped = [];
   });
 
   // 11.3) New content (v7): glaive (boomerang), toxin (zones), prism, Comet.

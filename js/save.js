@@ -17,6 +17,8 @@ const Save = {
         haste: 0, armor: 0, luck: 0, regen: 0, revival: 0,
       },
       unlocked: { spark: true }, // characters unlocked (spark is free)
+      relics: {},                // unlocked relic ids (id -> true)
+      equipped: [],              // currently-equipped relic ids (loadout)
       dailyBest: {},             // 'YYYY-MM-DD' -> { time, score }
       achievements: {},          // id -> true
       seen: { enemies: {}, weapons: {} }, // codex discovery
@@ -45,6 +47,8 @@ const Save = {
       const d = this.defaults();
       this.data.meta = Object.assign(d.meta, this.data.meta || {});
       this.data.unlocked = Object.assign(d.unlocked, this.data.unlocked || {});
+      this.data.relics = Object.assign({}, this.data.relics || {});
+      this.data.equipped = Array.isArray(this.data.equipped) ? this.data.equipped : [];
       this.data.dailyBest = Object.assign({}, this.data.dailyBest || {});
       this.data.gauntletBest = Object.assign(d.gauntletBest, this.data.gauntletBest || {});
       this.data.achievements = Object.assign({}, this.data.achievements || {});
@@ -73,6 +77,25 @@ const Save = {
 
   unlock(charId) { this.data.unlocked[charId] = true; this.save(); },
   isUnlocked(charId) { return !!this.data.unlocked[charId]; },
+
+  // ---- Relics --------------------------------------------------------------
+  isRelicUnlocked(id) { return !!this.data.relics[id]; },
+  relicCount() { return Object.keys(this.data.relics).length; },
+  unlockRelic(id) { this.data.relics[id] = true; this.save(); },
+  relicSlotCount() { return relicSlots(this.relicCount()); },
+  isEquipped(id) { return this.data.equipped.indexOf(id) >= 0; },
+  equippedRelics() {
+    // Filter to still-unlocked, valid ids and cap at the current slot count.
+    return this.data.equipped.filter(id => this.isRelicUnlocked(id)).slice(0, this.relicSlotCount());
+  },
+  // Toggle a relic in/out of the loadout. Returns true if now equipped.
+  toggleEquip(id) {
+    if (!this.isRelicUnlocked(id)) return false;
+    const i = this.data.equipped.indexOf(id);
+    if (i >= 0) { this.data.equipped.splice(i, 1); this.save(); return false; }
+    if (this.data.equipped.length >= this.relicSlotCount()) return this.isEquipped(id); // full
+    this.data.equipped.push(id); this.save(); return true;
+  },
 
   hasAchievement(id) { return !!this.data.achievements[id]; },
   grantAchievement(id) { this.data.achievements[id] = true; this.save(); },

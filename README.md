@@ -92,6 +92,19 @@ hit), *Vampiric* (heal on kill), *Greed* (+80% shards, tougher foes), *Colossal*
 *Featherweight*, *Executioner*, *Bulwark*, *Abundance*, and more. Every run
 opens differently.
 
+## 🔮 Relics (permanent loadout)
+
+Where Omens are random and per-run, **Relics are permanent and chosen**. Spend
+shards to **unlock** relics — several are gated behind achievements for a long
+unlock arc — then **equip** a few into a limited loadout that carries into every
+run. There are **17**, e.g. *Titan Heart* (+30% max HP), *Glass Lens* (+25%
+damage, −15% HP), *Chrono Core* (+18% attack speed), *Keenstone* (crit chance &
+damage), *Vampiric Charm* (heal on kill), *Phoenix Feather* (an extra revive),
+and the master-tier *Void Shard*. You start with **2 equip slots and earn more
+as you collect relics** (up to 4), so you deliberately craft a build identity
+before the run even begins. (The Daily Challenge ignores relics so its
+leaderboard stays fair.)
+
 ## ✨ Game feel
 
 LASTLIGHT leans into **juice**: a slow drifting **nebula** behind the parallax
@@ -122,8 +135,8 @@ detonates). Affixes stack on the new foes too, so a *Shielded Bomber* or a
 
 ## 🏆 Achievements, difficulty & the Codex
 
-- **26 achievements** with shard rewards and long-term goals — survive 15:00 to
-  unlock the secret character **Void**; hunt elites and slay a Champion.
+- **28 achievements** with shard rewards and long-term goals — survive 15:00 to
+  unlock the secret character **Void**; hunt elites, slay a Champion, collect relics.
 - **Ascension difficulties** — Normal → Hard → Nightmare → Abyss. Each scales
   enemies *and* shard rewards up, and unlocks by surviving a threshold on the
   tier below.
@@ -176,6 +189,8 @@ js/
   enemies.js        # enemy archetypes + affixes + the spawn Director + bosses/champions
   upgrades.js       # passives + level-up choice generator
   achievements.js   # achievement definitions + live/game-over checker
+  modifiers.js      # "omens" — drafted per-run modifiers
+  relics.js         # permanent, equippable run modifiers (loadout)
   player.js         # player entity, stat recalculation, leveling
   game.js           # engine: world, camera, collision, combat, render, HUD
   ui.js             # DOM overlays: menu, shop, level-up, achievements, codex…
@@ -188,15 +203,15 @@ tools/
 ## ✅ Tests
 
 A headless harness stubs the DOM/Canvas/WebAudio APIs and actually runs the
-game — a full simulated run, every weapon, all bosses, all 11 evolutions, all 26
-achievements, every omen, the Gauntlet boss-rush flow, the elite/affix/champion
-system, the boomerang/poison-pool mechanics, difficulty scaling, level-ups,
-pickups, the polish FX (nebula, projectile trails, tiered damage numbers), every
-UI screen, death, persistence, and the shop (200+ assertions):
+game — a full simulated run, every weapon, all bosses, all 11 evolutions, all 28
+achievements, every omen, the relic loadout system, the Gauntlet boss-rush flow,
+the elite/affix/champion system, the boomerang/poison-pool mechanics, difficulty
+scaling, level-ups, pickups, the polish FX (nebula, projectile trails, tiered
+damage numbers), every UI screen, death, persistence, and the shop (220+ assertions):
 
 ```bash
 npm test                          # functional + determinism suites
-node tools/headless-test.js       # functional suite (200+ assertions)
+ node tools/headless-test.js       # functional suite (220+ assertions)
 node tools/determinism-test.js    # proves Daily seeds are framerate/settings-independent
 node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```

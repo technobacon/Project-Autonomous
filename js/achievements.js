@@ -31,6 +31,8 @@ const ACHIEVEMENTS = [
   { id: 'champion',     icon: '🏛', name: 'Champion of Light',    desc: 'Clear 10 rounds of the Gauntlet.',       reward: 120, check: c => c.gauntletRound >= 10 },
   { id: 'elite_hunter', icon: '⭐', name: 'Elite Hunter',         desc: 'Defeat 25 elites in one run.',           reward: 50,  check: c => c.eliteKills >= 25 },
   { id: 'champion_slayer', icon: '⚜', name: 'Champion Slayer',    desc: 'Defeat a Champion.',                     reward: 60,  check: c => c.championKills >= 1 },
+  { id: 'relic_hunter', icon: '🔮', name: 'Relic Hunter',         desc: 'Unlock 6 relics.',                       reward: 60,  check: c => c.relicsUnlocked >= 6 },
+  { id: 'attuned',      icon: '🧿', name: 'Attuned',              desc: 'Fill your relic loadout.',               reward: 40,  check: c => c.relicLoadoutFull },
 ];
 
 function getAchievement(id) { return ACHIEVEMENTS.find(a => a.id === id); }
@@ -54,6 +56,8 @@ const Achievements = {
       gauntletRound: game ? (game.gauntletCleared || 0) : 0,
       eliteKills: game ? (game.eliteKills || 0) : 0,
       championKills: game ? (game.championKills || 0) : 0,
+      relicsUnlocked: Save.relicCount(),
+      relicLoadoutFull: Save.equippedRelics().length >= Save.relicSlotCount(),
       save: s,
       baseCharsUnlocked: CHARACTERS.filter(c => !c.secret && Save.isUnlocked(c.id)).length,
       baseCharsTotal: CHARACTERS.filter(c => !c.secret).length,

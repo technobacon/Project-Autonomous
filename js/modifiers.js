@@ -17,6 +17,8 @@ function defaultMods() {
     berserk: false,   // bonus damage scaling with missing HP
     lifesteal: 0,     // fraction of max HP healed per kill (+1 flat)
     extraChoice: false,
+    reviveBonus: 0,   // extra revives (relics)
+    regenBonus: 0,    // flat hp/sec regen added (relics)
   };
 }
 

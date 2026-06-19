@@ -65,6 +65,7 @@ class Game {
     this.gauntletCleared = 0;  // highest round fully cleared
     this.mods = defaultMods(); // run modifier ("omen") effects
     this.omen = null;
+    this.relics = [];          // equipped relic ids active this run
     // Run-tracking for achievements / scoring.
     this.damageTaken = 0;
     this.firstHitTime = null;
@@ -137,6 +138,10 @@ class Game {
     // stat tweaks are baked into recalc().
     this.omen = getModifier(opts.omen);
     this.mods = buildMods(opts.omen);
+    // Equipped relics fold their effects into the same modifier pipeline. The
+    // Daily Challenge ignores relics so its leaderboard stays fair for everyone.
+    this.relics = (this.daily || opts.noRelics) ? [] : Save.equippedRelics();
+    applyRelics(this.mods, this.relics);
     this.diffIndex = clamp(diffIndex, 0, DIFFICULTIES.length - 1);
     this.diff = getDifficulty(this.diffIndex);
     const char = getCharacter(charId);
