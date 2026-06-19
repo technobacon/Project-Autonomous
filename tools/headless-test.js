@@ -58,6 +58,7 @@ class FakeAudioContext {
   createBuffer(ch, len) { return { getChannelData: () => new Float32Array(len) }; }
   createBufferSource() { return { buffer: null, connect() {}, start() {} }; }
   createBiquadFilter() { return { type: '', frequency: { value: 0 }, connect() {} }; }
+  createDynamicsCompressor() { return { threshold: { value: 0 }, knee: { value: 0 }, ratio: { value: 0 }, attack: { value: 0 }, release: { value: 0 }, connect() {} }; }
   resume() {}
 }
 
@@ -495,6 +496,45 @@ globalThis.__run = function(report) {
     Save.recordHistory({ t: Date.now(), mode: 'gauntlet', char: 'spark', charName: 'Spark', charColor: '#fff', diff: 2, diffName: 'Nightmare', diffColor: '#f00', time: 200, score: 5000, kills: 300, bosses: 4, level: 22, rounds: 6, relics: ['glass_lens'], omenIcon: '☠', omenColor: '#f00', weapons: [{ icon: '✦', color: '#fff', level: 8, evo: true }], shards: 99 });
     UI.showHistory();
     Save.data.history = [];
+  });
+
+  // 11.7) Audio pass (v11): limiter, new combat SFX, adaptive/boss music.
+  sectionTry('audio: limiter + new combat SFX build cleanly', () => {
+    Audio2.enabled = true; Audio2.muted = false; Audio2.musicMuted = false;
+    Audio2.init();
+    ok('master chain + limiter built', !!Audio2.master && !!Audio2.sfxGain && !!Audio2.musicGain && !!Audio2.limiter);
+    Audio2.crit(); Audio2.eliteDie(); Audio2.championWarn(); Audio2.enemyDie();
+    ok('new SFX callable without throwing', true);
+  });
+  sectionTry('audio: gate throttles repeated sounds', () => {
+    Audio2._gates = {};
+    const a = Audio2._gate('t', 1e6), b = Audio2._gate('t', 1e6);
+    ok('first allowed, immediate repeat blocked', a === true && b === false);
+  });
+  sectionTry('audio: intensity & boss mode drive tempo', () => {
+    Audio2.setBossMode(false); Audio2.setIntensity(0);
+    const calm = Audio2._targetInterval();
+    Audio2.setIntensity(1);
+    const fast = Audio2._targetInterval();
+    ok('higher intensity => faster tempo', fast < calm);
+    Audio2.setBossMode(true);
+    ok('boss mode flagged + tempo not slower', Audio2._bossMode === true && Audio2._targetInterval() <= fast);
+    Audio2.setBossMode(false);
+  });
+  sectionTry('audio: music starts and stops cleanly', () => {
+    Audio2.startMusic(0);
+    ok('music started', Audio2._started === true);
+    Audio2.setIntensity(0.8);      // exercise retempo + volume swell
+    Audio2.stopMusic();
+    ok('music stopped + boss reset', Audio2._started === false && Audio2._bossMode === false);
+  });
+  sectionTry('audio: a live Champion flips boss music', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 9 });
+    Audio2.setBossMode(false);
+    const c = g.spawnEnemy('brute', g.player.x + 200, g.player.y, 5, 1);
+    g.makeChampion(c, 1);
+    g.update(1 / 60);
+    ok('boss mode engaged while a Champion lives', Audio2._bossMode === true);
   });
 
   // 11.3) New content (v7): glaive (boomerang), toxin (zones), prism, Comet.

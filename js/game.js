@@ -282,7 +282,7 @@ class Game {
     e.champion = true; e.boss = false; // champions are NOT bosses (own bar/rewards)
     this.makeElite(e, 2, true);
     e.eliteName = pick(CHAMPION_NAMES);
-    Audio2.bossWarn();
+    Audio2.championWarn();
     this.shake(10, 0.5);
     this.toast('☠ ' + e.eliteName + ' — a Champion rises!');
     return e;
@@ -394,6 +394,7 @@ class Game {
     // numbers and flashes (they hit many foes many times per second).
     this.particles.spray(e.x, e.y, a, silent ? 1 : (crit ? 8 : 4), 0.6, { color: e.color, speed: rand(60, 160), life: 0.4 });
     if (!silent) {
+      if (crit) Audio2.crit(); // rewarding ping (self-throttled in Audio2)
       // Bright impact flash at the point of contact (cosmetic — no seeded RNG).
       this.particles.spawn(e.x, e.y, { color: crit ? '#fff36b' : '#ffffff',
         size: crit ? 6 : 3.5, life: 0.12, speed: 0, angle: 0, drag: 0, glow: true });
@@ -458,7 +459,7 @@ class Game {
       this.spawnPickup(e.x + 26, e.y, 'health');
       this.toast('✦ ' + (e.eliteName || 'Champion') + ' slain!');
     } else {
-      Audio2.enemyDie();
+      if (e.elite) Audio2.eliteDie(); else Audio2.enemyDie();
       this.particles.burst(e.x, e.y, e.radius > 18 ? 14 : 7, { color: e.color, speed: rand(60, 220), life: rand(0.3, 0.6) });
       this.spawnGem(e.x, e.y, e.xp);
       // Elites drop a little extra loot.
@@ -699,8 +700,13 @@ class Game {
       if (this.shake_.t <= 0) { this.shake_.mag = 0; this.cam.sx = this.cam.sy = 0; }
     }
 
-    // Music intensity scales with time + boss presence.
-    Audio2.setIntensity(clamp(this.time / 300 + (this.activeBoss ? 0.4 : 0), 0, 1));
+    // Adaptive music: intensity scales with time, boss/champion presence and
+    // how crowded the field is; a boss or Champion flips the darker arrangement.
+    const champ = this.enemies.some(e => e.champion);
+    const bossish = !!this.activeBoss || champ;
+    Audio2.setBossMode(bossish);
+    const dens = clamp(this.enemies.length / 140, 0, 0.2);
+    Audio2.setIntensity(clamp(this.time / 360 + (this.activeBoss ? 0.45 : 0) + (champ ? 0.2 : 0) + dens, 0, 1));
   }
 
   updateEnemies(dt) {

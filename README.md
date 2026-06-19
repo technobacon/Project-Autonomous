@@ -116,6 +116,13 @@ is cosmetic and isolated from the seeded simulation, so the Daily Challenge
 stays bit-for-bit fair. Prefer it cleaner? Toggle **screen shake** and
 **damage numbers** off in the menu.
 
+The **audio** is fully synthesized and reactive: a master limiter keeps dense
+fights clean, critical hits *ping*, elites pop richer than fodder, and a
+Champion announces itself with a rising sting. The **music adapts** — the
+minor-key arpeggio quickens and brightens as the run heats up, then shifts into
+a darker, driving arrangement (with a tritone tension layer) whenever a boss or
+Champion is on the field.
+
 ## ⭐ Elites & Champions
 
 The dark isn't just fodder. Any foe can spawn as a glowing **elite** — scaled
@@ -189,7 +196,7 @@ index.html          # shell; loads scripts in dependency order
 css/style.css       # neon-on-dark UI
 js/
   utils.js          # math, RNG, helpers, object pool
-  audio.js          # procedural Web Audio SFX + evolving music
+  audio.js          # procedural Web Audio SFX + adaptive, boss-aware music
   input.js          # keyboard / pointer / touch
   particles.js      # particle + floating-text system
   save.js           # localStorage meta-progression
@@ -217,12 +224,13 @@ game — a full simulated run, every weapon, all bosses, all 11 evolutions, all 
 achievements, every omen, the relic loadout system, the run-history Chronicle,
 the Gauntlet boss-rush flow, the elite/affix/champion system, the
 boomerang/poison-pool mechanics, difficulty scaling, level-ups, pickups, the
-polish FX (nebula, projectile trails, tiered damage numbers), every UI screen,
-death, persistence, and the shop (230+ assertions):
+polish FX (nebula, projectile trails, tiered damage numbers), the adaptive
+audio engine (limiter, combat SFX, boss-aware music), every UI screen, death,
+persistence, and the shop (250+ assertions):
 
 ```bash
 npm test                          # functional + determinism suites
- node tools/headless-test.js       # functional suite (230+ assertions)
+ node tools/headless-test.js       # functional suite (250+ assertions)
 node tools/determinism-test.js    # proves Daily seeds are framerate/settings-independent
 node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```
