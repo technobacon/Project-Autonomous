@@ -328,6 +328,87 @@ globalThis.__run = function(report) {
     UI.showOmenDraft('spark', 0);   // builds without error
   });
 
+  // 11.4) Elites, affixes, champions, new foes (v8).
+  sectionTry('elites: data + new archetypes registered', () => {
+    ok('stalker archetype', !!ENEMY_TYPES.stalker && ENEMY_TYPES.stalker.ai === 'stalker');
+    ok('bomber archetype', !!ENEMY_TYPES.bomber && ENEMY_TYPES.bomber.ai === 'bomber' && ENEMY_TYPES.bomber.explodes === true);
+    ok('AFFIXES table has 6', Object.keys(AFFIXES).length === 6);
+  });
+  sectionTry('elites: makeElite scales + assigns affix', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 3 });
+    const e = g.spawnEnemy('drifter', g.player.x + 120, g.player.y, 1, 1);
+    const baseHp = e.maxHp, baseDmg = e.damage, baseXp = e.xp;
+    g.makeElite(e, 1, false);
+    ok('elite flagged', e.elite === true);
+    ok('elite has 1 affix', e.affixes.length === 1);
+    ok('elite hp scaled up', e.maxHp > baseHp && e.hp === e.maxHp);
+    ok('elite damage + xp scaled', e.damage > baseDmg && e.xp > baseXp);
+  });
+  sectionTry('elites: hardened resists, shield absorbs', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 4 });
+    g.player.crit = 0; // remove crit variance for exact arithmetic
+    const e = g.spawnEnemy('brute', g.player.x + 80, g.player.y, 1, 1);
+    g._applyAffix(e, 'hardened'); e.maxHp = e.hp;
+    const hp0 = e.hp; g.dealDamage(e, 100, g.player.x, g.player.y, 0);
+    ok('hardened reduces damage taken', (hp0 - e.hp) < 100 && (hp0 - e.hp) > 0);
+    const s = g.spawnEnemy('brute', g.player.x + 80, g.player.y, 1, 1);
+    g._applyAffix(s, 'shielded'); const shp = s.hp, shield = s.shield;
+    g.dealDamage(s, shield * 0.5, g.player.x, g.player.y, 0);
+    ok('shield absorbs (hp intact)', s.hp === shp && s.shield < shield);
+    g.dealDamage(s, shield, g.player.x, g.player.y, 0);
+    ok('hp drops once shield is gone', s.hp < shp);
+  });
+  sectionTry('elites: regen heals, volatile bursts, arcane fires', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 5 });
+    g.player.weapons = []; // isolate affix behavior from the player's own damage
+    const r = g.spawnEnemy('brute', g.player.x + 300, g.player.y, 1, 1);
+    g._applyAffix(r, 'regen'); r.hp = r.maxHp * 0.5; const h0 = r.hp;
+    for (let i = 0; i < 90; i++) g.update(1 / 60);
+    ok('regen healed over time', r.hp > h0);
+    const v = g.spawnEnemy('brute', g.player.x + 80, g.player.y, 1, 1);
+    g._applyAffix(v, 'volatile'); const proj0 = g.enemyProjectiles.length;
+    g.killEnemy(v);
+    ok('volatile burst on death', g.enemyProjectiles.length > proj0);
+    // Arcane: freeze a dummy at range (and the player) so its purple bolt is
+    // observable in flight rather than being absorbed on the same frame.
+    const a = g.spawnEnemy('brute', g.player.x + 220, g.player.y, 1, 1);
+    a.speed = 0; g._applyAffix(a, 'arcane');
+    const savedMV = Input.moveVector; Input.moveVector = () => ({ x: 0, y: 0 });
+    let fired = false;
+    for (let i = 0; i < 60 * 4 && !fired; i++) { g.player.invuln = 9999; g.update(1 / 60); if (g.enemyProjectiles.some(pr => pr.color === '#c98bff')) fired = true; }
+    Input.moveVector = savedMV;
+    ok('arcane fires bolts', fired);
+  });
+  sectionTry('elites: bomber detonates safely in the update loop', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 6 });
+    const b = g.spawnEnemy('bomber', g.player.x + 40, g.player.y, 1, 1);
+    const id = b.id; const proj0 = g.enemyProjectiles.length;
+    let gone = false;
+    for (let i = 0; i < 60 * 3 && !gone; i++) { g.update(1 / 60); if (!g.enemies.some(en => en.id === id)) gone = true; }
+    ok('bomber detonated + removed', gone);
+    ok('bomber burst projectiles', g.enemyProjectiles.length > proj0);
+    ok('player state finite after bomber', Number.isFinite(g.player.hp) && Number.isFinite(g.player.x));
+  });
+  sectionTry('elites: champion event + rewards + achievements', () => {
+    Save.data.achievements = {};
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 7 });
+    const e = g.spawnEnemy('brute', g.player.x + 200, g.player.y, 1, 1);
+    g.makeChampion(e, 2);
+    ok('champion flagged (not boss)', e.champion === true && e.boss === false);
+    ok('champion has 2 affixes + name', e.affixes.length === 2 && !!e.eliteName);
+    const pickups0 = g.pickups.length;
+    g.dealDamage(e, 1e9, g.player.x, g.player.y, 0);
+    ok('championKills incremented', g.championKills === 1);
+    ok('champion dropped a chest', g.pickups.some(k => k.kind === 'chest'));
+    // Elite kill counter.
+    const el = g.spawnEnemy('drifter', g.player.x + 60, g.player.y, 1, 1); g.makeElite(el, 1, false);
+    const ek0 = g.eliteKills; g.dealDamage(el, 1e9, g.player.x, g.player.y, 0);
+    ok('eliteKills incremented', g.eliteKills === ek0 + 1);
+    g.eliteKills = 25; g.championKills = 1; Achievements.check(g);
+    ok('elite_hunter unlocks', Save.hasAchievement('elite_hunter'));
+    ok('champion_slayer unlocks', Save.hasAchievement('champion_slayer'));
+  });
+
   // 11.3) New content (v7): glaive (boomerang), toxin (zones), prism, Comet.
   sectionTry('content: new weapons + evolutions registered', () => {
     for (const id of ['glaive', 'toxin', 'prism']) ok('base weapon ' + id, !!getWeapon(id) && WEAPON_LIST.some(w => w.id === id));

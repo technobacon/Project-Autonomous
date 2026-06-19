@@ -49,6 +49,8 @@ class Game {
     this.time = 0;
     this.kills = 0;
     this.bossKills = 0;
+    this.eliteKills = 0;
+    this.championKills = 0;
     this.score = 0;
     this.shake_ = { mag: 0, t: 0 };
     this.toasts = [];
@@ -240,10 +242,56 @@ class Game {
       ai: def.ai, flash: 0, slowAmount: 0, slowTimer: 0, burn: 0, dead: false,
       boss: !!def.boss, shootTimer: rand(0.3, (def.shootCd || 2)), state: 0, stateT: 0,
       spawnT: 0,
+      // Elite / affix state (inert by default; uniform shape keeps the hot loops fast).
+      elite: false, champion: false, affixes: [], eliteName: null, auraColor: null,
+      dmgResist: 0, regen: 0, shield: 0, shieldMax: 0,
+      arcane: false, affixShootTimer: 0, volatile: !!def.explodes, fuse: 0,
     };
     this.enemies.push(e);
     Save.markSeen('enemies', def.id);
     return e;
+  }
+
+  // ---- Elites & affixes -------------------------------------------------
+  // Promote an enemy to an elite: scale it up, then layer on affixes. Scaling
+  // is applied BEFORE affixes so affix multipliers (e.g. Hardened) compose on
+  // top, and composes ON TOP of difficulty/omen multipliers already baked into
+  // the base stats. Uses seeded RNG only (called from the sim/spawn path).
+  makeElite(e, affixCount = 1, isChampion = false) {
+    if (!e || e.boss) return e;
+    e.elite = true;
+    const s = isChampion ? 3.4 : 1.7;
+    e.maxHp *= s; e.hp = e.maxHp;
+    e.radius *= isChampion ? 1.9 : 1.35;
+    e.damage *= isChampion ? 2.0 : 1.4;
+    e.xp = Math.ceil(e.xp * (isChampion ? 8 : 3));
+    const ids = shuffle(Object.keys(AFFIXES)).slice(0, affixCount);
+    for (const id of ids) { e.affixes.push(AFFIXES[id]); this._applyAffix(e, id); }
+    e.auraColor = isChampion ? '#ffd84d' : (e.affixes[0] ? e.affixes[0].color : '#ffd84d');
+    e.maxHp = e.hp; // re-sync so the health bar reads full after all multipliers
+    return e;
+  }
+
+  makeChampion(e, min = 0) {
+    if (!e) return e;
+    e.champion = true; e.boss = false; // champions are NOT bosses (own bar/rewards)
+    this.makeElite(e, 2, true);
+    e.eliteName = pick(CHAMPION_NAMES);
+    Audio2.bossWarn();
+    this.shake(10, 0.5);
+    this.toast('☠ ' + e.eliteName + ' — a Champion rises!');
+    return e;
+  }
+
+  _applyAffix(e, id) {
+    switch (id) {
+      case 'swift':    e.speed *= 1.6; break;
+      case 'hardened': e.dmgResist = 0.5; e.hp *= 1.6; e.maxHp = e.hp; break;
+      case 'regen':    e.regen = e.maxHp * 0.04; break;
+      case 'volatile': e.volatile = true; break;
+      case 'arcane':   e.arcane = true; e.affixShootTimer = rand(0.6, 1.4); break;
+      case 'shielded': e.shield = e.maxHp * 0.6; e.shieldMax = e.shield; break;
+    }
   }
 
   spawnProjectile(o) {
@@ -328,6 +376,12 @@ class Game {
     let dmg = amount * (crit ? this.player.critMult : 1);
     // Berserker omen: bonus damage scaling with the player's missing health.
     if (this.mods.berserk) dmg *= 1 + (1 - this.player.hp / this.player.maxHp);
+    // Affixes: Hardened resists, Shielded absorbs a burst before health is hit.
+    if (e.dmgResist) dmg *= (1 - e.dmgResist);
+    if (e.shield > 0 && dmg > 0) {
+      const absorbed = Math.min(e.shield, dmg);
+      e.shield -= absorbed; dmg -= absorbed;
+    }
     e.hp -= dmg;
     e.flash = 0.08;
     const a = angleTo(fromX, fromY, e.x, e.y);
@@ -365,7 +419,18 @@ class Game {
     // Vampiric omen: heal a little on each kill.
     if (this.mods.lifesteal && this.player.alive) this.player.heal(1 + this.player.maxHp * this.mods.lifesteal);
 
-    // XP gems — bosses shower the player with them.
+    // Volatile (affix / Bomber type): erupt a ring of projectiles. Only touches
+    // enemyProjectiles, so it is safe to call from inside the updateEnemies loop.
+    if (e.volatile) {
+      const n = e.type.burstN || 10;
+      const base = rand(0, TAU);
+      const bdmg = e.type.burstDmg || Math.max(8, e.damage * 0.6);
+      for (let k = 0; k < n; k++) this.spawnEnemyProjectile(e.x, e.y, base + (k / n) * TAU, e.type.burstSpeed || 200, bdmg, '#ff8a3c');
+      this.particles.burst(e.x, e.y, 18, { color: '#ff7a3c', speed: rand(120, 300), life: rand(0.4, 0.8) });
+      Audio2.blip(120, 0.18, 'sawtooth', 0.16, -120);
+    }
+
+    // XP gems — bosses & champions shower the player with them.
     if (e.boss) {
       this.bossKills++;
       this.activeBoss = null;
@@ -377,10 +442,26 @@ class Game {
       this.spawnPickup(e.x, e.y, 'health');
       this.spawnPickup(e.x + 30, e.y, 'chest');
       this.toast('✦ ' + e.type.name + ' destroyed!');
+    } else if (e.champion) {
+      this.championKills++;
+      Audio2.bossDie();
+      this.shake(12, 0.4);
+      this.particles.burst(e.x, e.y, 36, { color: e.auraColor || e.color, speed: rand(120, 320), life: rand(0.5, 1.0), size: rand(2, 4) });
+      const gc = Math.min(24, 8 + Math.floor(e.xp / 8));
+      for (let i = 0; i < gc; i++) this.spawnGem(e.x + rand(-34, 34), e.y + rand(-34, 34), Math.ceil(e.xp / gc));
+      this.spawnPickup(e.x, e.y, 'chest');
+      this.spawnPickup(e.x + 26, e.y, 'health');
+      this.toast('✦ ' + (e.eliteName || 'Champion') + ' slain!');
     } else {
       Audio2.enemyDie();
       this.particles.burst(e.x, e.y, e.radius > 18 ? 14 : 7, { color: e.color, speed: rand(60, 220), life: rand(0.3, 0.6) });
       this.spawnGem(e.x, e.y, e.xp);
+      // Elites drop a little extra loot.
+      if (e.elite) {
+        this.eliteKills++;
+        for (let i = 0; i < 3; i++) this.spawnGem(e.x + rand(-26, 26), e.y + rand(-26, 26), Math.max(1, Math.ceil(e.xp / 4)));
+        if (chance(0.25)) this.spawnPickup(e.x, e.y, 'health');
+      }
       // Rare drops.
       if (chance(0.012)) this.spawnPickup(e.x, e.y, 'health');
       if (chance(0.006)) this.spawnPickup(e.x, e.y, 'magnet');
@@ -602,6 +683,9 @@ class Game {
         if (e.hp <= 0) { this.killEnemy(e); this.enemies.splice(i, 1); continue; }
       }
 
+      // Regenerating affix: heal over time (no RNG — arithmetic only).
+      if (e.regen && e.hp < e.maxHp) e.hp = Math.min(e.maxHp, e.hp + e.regen * dt);
+
       // Knockback velocity decay.
       e.x += e.vx * dt; e.y += e.vy * dt;
       e.vx *= (1 - Math.min(1, 8 * dt)); e.vy *= (1 - Math.min(1, 8 * dt));
@@ -611,6 +695,11 @@ class Game {
 
       // AI movement.
       this._enemyAI(e, dt, spd);
+
+      // The Bomber (and anything that self-destructs in its AI) calls killEnemy
+      // from inside this loop; remove it now so it doesn't deal a bonus frame of
+      // contact damage. Mirrors the burn-death branch above.
+      if (e.dead) { this.enemies.splice(i, 1); continue; }
 
       // Light separation to avoid total overlap (keeps a "crowd" feel).
       this._separate(e, cs);
@@ -630,6 +719,14 @@ class Game {
   _enemyAI(e, dt, spd) {
     const p = this.player;
     const ang = angleTo(e.x, e.y, p.x, p.y);
+    // Arcane affix: fire aimed bolts regardless of base AI (timer-driven; no RNG).
+    if (e.arcane) {
+      e.affixShootTimer -= dt;
+      if (e.affixShootTimer <= 0) {
+        e.affixShootTimer = 2.2;
+        this.spawnEnemyProjectile(e.x, e.y, ang, 240, Math.max(6, e.damage * 0.6), '#c98bff');
+      }
+    }
     switch (e.ai) {
       case 'shooter': {
         const d = dist(e.x, e.y, p.x, p.y);
@@ -681,6 +778,31 @@ class Game {
               const c = this.spawnEnemy('runner', e.x + rand(-30, 30), e.y + rand(-30, 30), 1 + this.time / 120, 1);
             }
           }
+        }
+        break;
+      }
+      case 'stalker': {
+        // Harass: hold a preferred orbit radius and strafe around the player.
+        const d = dist(e.x, e.y, p.x, p.y);
+        const orbitR = e.type.orbitR || 190;
+        const radial = d > orbitR * 1.15 ? 1 : (d < orbitR * 0.85 ? -0.7 : 0);
+        const dir = (e.id % 2) ? 1 : -1; // deterministic strafe direction
+        const tang = ang + Math.PI / 2 * dir;
+        let mx = Math.cos(ang) * radial + Math.cos(tang) * 0.9;
+        let my = Math.sin(ang) * radial + Math.sin(tang) * 0.9;
+        const m = Math.hypot(mx, my) || 1;
+        e.x += (mx / m) * spd * dt; e.y += (my / m) * spd * dt;
+        break;
+      }
+      case 'bomber': {
+        // Slow approach, then detonate (its volatile flag handles the burst).
+        e.x += Math.cos(ang) * spd * dt; e.y += Math.sin(ang) * spd * dt;
+        const fuseR = e.type.fuseR || 64;
+        if (dist2(e.x, e.y, p.x, p.y) < fuseR * fuseR) {
+          e.fuse += dt;
+          if (e.fuse >= 0.45) this.killEnemy(e); // detonate (removed by loop guard)
+        } else if (e.fuse > 0) {
+          e.fuse = Math.max(0, e.fuse - dt * 0.5);
         }
         break;
       }
@@ -1024,10 +1146,11 @@ class Game {
 
       ctx.shadowBlur = e.boss ? 26 : 10;
       ctx.shadowColor = e.color;
-      // Charger telegraph flash.
+      // Charger / Bomber telegraph flash.
       let fill = e.color;
       if (e.flash > 0) fill = '#ffffff';
       else if (e.ai === 'charger' && e.state === 1) fill = (Math.floor(this.time * 20) % 2 ? '#fff' : e.color);
+      else if (e.fuse > 0) fill = (Math.floor(this.time * 24) % 2 ? '#fff' : e.color);
       else if (e.slowAmount > 0) fill = '#9fe9ff';
       ctx.fillStyle = fill;
       this._shapePath(ctx, e, x, y); ctx.fill();
@@ -1035,11 +1158,41 @@ class Game {
       if (e.burn > 0) { ctx.shadowColor = '#ff7a3c'; ctx.fillStyle = 'rgba(255,130,60,0.5)'; this._shapePath(ctx, e, x, y); ctx.fill(); }
       ctx.restore();
 
-      // Boss health bar.
-      if (e.boss) {
-        const bw = 76, bh = 6;
-        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x - bw / 2, y - e.radius - 16, bw, bh);
-        ctx.fillStyle = '#ff5d6c'; ctx.fillRect(x - bw / 2, y - e.radius - 16, bw * clamp(e.hp / e.maxHp, 0, 1), bh);
+      // Elite aura ring (pulsing, time-driven — render-only).
+      if (e.elite) {
+        const pulse = 1 + Math.sin(this.time * 4 + e.id) * 0.08;
+        ctx.save();
+        ctx.globalAlpha = 0.6;
+        ctx.strokeStyle = e.auraColor || '#ffd84d';
+        ctx.lineWidth = e.champion ? 3.5 : 2.2;
+        ctx.shadowBlur = e.champion ? 22 : 14; ctx.shadowColor = e.auraColor || '#ffd84d';
+        ctx.beginPath(); ctx.arc(x, y, (e.radius + 6) * pulse, 0, TAU); ctx.stroke();
+        ctx.restore();
+      }
+      // Shield ring (arc length = remaining shield fraction).
+      if (e.shield > 0 && e.shieldMax > 0) {
+        ctx.save();
+        ctx.globalAlpha = 0.8; ctx.strokeStyle = '#8fd8ff'; ctx.lineWidth = 3;
+        ctx.shadowBlur = 10; ctx.shadowColor = '#8fd8ff';
+        const frac = clamp(e.shield / e.shieldMax, 0, 1);
+        ctx.beginPath(); ctx.arc(x, y, e.radius + 11, -Math.PI / 2, -Math.PI / 2 + frac * TAU); ctx.stroke();
+        ctx.restore();
+      }
+
+      // Health bars: bosses, champions, and (smaller) ordinary elites.
+      if (e.boss || e.champion || e.elite) {
+        const bw = (e.boss || e.champion) ? 76 : 44, bh = (e.boss || e.champion) ? 6 : 4;
+        const by = y - e.radius - 16;
+        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x - bw / 2, by, bw, bh);
+        ctx.fillStyle = e.champion ? '#ffd84d' : '#ff5d6c';
+        ctx.fillRect(x - bw / 2, by, bw * clamp(e.hp / e.maxHp, 0, 1), bh);
+        if (e.champion && e.eliteName) {
+          ctx.save();
+          ctx.font = 'bold 12px "Segoe UI", system-ui, sans-serif';
+          ctx.fillStyle = '#ffe9a8'; ctx.textAlign = 'center'; ctx.shadowBlur = 4; ctx.shadowColor = '#000';
+          ctx.fillText('☠ ' + e.eliteName, x, by - 6);
+          ctx.restore();
+        }
       }
     }
     ctx.restore();

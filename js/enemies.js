@@ -44,7 +44,32 @@ const ENEMY_TYPES = {
     id: 'wraith', name: 'Wraith', tier: 5, color: '#5ad9ff',
     hp: 110, speed: 70, radius: 16, damage: 20, xp: 6, ai: 'chase', shape: 'tri',
   },
+  stalker: {
+    id: 'stalker', name: 'Stalker', tier: 2.0, color: '#b07cff',
+    hp: 34, speed: 135, radius: 12, damage: 11, xp: 3, ai: 'stalker', shape: 'tri', orbitR: 190,
+  },
+  bomber: {
+    id: 'bomber', name: 'Bomber', tier: 3.5, color: '#ff7a3c',
+    hp: 46, speed: 40, radius: 16, damage: 0, xp: 4, ai: 'bomber', shape: 'dot',
+    explodes: true, fuseR: 64, burstN: 12, burstSpeed: 210, burstDmg: 13,
+  },
 };
+
+// ---- Affixes: single-enemy modifiers carried by "elite" foes ---------------
+// Data-only table (id/name/color/desc) so UI, help, codex, and tests can
+// iterate it. The numeric effects are applied in Game._applyAffix (sim path).
+const AFFIXES = {
+  swift:    { id: 'swift',    name: 'Swift',        color: '#7affc4', desc: 'Moves far faster.' },
+  hardened: { id: 'hardened', name: 'Hardened',     color: '#9ad8ff', desc: 'Resists damage and has extra health.' },
+  regen:    { id: 'regen',    name: 'Regenerating', color: '#7affc4', desc: 'Heals over time — burst it down.' },
+  volatile: { id: 'volatile', name: 'Volatile',     color: '#ff7a3c', desc: 'Bursts projectiles on death.' },
+  arcane:   { id: 'arcane',   name: 'Arcane',       color: '#c98bff', desc: 'Periodically fires bolts at you.' },
+  shielded: { id: 'shielded', name: 'Shielded',     color: '#8fd8ff', desc: 'A shield absorbs a burst of damage.' },
+};
+const AFFIX_LIST = Object.values(AFFIXES);
+function getAffix(id) { return AFFIXES[id]; }
+
+const CHAMPION_NAMES = ['Gorehusk', 'Nightmaw', 'Dreadcoil', 'Voidfang', 'Hollowmark', 'Sablewrath', 'Grimspire', 'Ashmaw'];
 
 // Bosses appear on a schedule. They are large, tanky, and drop big rewards.
 const BOSSES = {
@@ -78,6 +103,7 @@ class Director {
     this.bossIndex = 0;
     this.eliteTimer = 18;            // periodic tougher pack
     this.swarmTimer = 35;           // periodic ring rush
+    this.champTimer = 75;           // periodic Champion mini-boss event
   }
 
   // Difficulty multipliers as a function of elapsed minutes.
@@ -86,6 +112,15 @@ class Director {
   // them, while they remain a genuine threat.
   bossScale(min) { return 1 + min * 0.20 + min * min * 0.018; }
   dmgScale(min) { return 1 + min * 0.14; }
+  // Odds a freshly-spawned fodder enemy is promoted to an elite, ramping with
+  // time but capped so the screen never becomes all-elite.
+  eliteChance(min) { return clamp(0.02 + min * 0.006, 0.02, 0.10); }
+  // Roll a spawned enemy into an elite (single affix). Seeded — sim path only.
+  maybeElite(e, min) {
+    if (!e || e.boss || e.type.id === 'splitling') return e;
+    if (chance(this.eliteChance(min))) this.game.makeElite(e, 1, false);
+    return e;
+  }
   // Target simultaneous enemy count grows over time, with a hard cap.
   // Enough fodder to fuel level-ups, but gentle enough to survive while weak.
   // Difficulty raises both the population target and the spawn cadence.
@@ -141,6 +176,14 @@ class Director {
       this.swarmTimer = Math.max(22, 45 - min * 1.5);
       this.spawnRing(min);
     }
+
+    // Champion: a periodic two-affix elite mini-boss (survival only; this branch
+    // is never reached in gauntlet mode). Only one champion lives at a time.
+    this.champTimer -= dt;
+    if (this.champTimer <= 0 && !g.enemies.some(e => e.champion)) {
+      this.champTimer = Math.max(55, 110 - min * 3);
+      this.spawnChampion(min);
+    }
   }
 
   availableTypes(min) {
@@ -156,7 +199,8 @@ class Director {
   spawnRandom(min) {
     const type = this.pickType(min);
     const pos = this.game.offscreenPoint();
-    this.game.spawnEnemy(type.id, pos.x, pos.y, this.hpScale(min), this.dmgScale(min));
+    const e = this.game.spawnEnemy(type.id, pos.x, pos.y, this.hpScale(min), this.dmgScale(min));
+    this.maybeElite(e, min);
   }
 
   spawnPack(min) {
@@ -164,8 +208,10 @@ class Director {
     const center = this.game.offscreenPoint();
     const n = 3 + Math.floor(min / 2);
     for (let i = 0; i < n; i++) {
-      this.game.spawnEnemy(type.id, center.x + rand(-50, 50), center.y + rand(-50, 50),
+      const e = this.game.spawnEnemy(type.id, center.x + rand(-50, 50), center.y + rand(-50, 50),
         this.hpScale(min) * 1.15, this.dmgScale(min));
+      // The pack is led by a guaranteed elite; the rest may roll one too.
+      if (i === 0) this.game.makeElite(e, 1, false); else this.maybeElite(e, min);
     }
     this.game.toast('⚠ Elite pack incoming');
   }
@@ -233,6 +279,17 @@ class Director {
       if (e) { e.boss = true; this.game.onBossSpawn(e); }
     }
     this.game.toast('☠ Round ' + round + ' — survive!');
+  }
+
+  // A Champion: a beefy, named, two-affix elite that drops a chest. Picks a
+  // sturdy non-splitter base so elite scaling never multiplies split counts.
+  spawnChampion(min) {
+    const pool = [ENEMY_TYPES.brute, ENEMY_TYPES.charger, ENEMY_TYPES.wraith, ENEMY_TYPES.stalker]
+      .filter(t => t.tier <= min + 1);
+    const type = (pool.length ? pick(pool) : ENEMY_TYPES.brute);
+    const pos = this.game.offscreenPoint(0.85);
+    const e = this.game.spawnEnemy(type.id, pos.x, pos.y, this.hpScale(min), this.dmgScale(min));
+    if (e) this.game.makeChampion(e, min);
   }
 
   spawnBoss(id, mult = 1) {

@@ -71,7 +71,8 @@ globalThis.__det = function(report) {
     for (const e of g.enemies) { ehp += e.hp; ex += e.x; ey += e.y; }
     return [g.time.toFixed(3), g.kills, g.score, g.player.level, g.player.hp.toFixed(3),
       g.player.x.toFixed(3), g.player.y.toFixed(3), g.enemies.length, ehp.toFixed(2),
-      ex.toFixed(2), ey.toFixed(2), g.gems.length, g.projectiles.length].join('|');
+      ex.toFixed(2), ey.toFixed(2), g.gems.length, g.projectiles.length,
+      g.eliteKills, g.championKills, g.enemyProjectiles.length, g.zones.length].join('|');
   }
 
   const results = { passed: [], failed: [] };

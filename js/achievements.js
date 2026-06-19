@@ -29,6 +29,8 @@ const ACHIEVEMENTS = [
   { id: 'cursed_glory', icon: '🩸', name: 'Cursed Glory',        desc: 'Reach 8:00 with the Berserker Omen.',    reward: 80,  check: c => c.omenId === 'berserk' && c.time >= 480 },
   { id: 'gladiator',    icon: '⚔', name: 'Gladiator',           desc: 'Clear 5 rounds of the Gauntlet.',        reward: 60,  check: c => c.gauntletRound >= 5 },
   { id: 'champion',     icon: '🏛', name: 'Champion of Light',    desc: 'Clear 10 rounds of the Gauntlet.',       reward: 120, check: c => c.gauntletRound >= 10 },
+  { id: 'elite_hunter', icon: '⭐', name: 'Elite Hunter',         desc: 'Defeat 25 elites in one run.',           reward: 50,  check: c => c.eliteKills >= 25 },
+  { id: 'champion_slayer', icon: '⚜', name: 'Champion Slayer',    desc: 'Defeat a Champion.',                     reward: 60,  check: c => c.championKills >= 1 },
 ];
 
 function getAchievement(id) { return ACHIEVEMENTS.find(a => a.id === id); }
@@ -50,6 +52,8 @@ const Achievements = {
       omen: game ? !!game.omen : false,
       omenId: game && game.omen ? game.omen.id : null,
       gauntletRound: game ? (game.gauntletCleared || 0) : 0,
+      eliteKills: game ? (game.eliteKills || 0) : 0,
+      championKills: game ? (game.championKills || 0) : 0,
       save: s,
       baseCharsUnlocked: CHARACTERS.filter(c => !c.secret && Save.isUnlocked(c.id)).length,
       baseCharsTotal: CHARACTERS.filter(c => !c.secret).length,

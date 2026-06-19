@@ -103,10 +103,27 @@ is cosmetic and isolated from the seeded simulation, so the Daily Challenge
 stays bit-for-bit fair. Prefer it cleaner? Toggle **screen shake** and
 **damage numbers** off in the menu.
 
+## ⭐ Elites & Champions
+
+The dark isn't just fodder. Any foe can spawn as a glowing **elite** — scaled
+up, wreathed in an aura, carrying one of six **affixes**, and dropping extra
+loot:
+
+- **Swift** (much faster), **Hardened** (resists damage, extra health),
+  **Regenerating** (heals — burst it down), **Volatile** (bursts projectiles on
+  death), **Arcane** (fires bolts at you), **Shielded** (a shield soaks a
+  burst before its health is touched).
+
+Periodically a named **Champion** rises — a two-affix mini-boss with its own
+health bar that drops a chest. And two new foes prowl the field: the **Stalker**
+(orbits and harasses you at range) and the **Bomber** (closes in, then
+detonates). Affixes stack on the new foes too, so a *Shielded Bomber* or a
+*Swift Stalker* keeps every minute different.
+
 ## 🏆 Achievements, difficulty & the Codex
 
-- **24 achievements** with shard rewards and long-term goals — survive 15:00 to
-  unlock the secret character **Void**.
+- **26 achievements** with shard rewards and long-term goals — survive 15:00 to
+  unlock the secret character **Void**; hunt elites and slay a Champion.
 - **Ascension difficulties** — Normal → Hard → Nightmare → Abyss. Each scales
   enemies *and* shard rewards up, and unlocks by surviving a threshold on the
   tier below.
@@ -156,7 +173,7 @@ js/
   content.js        # characters, difficulty tiers + meta-upgrade shop
   weapons.js        # 11 base weapons (periodic, continuous, boomerang, zones)
   evolutions.js     # 11 weapon evolutions + evolution rules
-  enemies.js        # enemy archetypes + the spawn Director + bosses
+  enemies.js        # enemy archetypes + affixes + the spawn Director + bosses/champions
   upgrades.js       # passives + level-up choice generator
   achievements.js   # achievement definitions + live/game-over checker
   player.js         # player entity, stat recalculation, leveling
@@ -171,15 +188,15 @@ tools/
 ## ✅ Tests
 
 A headless harness stubs the DOM/Canvas/WebAudio APIs and actually runs the
-game — a full simulated run, every weapon, all bosses, all 11 evolutions, all 24
-achievements, every omen, the Gauntlet boss-rush flow, the boomerang/poison-pool
-mechanics, difficulty scaling, level-ups, pickups, the polish FX (nebula,
-projectile trails, tiered damage numbers), every UI screen, death, persistence,
-and the shop (170+ assertions):
+game — a full simulated run, every weapon, all bosses, all 11 evolutions, all 26
+achievements, every omen, the Gauntlet boss-rush flow, the elite/affix/champion
+system, the boomerang/poison-pool mechanics, difficulty scaling, level-ups,
+pickups, the polish FX (nebula, projectile trails, tiered damage numbers), every
+UI screen, death, persistence, and the shop (200+ assertions):
 
 ```bash
 npm test                          # functional + determinism suites
-node tools/headless-test.js       # functional suite (170+ assertions)
+node tools/headless-test.js       # functional suite (200+ assertions)
 node tools/determinism-test.js    # proves Daily seeds are framerate/settings-independent
 node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```
