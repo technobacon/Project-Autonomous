@@ -123,6 +123,18 @@ minor-key arpeggio quickens and brightens as the run heats up, then shifts into
 a darker, driving arrangement (with a tritone tension layer) whenever a boss or
 Champion is on the field.
 
+## 🌌 Biomes (a transforming world)
+
+A survival run doesn't stay in one place. Every ~2½ minutes the world **shifts
+into a new biome** — *The Verge*, *Emberwaste*, *Glacial Rift*, *The Hollows*,
+*Bloodmoon* — each with its own palette, nebula tint and grid colour, announced
+with a wash of colour and a soft swell. Each biome also **leans the spawns**
+toward thematic foes (Emberwaste favours chargers and runners, Glacial Rift
+favours brutes, the Hollows crawl with wraiths and stalkers…) — it changes
+*which* enemies you face, never the difficulty curve. The sequence cycles, so a
+long run keeps changing scenery. Because the active biome is a pure function of
+elapsed time, it's identical for a given seed — the Daily Challenge stays fair.
+
 ## ⭐ Elites & Champions
 
 The dark isn't just fodder. Any foe can spawn as a glowing **elite** — scaled
@@ -209,7 +221,7 @@ js/
   modifiers.js      # "omens" — drafted per-run modifiers
   relics.js         # permanent, equippable run modifiers (loadout)
   player.js         # player entity, stat recalculation, leveling
-  game.js           # engine: world, camera, collision, combat, render, HUD
+  game.js           # engine: world, biomes, camera, collision, combat, render, HUD
   ui.js             # DOM overlays: menu, shop, level-up, achievements, codex…
   main.js           # bootstrap + fixed-timestep loop + global keys
 tools/
@@ -224,13 +236,14 @@ game — a full simulated run, every weapon, all bosses, all 11 evolutions, all 
 achievements, every omen, the relic loadout system, the run-history Chronicle,
 the Gauntlet boss-rush flow, the elite/affix/champion system, the
 boomerang/poison-pool mechanics, difficulty scaling, level-ups, pickups, the
-polish FX (nebula, projectile trails, tiered damage numbers), the adaptive
-audio engine (limiter, combat SFX, boss-aware music), every UI screen, death,
-persistence, and the shop (250+ assertions):
+polish FX (nebula, projectile trails, tiered damage numbers), the time-driven
+biome progression (palette + spawn bias), the adaptive audio engine (limiter,
+combat SFX, boss-aware music), every UI screen, death, persistence, and the
+shop (260+ assertions):
 
 ```bash
 npm test                          # functional + determinism suites
- node tools/headless-test.js       # functional suite (250+ assertions)
+ node tools/headless-test.js       # functional suite (260+ assertions)
 node tools/determinism-test.js    # proves Daily seeds are framerate/settings-independent
 node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```

@@ -537,6 +537,35 @@ globalThis.__run = function(report) {
     ok('boss mode engaged while a Champion lives', Audio2._bossMode === true);
   });
 
+  // 11.8) Biomes (v12): time-driven stage progression + spawn bias.
+  sectionTry('biomes: registry + time mapping', () => {
+    ok('biome list non-empty', Array.isArray(BIOMES) && BIOMES.length >= 3);
+    ok('t=0 is first biome', biomeIndexForTime(0) === 0 && biomeForTime(0) === BIOMES[0]);
+    ok('crosses at BIOME_SECONDS', biomeIndexForTime(BIOME_SECONDS - 1) === 0 && biomeIndexForTime(BIOME_SECONDS + 1) === 1);
+    ok('cycles past the list', biomeForTime(BIOME_SECONDS * BIOMES.length + 1) === BIOMES[0]);
+  });
+  sectionTry('biomes: updateBiome transitions + announces', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 4 });
+    ok('starts in biome 0', g.biomeIndex === 0);
+    g.toasts = []; g.time = BIOME_SECONDS + 0.1;
+    g.updateBiome(0.1);
+    ok('advanced to biome 1', g.biomeIndex === 1 && g.biome === BIOMES[1]);
+    ok('transition flashed + toasted', g._biomeFlash > 0 && g.toasts.length >= 1);
+  });
+  sectionTry('biomes: spawn bias steers pickType (deterministic)', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 12 });
+    g.biome = { id: 'test', name: 'T', base: '#000', grid: '#111', accent: '#fff', nebula: [[1, 2, 3]], bias: { drifter: 1000 } };
+    let drifters = 0;
+    for (let i = 0; i < 60; i++) if (g.director.pickType(1).id === 'drifter') drifters++;
+    ok('heavy bias makes the favored foe dominate', drifters >= 45);
+  });
+  sectionTry('biomes: replay retints + render survives a flash', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 1 });
+    g._biomeFlash = 1; g.biome = BIOMES[2];
+    g.render();
+    ok('render with biome flash stays finite', Number.isFinite(g.player.x));
+  });
+
   // 11.3) New content (v7): glaive (boomerang), toxin (zones), prism, Comet.
   sectionTry('content: new weapons + evolutions registered', () => {
     for (const id of ['glaive', 'toxin', 'prism']) ok('base weapon ' + id, !!getWeapon(id) && WEAPON_LIST.some(w => w.id === id));

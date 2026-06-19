@@ -4,6 +4,27 @@
 // spawning helpers, leveling, bosses, and all gameplay rendering + HUD.
 // ===========================================================================
 
+// Biomes: the world visibly transforms as a run endures. The active biome is a
+// pure function of elapsed time (deterministic — Daily stays fair), driving the
+// background palette/nebula tint AND a mild spawn bias toward thematic foes
+// (which archetypes appear, never the difficulty curve). After the list it
+// cycles, so a long run keeps shifting scenery.
+const BIOME_SECONDS = 150; // ~2.5 minutes per biome
+const BIOMES = [
+  { id: 'verge', name: 'The Verge', base: '#05060d', grid: 'rgba(80,110,200,0.07)', accent: '#9ad8ff',
+    nebula: [[88, 120, 255], [150, 90, 255], [120, 160, 255]], bias: {} },
+  { id: 'emberwaste', name: 'Emberwaste', base: '#0d0604', grid: 'rgba(200,90,40,0.08)', accent: '#ff9a4d',
+    nebula: [[255, 120, 60], [255, 80, 40], [200, 60, 30]], bias: { charger: 1.7, runner: 1.4 } },
+  { id: 'glacier', name: 'Glacial Rift', base: '#040a0e', grid: 'rgba(90,180,220,0.08)', accent: '#9ff0ff',
+    nebula: [[80, 200, 230], [120, 220, 255], [180, 240, 255]], bias: { brute: 1.7, drifter: 1.4 } },
+  { id: 'hollow', name: 'The Hollows', base: '#080510', grid: 'rgba(150,90,220,0.08)', accent: '#c89bff',
+    nebula: [[150, 90, 255], [120, 60, 200], [200, 120, 255]], bias: { wraith: 1.7, stalker: 1.7 } },
+  { id: 'bloodmoon', name: 'Bloodmoon', base: '#0e0406', grid: 'rgba(220,60,90,0.09)', accent: '#ff6b8a',
+    nebula: [[255, 70, 110], [220, 40, 80], [255, 120, 150]], bias: { bomber: 1.6, swarm: 1.5 } },
+];
+function biomeForTime(t) { return BIOMES[Math.floor(Math.max(0, t) / BIOME_SECONDS) % BIOMES.length]; }
+function biomeIndexForTime(t) { return Math.floor(Math.max(0, t) / BIOME_SECONDS); }
+
 class Game {
   constructor(canvas) {
     this.canvas = canvas;
@@ -54,6 +75,9 @@ class Game {
     this.score = 0;
     this.shake_ = { mag: 0, t: 0 };
     this.toasts = [];
+    this.biomeIndex = 0;          // which biome stage we're in (time-driven)
+    this.biome = BIOMES[0];       // current biome (palette + spawn bias)
+    this._biomeFlash = 0;         // cosmetic transition wash (decays)
     this.activeBoss = null;
     this.pendingLevels = 0;
     this.scheduled = [];       // sim-time delayed actions {t, fn}
@@ -73,6 +97,7 @@ class Game {
     this.maxWeaponsHeld = 0;
     this.diffIndex = 0;
     this.diff = getDifficulty(0);
+    if (this.stars) this._buildNebula(); // retint sky to the opening biome on replay
   }
 
   resize() {
@@ -103,9 +128,9 @@ class Game {
   _buildNebula() {
     // A handful of big soft colour blobs that drift slowly behind the stars.
     // Positions/tints use vrand (cosmetic) so they never affect determinism.
-    const palette = [
-      [88, 120, 255], [150, 90, 255], [60, 200, 220], [255, 90, 150], [120, 160, 255],
-    ];
+    // Tinted by the active biome so the sky matches the current stage.
+    const palette = (this.biome && this.biome.nebula) ||
+      [[88, 120, 255], [150, 90, 255], [60, 200, 220], [255, 90, 150], [120, 160, 255]];
     this.nebula = [];
     for (let i = 0; i < 7; i++) {
       const c = palette[Math.floor(vrand(0, palette.length)) % palette.length];
@@ -557,6 +582,24 @@ class Game {
     this.toast('☠ ' + e.type.name + ' approaches!');
   }
 
+  // Advance the biome stage. The index is a pure function of elapsed time, so
+  // it's identical for a given seed regardless of framerate (determinism-safe).
+  // Crossing into a new stage retints the sky and announces it — all cosmetic.
+  updateBiome(dt) {
+    if (this._biomeFlash > 0) this._biomeFlash = Math.max(0, this._biomeFlash - dt);
+    const idx = biomeIndexForTime(this.time);
+    if (idx === this.biomeIndex) return;
+    const first = this.time <= 0;
+    this.biomeIndex = idx;
+    this.biome = BIOMES[idx % BIOMES.length];
+    this._buildNebula();           // cosmetic retint (vrand only)
+    if (!first) {
+      this._biomeFlash = 1;
+      this.toast('❖ Entering ' + this.biome.name);
+      Audio2.biomeShift();
+    }
+  }
+
   // Build a compact, display-ready record of this run for the chronicle.
   runSnapshot(earned) {
     const p = this.player;
@@ -666,6 +709,7 @@ class Game {
     dt = Math.min(dt, 0.05); // clamp huge frame gaps
     this.time += dt;
 
+    this.updateBiome(dt);      // advance the stage before spawns read its bias
     this._runScheduled(dt);    // fire any due delayed effects first
     this.buildGrid();          // grid first, so weapon queries see current foes
     this.player.update(dt);
@@ -1073,8 +1117,8 @@ class Game {
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     const cam = { x: this.cam.x + this.cam.sx, y: this.cam.y + this.cam.sy };
 
-    // Background.
-    ctx.fillStyle = '#05060d';
+    // Background (tinted by the active biome).
+    ctx.fillStyle = (this.biome && this.biome.base) || '#05060d';
     ctx.fillRect(0, 0, this.view.w, this.view.h);
     this._drawBackground(ctx, cam);
 
@@ -1134,8 +1178,8 @@ class Game {
     }
     ctx.globalAlpha = 1;
 
-    // Subtle grid.
-    ctx.strokeStyle = 'rgba(80,110,200,0.07)';
+    // Subtle grid (biome-tinted).
+    ctx.strokeStyle = (this.biome && this.biome.grid) || 'rgba(80,110,200,0.07)';
     ctx.lineWidth = 1;
     const gs = 80;
     const ox = -(cam.x % gs), oy = -(cam.y % gs);
@@ -1143,6 +1187,13 @@ class Game {
     for (let x = ox; x < this.view.w; x += gs) { ctx.moveTo(x, 0); ctx.lineTo(x, this.view.h); }
     for (let y = oy; y < this.view.h; y += gs) { ctx.moveTo(0, y); ctx.lineTo(this.view.w, y); }
     ctx.stroke();
+
+    // A brief full-screen wash when crossing into a new biome.
+    if (this._biomeFlash > 0 && this.biome) {
+      const [r, g, b] = this.biome.nebula[0];
+      ctx.fillStyle = `rgba(${r},${g},${b},${0.18 * this._biomeFlash})`;
+      ctx.fillRect(0, 0, this.view.w, this.view.h);
+    }
   }
 
   _drawWorldBounds(ctx, cam) {
@@ -1449,6 +1500,14 @@ class Game {
     ctx.fillStyle = '#ffffff'; ctx.shadowBlur = 6; ctx.shadowColor = '#000';
     ctx.fillText(formatTime(this.time), W / 2, 16);
     ctx.shadowBlur = 0;
+    // Current biome name beneath the timer (hidden while a boss banner shows).
+    if (this.biome && !this.activeBoss) {
+      ctx.font = 'bold 11px "Segoe UI", system-ui, sans-serif';
+      ctx.fillStyle = this.biome.accent;
+      ctx.globalAlpha = 0.85;
+      ctx.fillText('❖ ' + this.biome.name, W / 2, 46);
+      ctx.globalAlpha = 1;
+    }
 
     // Kills + score (right top).
     ctx.font = 'bold 13px "Segoe UI", system-ui, sans-serif';

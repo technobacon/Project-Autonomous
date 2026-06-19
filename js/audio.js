@@ -137,6 +137,8 @@ const Audio2 = {
   eliteDie()   { if (!this._gate('elite', 50)) return; this.noise(0.16, 0.20, 1100); this.blip(vrand(170, 210), 0.13, 'square', 0.11, -70); this.blip(vrand(330, 380), 0.10, 'triangle', 0.07, 120); },
   // A Champion's arrival sting — a rising, ominous triad over a low rumble.
   championWarn() { [150, 188, 252].forEach((f, i) => setTimeout(() => this.blip(f, 0.45, 'sawtooth', 0.2, 70), i * 110)); this.noise(0.55, 0.16, 420); },
+  // A soft, airy swell when the world shifts into a new biome.
+  biomeShift() { [392, 523, 659].forEach((f, i) => setTimeout(() => this.blip(f, 0.5, 'sine', 0.12, 40), i * 90)); },
 
   // ---- Procedural music -------------------------------------------------
   // An evolving minor arpeggio whose tempo, brightness and harmony respond to

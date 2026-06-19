@@ -192,8 +192,10 @@ class Director {
 
   pickType(min) {
     const avail = this.availableTypes(min);
-    // Bias toward newer (higher-tier) enemies as time goes on.
-    return weightedPick(avail, t => 1 + t.tier);
+    // Bias toward newer (higher-tier) enemies as time goes on, plus the active
+    // biome's thematic lean (which archetypes appear — not the difficulty).
+    const bias = (this.game.biome && this.game.biome.bias) || null;
+    return weightedPick(avail, t => (1 + t.tier) * (bias && bias[t.id] ? bias[t.id] : 1));
   }
 
   spawnRandom(min) {
