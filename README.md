@@ -145,6 +145,16 @@ detonates). Affixes stack on the new foes too, so a *Shielded Bomber* or a
 - **Options** — toggle SFX, music, screen shake, and floating damage numbers
   (accessibility / clarity).
 
+## 📜 Chronicle (run history & records)
+
+Every finished run is logged to your **Chronicle** — a scrolling history of your
+last 30 runs, each with a full snapshot: mode (Survival / Gauntlet / Daily),
+character, difficulty, the **weapons you ended with** (evolutions glow), any
+Omen and equipped Relics, plus score, kills, level and time. Your headline
+records (best time, best score, best Gauntlet round, total runs) sit at the top.
+Open it from the menu or straight from the game-over screen to track your
+progress and revisit your best builds.
+
 ## ⚔ Gauntlet (boss rush)
 
 A separate mode for when you want pure pressure: **endless rounds of bosses**,
@@ -204,14 +214,15 @@ tools/
 
 A headless harness stubs the DOM/Canvas/WebAudio APIs and actually runs the
 game — a full simulated run, every weapon, all bosses, all 11 evolutions, all 28
-achievements, every omen, the relic loadout system, the Gauntlet boss-rush flow,
-the elite/affix/champion system, the boomerang/poison-pool mechanics, difficulty
-scaling, level-ups, pickups, the polish FX (nebula, projectile trails, tiered
-damage numbers), every UI screen, death, persistence, and the shop (220+ assertions):
+achievements, every omen, the relic loadout system, the run-history Chronicle,
+the Gauntlet boss-rush flow, the elite/affix/champion system, the
+boomerang/poison-pool mechanics, difficulty scaling, level-ups, pickups, the
+polish FX (nebula, projectile trails, tiered damage numbers), every UI screen,
+death, persistence, and the shop (230+ assertions):
 
 ```bash
 npm test                          # functional + determinism suites
- node tools/headless-test.js       # functional suite (220+ assertions)
+ node tools/headless-test.js       # functional suite (230+ assertions)
 node tools/determinism-test.js    # proves Daily seeds are framerate/settings-independent
 node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```

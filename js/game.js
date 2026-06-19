@@ -556,6 +556,38 @@ class Game {
     this.toast('☠ ' + e.type.name + ' approaches!');
   }
 
+  // Build a compact, display-ready record of this run for the chronicle.
+  runSnapshot(earned) {
+    const p = this.player;
+    const weapons = (p && p.weapons ? p.weapons : []).map(w => ({
+      icon: w.def.icon, color: w.def.color, level: w.level,
+      evo: !!(typeof EVOLVED_WEAPONS !== 'undefined' && EVOLVED_WEAPONS[w.def.id]),
+    }));
+    return {
+      t: Date.now(),
+      mode: this.daily ? 'daily' : this.mode,
+      char: p && p.char ? p.char.id : 'spark',
+      charName: p && p.char ? p.char.name : 'Spark',
+      charColor: p && p.char ? p.char.color : '#ffd84d',
+      diff: this.diffIndex,
+      diffName: this.diff ? this.diff.name : 'Normal',
+      diffColor: this.diff ? this.diff.color : '#7affc4',
+      time: this.time,
+      score: this.score,
+      kills: this.kills,
+      bosses: this.bossKills,
+      level: p ? p.level : 1,
+      rounds: this.gauntletCleared || 0,
+      dailyDate: this.daily ? this.dailyDate : null,
+      omen: this.omen ? this.omen.id : null,
+      omenIcon: this.omen ? this.omen.icon : null,
+      omenColor: this.omen ? this.omen.color : null,
+      relics: (this.relics || []).slice(),
+      weapons,
+      shards: earned || 0,
+    };
+  }
+
   onPlayerDeath() {
     this.running = false;
     this.state = 'gameover';
@@ -574,6 +606,7 @@ class Game {
     Save.addShards(earned);
     Save.recordRun(this.time, this.score, this.kills, this.bossKills);
     if (this.mode === 'gauntlet') this.lastGauntlet = Save.recordGauntlet(this.gauntletCleared, this.score);
+    Save.recordHistory(this.runSnapshot(earned));
 
     // Ascension: surviving the unlock threshold opens the next difficulty.
     const next = DIFFICULTIES[this.diffIndex + 1];

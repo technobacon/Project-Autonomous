@@ -459,6 +459,44 @@ globalThis.__run = function(report) {
     Save.data.relics = {}; Save.data.equipped = [];
   });
 
+  // 11.6) Run History / Chronicle (v10): snapshots, cap, and the screen.
+  sectionTry('history: snapshot captures run shape', () => {
+    Save.data.history = [];
+    const g = new Game(document.getElementById('game'));
+    g.start('comet', 1, { seed: 7, omen: 'glass' });
+    for (let i = 0; i < 60; i++) g.update(1 / 60);
+    const snap = g.runSnapshot(123);
+    ok('snapshot char + mode', snap.char === 'comet' && snap.mode === 'survival');
+    ok('snapshot records difficulty', snap.diff === 1 && typeof snap.diffName === 'string');
+    ok('snapshot captures the omen', snap.omen === 'glass');
+    ok('snapshot lists weapons w/ icon+level', snap.weapons.length >= 1 && !!snap.weapons[0].icon && snap.weapons[0].level >= 1);
+    ok('snapshot carries shards earned + timestamp', snap.shards === 123 && snap.t > 0);
+  });
+  sectionTry('history: recordHistory orders newest-first and caps', () => {
+    Save.data.history = [];
+    for (let i = 0; i < Save.HISTORY_CAP + 5; i++) Save.recordHistory({ t: i, score: i, mode: 'survival', weapons: [] });
+    ok('history capped at HISTORY_CAP', Save.data.history.length === Save.HISTORY_CAP);
+    ok('newest run is first', Save.data.history[0].score === Save.HISTORY_CAP + 4);
+  });
+  sectionTry('history: a real game-over writes a snapshot', () => {
+    Save.data.history = [];
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 3 });
+    for (let i = 0; i < 30; i++) g.update(1 / 60);
+    g.player.invuln = 0; g.player.revives = 0; g.player.hurt(1e9);
+    ok('game over appended a run', Save.data.history.length === 1 && Save.data.history[0].char === 'spark');
+  });
+  sectionTry('history: daily mode tags correctly', () => {
+    const gd = new Game(document.getElementById('game')); gd.start('spark', 0, { daily: true, date: '2026-01-01' });
+    ok('daily snapshot tagged daily', gd.runSnapshot(0).mode === 'daily');
+  });
+  sectionTry('UI.showHistory renders (empty + populated)', () => {
+    Save.data.history = [];
+    UI.showHistory();
+    Save.recordHistory({ t: Date.now(), mode: 'gauntlet', char: 'spark', charName: 'Spark', charColor: '#fff', diff: 2, diffName: 'Nightmare', diffColor: '#f00', time: 200, score: 5000, kills: 300, bosses: 4, level: 22, rounds: 6, relics: ['glass_lens'], omenIcon: '☠', omenColor: '#f00', weapons: [{ icon: '✦', color: '#fff', level: 8, evo: true }], shards: 99 });
+    UI.showHistory();
+    Save.data.history = [];
+  });
+
   // 11.3) New content (v7): glaive (boomerang), toxin (zones), prism, Comet.
   sectionTry('content: new weapons + evolutions registered', () => {
     for (const id of ['glaive', 'toxin', 'prism']) ok('base weapon ' + id, !!getWeapon(id) && WEAPON_LIST.some(w => w.id === id));

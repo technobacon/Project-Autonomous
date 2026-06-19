@@ -46,6 +46,7 @@ const UI = {
           <div class="menu-buttons row">
             <button class="btn" id="btn-ach">🏆 ${Save.achievementCount()}/${ACHIEVEMENTS.length}</button>
             <button class="btn" id="btn-codex">📖 CODEX</button>
+            <button class="btn" id="btn-history">📜 HISTORY</button>
             <button class="btn" id="btn-help">? HELP</button>
           </div>
         </div>
@@ -70,6 +71,7 @@ const UI = {
     document.getElementById('btn-relics').onclick = () => { Audio2.uiSelect(); this.showRelics(); };
     document.getElementById('btn-ach').onclick = () => { Audio2.uiSelect(); this.showAchievements(); };
     document.getElementById('btn-codex').onclick = () => { Audio2.uiSelect(); this.showCodex(); };
+    document.getElementById('btn-history').onclick = () => { Audio2.uiSelect(); this.showHistory(); };
     document.getElementById('btn-help').onclick = () => { Audio2.uiSelect(); this.showHelp(); };
     document.getElementById('btn-sfx').onclick = (e) => { Audio2.resume(); const m = Audio2.toggleMute(); Save.data.muted = m; Save.save(); e.target.textContent = (m ? '🔇' : '🔊') + ' SFX'; };
     document.getElementById('btn-music').onclick = (e) => { Audio2.resume(); const m = Audio2.toggleMusic(); Save.data.musicMuted = m; Save.save(); e.target.textContent = (m ? '🎵̶' : '🎵') + ' Music'; };
@@ -95,6 +97,7 @@ const UI = {
           <div class="help-card"><h3>⭐ Elites &amp; Champions</h3><p>Glowing <b>elite</b> foes carry an affix and drop extra loot; <b>Champions</b> are named two-affix mini-bosses with a chest. Affixes: ${AFFIX_LIST.map(a => `<b style="color:${a.color}">${a.name}</b>`).join(', ')}.</p></div>
           <div class="help-card"><h3>🗓 Daily</h3><p>A <b>seeded</b> run that's the same for everyone today. Pure skill — beat your own best score each day.</p></div>
           <div class="help-card"><h3>🔮 Relics</h3><p>Spend shards to <b>unlock relics</b> (some gated behind achievements), then <b>equip</b> a few into your loadout for permanent bonuses. Collect more to earn extra slots.</p></div>
+          <div class="help-card"><h3>📜 Chronicle</h3><p>Every run is logged in your <b>History</b> — its mode, character, build, score and time — so you can track your records and revisit your best runs.</p></div>
           <div class="help-card"><h3>⚙ Options</h3><p>From the menu, toggle <b>SFX</b>, <b>Music</b>, <b>screen shake</b>, and floating <b>damage numbers</b> to taste.</p></div>
         </div>
         <button class="btn btn-primary" id="btn-back">← Back</button>
@@ -229,6 +232,63 @@ const UI = {
           <span class="shard-chip big">${Save.achievementCount()} / ${ACHIEVEMENTS.length}</span>
         </div>
         <div class="ach-grid">${cards}</div>
+        <button class="btn" id="btn-back">← Back</button>
+      </div>`;
+    document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
+  },
+
+  // ---- Run History / Chronicle ------------------------------------------
+  _modeChip(r) {
+    if (r.mode === 'daily') return `<span class="hist-mode" style="color:#9ad8ff;border-color:#9ad8ff">🗓 Daily</span>`;
+    if (r.mode === 'gauntlet') return `<span class="hist-mode" style="color:#ffd84d;border-color:#ffd84d">⚔ Gauntlet</span>`;
+    return `<span class="hist-mode" style="color:${r.diffColor || '#7affc4'};border-color:${r.diffColor || '#7affc4'}">✦ ${r.diff > 0 ? r.diffName : 'Survival'}</span>`;
+  },
+
+  showHistory() {
+    this.clear(); this.show();
+    const d = Save.data;
+    const hist = Array.isArray(d.history) ? d.history : [];
+    const records = `
+      <div class="stats-row">
+        <div class="stat"><span>Best Time</span><b>${formatTime(d.bestTime)}</b></div>
+        <div class="stat"><span>Best Score</span><b>${formatNum(d.bestScore)}</b></div>
+        <div class="stat"><span>Gauntlet</span><b>${d.gauntletBest && d.gauntletBest.rounds ? 'R' + d.gauntletBest.rounds : '—'}</b></div>
+        <div class="stat"><span>Runs</span><b>${d.runs}</b></div>
+      </div>`;
+    const rows = hist.length ? hist.map(r => {
+      const primary = r.mode === 'gauntlet' ? 'Round ' + r.rounds : formatTime(r.time);
+      const weps = (r.weapons || []).map(w =>
+        `<span class="hist-wep ${w.evo ? 'evo' : ''}" style="color:${w.color}" title="Lv ${w.level}">${w.icon}</span>`).join('');
+      const omen = r.omenIcon ? `<span class="hist-tag" style="color:${r.omenColor};border-color:${r.omenColor}">${r.omenIcon}</span>` : '';
+      const relics = (r.relics && r.relics.length)
+        ? `<span class="hist-tag" style="color:#c9a8ff;border-color:#c9a8ff">🔮 ${r.relics.map(id => { const x = getRelic(id); return x ? x.icon : ''; }).join('')}</span>` : '';
+      return `
+        <div class="hist-card">
+          <div class="hist-top">
+            ${this._modeChip(r)}
+            <span class="hist-char" style="color:${r.charColor}">${r.charName}</span>
+            <span class="hist-when">${timeAgo(r.t)}</span>
+          </div>
+          <div class="hist-main">
+            <div class="hist-primary"><b>${primary}</b></div>
+            <div class="hist-mini">
+              <span>✦ ${formatNum(r.score)}</span>
+              <span>☠ ${formatNum(r.kills)}</span>
+              <span>Lv ${r.level}</span>
+              ${r.bosses ? `<span>👑 ${r.bosses}</span>` : ''}
+            </div>
+          </div>
+          <div class="hist-build">${weps}${omen}${relics}</div>
+        </div>`;
+    }).join('') : `<p class="empty-note">No runs recorded yet. Play a run and your chronicle begins here.</p>`;
+    this.root.innerHTML = `
+      <div class="screen panel wide">
+        <div class="panel-head">
+          <h2>Chronicle</h2>
+          <span class="shard-chip big">${hist.length} run${hist.length === 1 ? '' : 's'}</span>
+        </div>
+        ${records}
+        <div class="hist-list">${rows}</div>
         <button class="btn" id="btn-back">← Back</button>
       </div>`;
     document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
@@ -489,9 +549,11 @@ const UI = {
         ${achBlock}
         <div class="menu-buttons row">
           <button class="btn btn-primary" id="btn-retry">↺ Play Again</button>
+          <button class="btn" id="btn-history">📜 History</button>
           <button class="btn" id="btn-menu">⌂ Menu</button>
         </div>
       </div>`;
+    document.getElementById('btn-history').onclick = () => { Audio2.uiSelect(); this.showHistory(); };
     const wasDaily = game.daily;
     const wasMode = game.mode;
     document.getElementById('btn-retry').onclick = () => {

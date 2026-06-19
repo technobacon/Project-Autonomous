@@ -7,6 +7,7 @@
 
 const Save = {
   KEY: 'lastlight.save.v1',
+  HISTORY_CAP: 30,           // how many recent runs to keep in the chronicle
   data: null,
 
   defaults() {
@@ -26,6 +27,7 @@ const Save = {
       bestTime: 0,               // longest survival, seconds
       bestScore: 0,
       gauntletBest: { rounds: 0, score: 0 }, // boss-rush record
+      history: [],               // recent run snapshots (most-recent first)
       runs: 0,
       totalKills: 0,
       bossKills: 0,
@@ -51,6 +53,7 @@ const Save = {
       this.data.equipped = Array.isArray(this.data.equipped) ? this.data.equipped : [];
       this.data.dailyBest = Object.assign({}, this.data.dailyBest || {});
       this.data.gauntletBest = Object.assign(d.gauntletBest, this.data.gauntletBest || {});
+      this.data.history = Array.isArray(this.data.history) ? this.data.history : [];
       this.data.achievements = Object.assign({}, this.data.achievements || {});
       this.data.seen = Object.assign(d.seen, this.data.seen || {});
       this.data.seen.enemies = Object.assign({}, this.data.seen.enemies || {});
@@ -124,6 +127,19 @@ const Save = {
 
   unlockDifficulty(index) {
     if (index > this.data.maxDifficulty) { this.data.maxDifficulty = index; this.save(); }
+  },
+
+  // Push a rich snapshot of a finished run onto the chronicle (newest first,
+  // capped). Used by the Run History screen — purely a record, never read by
+  // the simulation, so it can't affect determinism.
+  recordHistory(snap) {
+    if (!Array.isArray(this.data.history)) this.data.history = [];
+    this.data.history.unshift(snap);
+    if (this.data.history.length > this.HISTORY_CAP) {
+      this.data.history.length = this.HISTORY_CAP;
+    }
+    this.save();
+    return snap;
   },
 
   recordRun(time, score, kills, bosses) {
