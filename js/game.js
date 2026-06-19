@@ -42,6 +42,7 @@ class Game {
     this.novas = [];
     this.chains = [];
     this.whips = [];
+    this.zones = [];           // lingering ground effects (poison pools, etc.)
     this.pickups = [];
     this.particles = new Particles();
     this.grid = new Map();
@@ -251,11 +252,12 @@ class Game {
       vx: Math.cos(o.angle) * o.speed, vy: Math.sin(o.angle) * o.speed,
       speed: o.speed, angle: o.angle,
       damage: o.damage, radius: o.radius || 6,
-      hitsLeft: (o.pierce || 0) + 1, life: o.life || 1.5,
+      hitsLeft: (o.pierce || 0) + 1, maxHits: (o.pierce || 0) + 1, life: o.life || 1.5,
       color: o.color || '#fff', glow: o.glow || o.color || '#fff',
       seek: !!o.seek, seekStrength: o.seekStrength || 9,
       kb: o.kb || 60, chill: o.chill || 0, chillDur: o.chillDur || 0,
       burn: o.burn || 0, hit: null, trail: [],
+      boomerang: !!o.boomerang, outT: o.outT || 0.5, bt: 0, returning: false,
     });
   }
 
@@ -280,6 +282,11 @@ class Game {
     this.shake(5, 0.18);
   }
   spawnNova(x, y, maxR, dmg, kb, color) { this.nova(x, y, maxR, dmg, kb, color); }
+
+  // Lingering ground effect (poison pool). Ticks damage to all foes inside.
+  spawnZone(x, y, r, dps, life, color = '#a6e22e', slow = 0) {
+    this.zones.push({ x, y, r, dps, life, maxLife: life, color, slow, t: 0, tick: 0 });
+  }
 
   castChain(x, y, jumps, dmg, range) {
     const hitIds = new Set();
@@ -315,7 +322,7 @@ class Game {
   }
 
   // ---- Combat resolution ------------------------------------------------
-  dealDamage(e, amount, fromX, fromY, kb = 0) {
+  dealDamage(e, amount, fromX, fromY, kb = 0, silent = false) {
     if (e.dead) return;
     const crit = chance(this.player.crit);
     let dmg = amount * (crit ? this.player.critMult : 1);
@@ -324,12 +331,16 @@ class Game {
     e.hp -= dmg;
     e.flash = 0.08;
     const a = angleTo(fromX, fromY, e.x, e.y);
-    this.particles.spray(e.x, e.y, a, crit ? 8 : 4, 0.6, { color: e.color, speed: rand(60, 160), life: 0.4 });
-    // Bright impact flash at the point of contact (cosmetic — no seeded RNG).
-    this.particles.spawn(e.x, e.y, { color: crit ? '#fff36b' : '#ffffff',
-      size: crit ? 6 : 3.5, life: 0.12, speed: 0, angle: 0, drag: 0, glow: true });
+    // DoT / zone ticks pass silent=true so they don't flood the screen with
+    // numbers and flashes (they hit many foes many times per second).
+    this.particles.spray(e.x, e.y, a, silent ? 1 : (crit ? 8 : 4), 0.6, { color: e.color, speed: rand(60, 160), life: 0.4 });
+    if (!silent) {
+      // Bright impact flash at the point of contact (cosmetic — no seeded RNG).
+      this.particles.spawn(e.x, e.y, { color: crit ? '#fff36b' : '#ffffff',
+        size: crit ? 6 : 3.5, life: 0.12, speed: 0, angle: 0, drag: 0, glow: true });
+    }
     // Tiered floating damage numbers (bigger/hotter as the hit gets stronger).
-    if (Save.data && Save.data.dmgNumbers) {
+    if (!silent && Save.data && Save.data.dmgNumbers) {
       const r = Math.round(dmg);
       let col = '#dfe9ff', size = 12;
       if (crit) { col = '#fff36b'; size = 18; }
@@ -543,6 +554,7 @@ class Game {
     this.updateProjectiles(dt);
     this.updateEnemyProjectiles(dt);
     this.updateNovas(dt);
+    this.updateZones(dt);
     this.updateGems(dt);
     this.updatePickups(dt);
     this.particles.update(dt);
@@ -709,6 +721,22 @@ class Game {
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const pr = this.projectiles[i];
       pr.life -= dt;
+      // Boomerang: fly out, decelerate, then home back to the player, re-arming
+      // its hits so it cuts the crowd a second time on the return.
+      if (pr.boomerang) {
+        const pl = this.player;
+        pr.bt += dt;
+        if (!pr.returning) {
+          pr.vx *= (1 - 1.7 * dt); pr.vy *= (1 - 1.7 * dt);
+          if (pr.bt >= pr.outT) pr.returning = true;
+        } else {
+          const a = angleTo(pr.x, pr.y, pl.x, pl.y);
+          const sp = pr.speed * 1.15;
+          pr.vx = Math.cos(a) * sp; pr.vy = Math.sin(a) * sp;
+          if (!pr._recharged) { if (pr.hit) pr.hit.clear(); pr.hitsLeft = pr.maxHits; pr._recharged = true; }
+          if (dist2(pr.x, pr.y, pl.x, pl.y) < (pl.radius + 12) * (pl.radius + 12)) { this.projectiles.splice(i, 1); continue; }
+        }
+      }
       // Homing.
       if (pr.seek) {
         const t = this.nearestEnemy(pr.x, pr.y, 480);
@@ -729,8 +757,8 @@ class Game {
       }
 
       if (pr.life <= 0 ||
-          pr.x < -margin || pr.y < -margin ||
-          pr.x > this.world.w + margin || pr.y > this.world.h + margin) {
+          (!pr.boomerang && (pr.x < -margin || pr.y < -margin ||
+          pr.x > this.world.w + margin || pr.y > this.world.h + margin))) {
         this.projectiles.splice(i, 1); continue;
       }
 
@@ -782,6 +810,22 @@ class Game {
         }
       }
       if (n.r >= n.maxR) this.novas.splice(i, 1);
+    }
+  }
+
+  updateZones(dt) {
+    for (let i = this.zones.length - 1; i >= 0; i--) {
+      const z = this.zones[i];
+      z.life -= dt; z.t += dt; z.tick -= dt;
+      if (z.tick <= 0) {
+        z.tick = 0.25;
+        const foes = this.enemiesInRadius(z.x, z.y, z.r);
+        for (const e of foes) {
+          this.dealDamage(e, z.dps * 0.25, z.x, z.y, 0, true); // silent tick
+          if (z.slow > 0 && !e.dead) { e.slowAmount = Math.max(e.slowAmount, z.slow); e.slowTimer = Math.max(e.slowTimer, 0.5); }
+        }
+      }
+      if (z.life <= 0) this.zones.splice(i, 1);
     }
   }
 
@@ -870,6 +914,7 @@ class Game {
 
     if (this.player) {
       this._drawWorldBounds(ctx, cam);
+      this._drawZones(ctx, cam);
       this._drawGems(ctx, cam);
       this._drawPickups(ctx, cam);
       this.particles.draw(ctx, cam);
@@ -1049,6 +1094,30 @@ class Game {
       ctx.lineWidth = 6 * a + 2;
       ctx.shadowBlur = 20; ctx.shadowColor = n.color;
       ctx.beginPath(); ctx.arc(n.x - cam.x, n.y - cam.y, n.r, 0, TAU); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  _drawZones(ctx, cam) {
+    ctx.save();
+    for (const z of this.zones) {
+      const x = z.x - cam.x, y = z.y - cam.y;
+      if (x < -z.r || y < -z.r || x > this.view.w + z.r || y > this.view.h + z.r) continue;
+      const a = clamp(z.life / z.maxLife, 0, 1);
+      const r = z.r * (1 + Math.sin(z.t * 5) * 0.06);
+      const g = ctx.createRadialGradient(x, y, r * 0.15, x, y, r);
+      g.addColorStop(0, z.color + '66');
+      g.addColorStop(0.7, z.color + '22');
+      g.addColorStop(1, z.color + '00');
+      ctx.globalAlpha = 0.45 + 0.45 * a;
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+      // A few drifting bubbles for life (driven by the sim clock, not RNG).
+      ctx.globalAlpha = a * 0.5; ctx.fillStyle = z.color;
+      for (let k = 0; k < 3; k++) {
+        const ang = z.t * 1.5 + k * 2.1, rr = r * 0.55;
+        ctx.beginPath(); ctx.arc(x + Math.cos(ang) * rr, y + Math.sin(ang) * rr, 2.5, 0, TAU); ctx.fill();
+      }
     }
     ctx.restore();
   }

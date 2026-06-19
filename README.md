@@ -47,13 +47,16 @@ each with a distinct starting weapon and playstyle:
 | **Frost** | Sturdy control, chills foes | Frost Shard |
 | **Gale**  | Fast, fragile, far reach | Orbit Wisps |
 | **Monarch** | Slow, devastating bursts | Nova Burst |
+| **Comet** | Hit-and-run, blades return | Whirling Glaive |
 
 Progress is saved automatically in your browser (`localStorage`).
 
 ## ⚒ Build variety
 
-**8 weapons** — Light Bolt, Frost Shard, Flame Aura, Orbit Wisps, Nova Burst,
-Arc Lightning, Spirit Seekers, Light Whip — each with 8 levels.
+**11 weapons** — Light Bolt, Frost Shard, Flame Aura, Orbit Wisps, Nova Burst,
+Arc Lightning, Spirit Seekers, Light Whip, **Whirling Glaive** (a returning
+boomerang), **Toxic Flask** (lingering poison pools), and **Prism Cross**
+(rotating beams) — each with 8 levels.
 **14 passives** — damage, attack speed, move speed, area, projectiles, pierce,
 projectile speed, pickup range, max health, regen, XP gain, crit, armor, luck.
 
@@ -75,6 +78,9 @@ a golden **EVOLUTION** — transforming it into a devastating new form:
 | Arc Lightning + Keen Edge | **Tempest** — arcs through the whole horde |
 | Spirit Seekers + Lodestone | **Reaper Swarm** — relentless piercing reapers |
 | Light Whip + Piercer | **Eclipse Blade** — encircling sweeping blades |
+| Whirling Glaive + Velocity Rune | **Ouroboros** — an eternal ring of returning blades |
+| Toxic Flask + Wide Lens | **Pandemic** — a creeping plague that engulfs the field |
+| Prism Cross + Split Prism | **Spectrum** — a rotating storm of prismatic beams |
 
 ## 🎴 Omens (run modifiers)
 
@@ -148,8 +154,8 @@ js/
   particles.js      # particle + floating-text system
   save.js           # localStorage meta-progression
   content.js        # characters, difficulty tiers + meta-upgrade shop
-  weapons.js        # 8 base weapons (periodic + continuous)
-  evolutions.js     # 8 weapon evolutions + evolution rules
+  weapons.js        # 11 base weapons (periodic, continuous, boomerang, zones)
+  evolutions.js     # 11 weapon evolutions + evolution rules
   enemies.js        # enemy archetypes + the spawn Director + bosses
   upgrades.js       # passives + level-up choice generator
   achievements.js   # achievement definitions + live/game-over checker
@@ -165,14 +171,15 @@ tools/
 ## ✅ Tests
 
 A headless harness stubs the DOM/Canvas/WebAudio APIs and actually runs the
-game — a full simulated run, every weapon, all bosses, all 8 evolutions, all 24
-achievements, every omen, the Gauntlet boss-rush flow, difficulty scaling,
-level-ups, pickups, the polish FX (nebula, projectile trails, tiered damage
-numbers), every UI screen, death, persistence, and the shop (150+ assertions):
+game — a full simulated run, every weapon, all bosses, all 11 evolutions, all 24
+achievements, every omen, the Gauntlet boss-rush flow, the boomerang/poison-pool
+mechanics, difficulty scaling, level-ups, pickups, the polish FX (nebula,
+projectile trails, tiered damage numbers), every UI screen, death, persistence,
+and the shop (170+ assertions):
 
 ```bash
 npm test                          # functional + determinism suites
-node tools/headless-test.js       # functional suite (150+ assertions)
+node tools/headless-test.js       # functional suite (170+ assertions)
 node tools/determinism-test.js    # proves Daily seeds are framerate/settings-independent
 node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```

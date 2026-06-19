@@ -250,6 +250,97 @@ const WEAPONS = {
       Audio2.blip(420, 0.12, 'triangle', 0.12, -120);
     },
   },
+
+  // -- Whirling Glaive: a blade that flies out and returns, cutting twice. --
+  glaive: {
+    id: 'glaive', name: 'Whirling Glaive', icon: '🪃', color: '#9affe0', maxLevel: 8,
+    desc(l) {
+      return [
+        'Hurl a blade that returns, cutting both ways.',
+        '+1 glaive.', '+25% damage.', 'Longer reach & more pierce.',
+        '+1 glaive.', '+30% damage.', 'Glaives pierce everything.',
+        '+2 glaives, huge reach.',
+      ][l - 1] || 'Maxed.';
+    },
+    cooldown(l, p) { return cd(1.5 - l * 0.05, p); },
+    fire(game, inst) {
+      const p = game.player, l = inst.level;
+      const count = 1 + (l >= 2 ? 1 : 0) + (l >= 5 ? 1 : 0) + (l >= 8 ? 2 : 0) + p.bonusProj;
+      const dmg = (20 * (1 + (l >= 3 ? 0.25 : 0) + (l >= 6 ? 0.30 : 0))) * p.might;
+      const pierce = (l >= 7 ? 99 : (l >= 4 ? 3 : 1)) + p.bonusPierce;
+      const outT = 0.55 + (l >= 4 ? 0.12 : 0) + (l >= 8 ? 0.18 : 0);
+      const base = game.aimAngle();
+      for (let i = 0; i < count; i++) {
+        const ang = base + (count > 1 ? lerp(-0.45, 0.45, i / (count - 1)) : 0);
+        game.spawnProjectile({
+          x: p.x, y: p.y, angle: ang, speed: 520 * p.projSpeed,
+          damage: dmg, radius: 9 * p.area, pierce, life: 4,
+          color: '#dfffff', glow: '#9affe0', kb: 80, boomerang: true, outT,
+        });
+      }
+      Audio2.blip(360, 0.12, 'triangle', 0.13, 140);
+    },
+  },
+
+  // -- Toxic Flask: lobs flasks that leave lingering corrosive pools. -------
+  toxin: {
+    id: 'toxin', name: 'Toxic Flask', icon: '☣', color: '#a6e22e', maxLevel: 8,
+    desc(l) {
+      return [
+        'Lob a flask that leaves a corrosive pool.',
+        '+20% damage.', 'Bigger pools.', '+1 flask.',
+        '+25% damage.', 'Pools linger longer.', 'Pools also slow foes.',
+        '+1 flask, deeply caustic.',
+      ][l - 1] || 'Maxed.';
+    },
+    cooldown(l, p) { return cd(1.9 - l * 0.05, p); },
+    fire(game, inst) {
+      const p = game.player, l = inst.level;
+      const count = 1 + (l >= 4 ? 1 : 0) + (l >= 8 ? 1 : 0) + (p.bonusProj > 0 ? 1 : 0);
+      const dps = (10 * (1 + (l >= 2 ? 0.20 : 0) + (l >= 5 ? 0.25 : 0))) * p.might;
+      const radius = (66 + l * 6) * p.area * (l >= 3 ? 1.2 : 1);
+      const life = 3.5 + (l >= 6 ? 2 : 0);
+      const slow = l >= 7 ? 0.4 : 0;
+      const aim = game.aimAngle();
+      for (let i = 0; i < count; i++) {
+        const t = game.nearestEnemy(p.x, p.y, 440);
+        const tx = t ? t.x + rand(-30, 30) : p.x + Math.cos(aim) * 170 + rand(-30, 30);
+        const ty = t ? t.y + rand(-30, 30) : p.y + Math.sin(aim) * 170 + rand(-30, 30);
+        game.spawnZone(tx, ty, radius, dps, life, '#a6e22e', slow);
+      }
+      Audio2.blip(180, 0.18, 'sawtooth', 0.12, -80);
+    },
+  },
+
+  // -- Prism Cross: rotating beams that fan out around you. -----------------
+  prism: {
+    id: 'prism', name: 'Prism Cross', icon: '✛', color: '#ff86c8', maxLevel: 8,
+    desc(l) {
+      return [
+        'Fire light in four rotating directions.',
+        '+25% damage.', 'Beams pierce +1.', 'Rotates faster.',
+        '+30% damage.', '+4 diagonal beams.', 'Beams pierce more.',
+        'Blinding prismatic burst.',
+      ][l - 1] || 'Maxed.';
+    },
+    cooldown(l, p) { return cd(1.2 - l * 0.04, p); },
+    fire(game, inst) {
+      const p = game.player, l = inst.level;
+      inst._rot = (inst._rot || 0) + 0.5 + (l >= 4 ? 0.5 : 0);
+      const dirs = l >= 6 ? 8 : 4;
+      const dmg = (15 * (1 + (l >= 2 ? 0.25 : 0) + (l >= 5 ? 0.30 : 0))) * p.might;
+      const pierce = 1 + (l >= 3 ? 1 : 0) + (l >= 7 ? 2 : 0) + p.bonusPierce;
+      for (let i = 0; i < dirs; i++) {
+        const ang = inst._rot + (i / dirs) * TAU;
+        game.spawnProjectile({
+          x: p.x, y: p.y, angle: ang, speed: 400 * p.projSpeed,
+          damage: dmg, radius: 6 * p.area, pierce, life: 1.2,
+          color: '#ffd0ec', glow: '#ff86c8', kb: 60,
+        });
+      }
+      Audio2.blip(680, 0.1, 'square', 0.1, 160);
+    },
+  },
 };
 
 const WEAPON_LIST = Object.values(WEAPONS);

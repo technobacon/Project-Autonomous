@@ -48,6 +48,14 @@ const CHARACTERS = [
     blurb: 'For the patient. Devastating bursts of arcane power.',
   },
   {
+    id: 'comet', name: 'Comet', color: '#9affe0',
+    desc: 'Hurls returning blades and never stops moving.',
+    startWeapon: 'glaive',
+    cost: 800,
+    stats: { maxHp: 95, speed: 195, might: 1.15, haste: 1.05, armor: 0, pickup: 160 },
+    blurb: 'Hit-and-run striker. Blades return — so keep on the move.',
+  },
+  {
     // Secret character — not purchasable; unlocked by the "Into the Void"
     // achievement (survive 15:00). Powerful but high-risk.
     id: 'void', name: 'Void', color: '#ff4dff',

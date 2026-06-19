@@ -15,6 +15,9 @@ const EVOLUTIONS = [
   { base: 'chain',  passive: 'crit',      passiveLvl: 2, into: 'tempest' },
   { base: 'spirit', passive: 'magnet',    passiveLvl: 2, into: 'reapers' },
   { base: 'whip',   passive: 'pierce',    passiveLvl: 2, into: 'eclipse' },
+  { base: 'glaive', passive: 'velocity',  passiveLvl: 2, into: 'ouroboros' },
+  { base: 'toxin',  passive: 'area',      passiveLvl: 2, into: 'pandemic' },
+  { base: 'prism',  passive: 'multishot', passiveLvl: 2, into: 'spectrum' },
 ];
 
 // Evolved weapon definitions (maxLevel 1; power scales with player stats).
@@ -175,6 +178,64 @@ const EVOLVED_WEAPONS = {
       // Four quadrant sweeps cover the full circle.
       for (let q = 0; q < 4; q++) game.spawnWhip(p.x, p.y, q * (Math.PI / 2), len, Math.PI / 4 + 0.12, dmg);
       Audio2.blip(420, 0.13, 'triangle', 0.13, -120);
+    },
+  },
+
+  ouroboros: {
+    id: 'ouroboros', name: 'Ouroboros', icon: '➿', color: '#7dffd0', maxLevel: 1, evolved: true,
+    desc() { return 'EVOLVED: an eternal ring of returning blades.'; },
+    cooldown(l, p) { return cd(0.9, p); },
+    fire(game, inst) {
+      const p = game.player;
+      const count = 8 + p.bonusProj;
+      const dmg = 30 * p.might;
+      for (let i = 0; i < count; i++) {
+        const ang = (i / count) * TAU;
+        game.spawnProjectile({
+          x: p.x, y: p.y, angle: ang, speed: 560 * p.projSpeed,
+          damage: dmg, radius: 11 * p.area, pierce: 99, life: 5,
+          color: '#ccfff0', glow: '#7dffd0', kb: 90, boomerang: true, outT: 0.7,
+        });
+      }
+      Audio2.blip(360, 0.14, 'triangle', 0.14, 160);
+    },
+  },
+
+  pandemic: {
+    id: 'pandemic', name: 'Pandemic', icon: '🦠', color: '#b6ff3c', maxLevel: 1, evolved: true,
+    desc() { return 'EVOLVED: a creeping plague that engulfs the field.'; },
+    cooldown(l, p) { return cd(1.4, p); },
+    fire(game, inst) {
+      const p = game.player;
+      const dps = 26 * p.might;
+      const r = 130 * p.area;
+      game.spawnZone(p.x, p.y, r, dps, 4, '#b6ff3c', 0.5);
+      for (const e of game.nearestEnemies(p.x, p.y, 3)) game.spawnZone(e.x, e.y, r * 0.8, dps, 4, '#b6ff3c', 0.5);
+      Audio2.blip(160, 0.2, 'sawtooth', 0.12, -60);
+    },
+  },
+
+  spectrum: {
+    id: 'spectrum', name: 'Spectrum', icon: '🌈', color: '#ff6bd6', maxLevel: 1, evolved: true,
+    desc() { return 'EVOLVED: a rotating storm of prismatic beams.'; },
+    cooldown(l, p) { return cd(0.7, p); },
+    fire(game, inst) {
+      const p = game.player;
+      inst._rot = (inst._rot || 0) + 0.6;
+      const dirs = 12;
+      const dmg = 22 * p.might;
+      const pierce = 4 + p.bonusPierce;
+      const cols = ['#ff6b6b', '#ffd84d', '#7affc4', '#5ad9ff', '#c98bff', '#ff86c8'];
+      for (let i = 0; i < dirs; i++) {
+        const ang = inst._rot + (i / dirs) * TAU;
+        const col = cols[i % cols.length];
+        game.spawnProjectile({
+          x: p.x, y: p.y, angle: ang, speed: 430 * p.projSpeed,
+          damage: dmg, radius: 6 * p.area, pierce, life: 1.3,
+          color: col, glow: col, kb: 60,
+        });
+      }
+      Audio2.blip(720, 0.1, 'square', 0.1, 180);
     },
   },
 };

@@ -23,7 +23,7 @@ const ACHIEVEMENTS = [
   { id: 'wealthy',      icon: '💰', name: 'Hoarder',            desc: 'Earn 1000 shards in total.',             reward: 0,   check: c => c.save.totalShardsEarned >= 1000 },
   { id: 'ascendant',    icon: '🔥', name: 'Ascendant',          desc: 'Reach 8:00 on Nightmare or harder.',     reward: 100, check: c => c.difficultyIndex >= 2 && c.time >= 480 },
   { id: 'abyssal',      icon: '🌑', name: 'Abyssal',            desc: 'Survive 5:00 in the Abyss.',             reward: 150, check: c => c.difficultyIndex >= 3 && c.time >= 300 },
-  { id: 'roster',       icon: '🌟', name: 'The Five',           desc: 'Unlock every standard character.',       reward: 50,  check: c => c.baseCharsUnlocked >= 5 },
+  { id: 'roster',       icon: '🌟', name: 'Full Roster',         desc: 'Unlock every standard character.',       reward: 50,  check: c => c.baseCharsUnlocked >= c.baseCharsTotal },
   { id: 'archivist',    icon: '📖', name: 'Archivist',          desc: 'Discover every foe in the Codex.',       reward: 40,  check: c => c.enemiesSeen },
   { id: 'omened',       icon: '🎴', name: 'Fate Sealed',         desc: 'Reach 5:00 with an Omen active.',        reward: 40,  check: c => c.omen && c.time >= 300 },
   { id: 'cursed_glory', icon: '🩸', name: 'Cursed Glory',        desc: 'Reach 8:00 with the Berserker Omen.',    reward: 80,  check: c => c.omenId === 'berserk' && c.time >= 480 },
@@ -52,6 +52,7 @@ const Achievements = {
       gauntletRound: game ? (game.gauntletCleared || 0) : 0,
       save: s,
       baseCharsUnlocked: CHARACTERS.filter(c => !c.secret && Save.isUnlocked(c.id)).length,
+      baseCharsTotal: CHARACTERS.filter(c => !c.secret).length,
       enemiesSeen: Object.keys(ENEMY_TYPES).every(k => Save.isSeen('enemies', k)),
     };
   },

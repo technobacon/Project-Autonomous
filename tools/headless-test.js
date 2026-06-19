@@ -328,6 +328,41 @@ globalThis.__run = function(report) {
     UI.showOmenDraft('spark', 0);   // builds without error
   });
 
+  // 11.3) New content (v7): glaive (boomerang), toxin (zones), prism, Comet.
+  sectionTry('content: new weapons + evolutions registered', () => {
+    for (const id of ['glaive', 'toxin', 'prism']) ok('base weapon ' + id, !!getWeapon(id) && WEAPON_LIST.some(w => w.id === id));
+    for (const id of ['ouroboros', 'pandemic', 'spectrum']) ok('evolved weapon ' + id, !!getWeapon(id) && getWeapon(id).evolved);
+    ok('Comet character exists', CHARACTERS.some(c => c.id === 'comet') && getCharacter('comet').startWeapon === 'glaive');
+  });
+  sectionTry('content: glaive boomerang returns', () => {
+    const g = new Game(document.getElementById('game')); g.start('comet', 0, { seed: 11 });
+    g.spawnEnemy('drifter', g.player.x + 160, g.player.y, 1, 1);
+    let sawReturn = false, sawProj = false;
+    for (let i = 0; i < 60 * 8; i++) {
+      g.update(1 / 60);
+      if (g.projectiles.some(pr => pr.boomerang)) sawProj = true;
+      if (g.projectiles.some(pr => pr.boomerang && pr.returning)) sawReturn = true;
+    }
+    ok('glaive spawned a boomerang', sawProj);
+    ok('boomerang entered return phase', sawReturn);
+  });
+  sectionTry('content: toxin leaves damaging pools', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 5 });
+    g.player.weapons = []; g.player.addWeapon('toxin');
+    const e = g.spawnEnemy('brute', g.player.x + 60, g.player.y, 30, 1);
+    const hp0 = e.hp;
+    let sawZone = false;
+    for (let i = 0; i < 60 * 4; i++) { g.update(1 / 60); if (g.zones.length > 0) sawZone = true; }
+    ok('toxin created a zone', sawZone);
+    ok('zone damaged a foe', e.dead || e.hp < hp0);
+  });
+  sectionTry('content: roster achievement scales to all standard chars', () => {
+    Save.data.achievements = {};
+    for (const c of CHARACTERS) if (!c.secret) Save.unlock(c.id);
+    Achievements.check(new Game(document.getElementById('game')));
+    ok('roster unlocks with all standard chars', Save.hasAchievement('roster'));
+  });
+
   // 11.5) Gauntlet (boss-rush) mode (v6).
   // Auto-resolve a fresh game's level-up screens (the opening Gauntlet picks
   // arrive during start(), so this must be installed before start()).
