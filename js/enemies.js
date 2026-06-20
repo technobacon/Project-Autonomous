@@ -90,6 +90,13 @@ const BOSSES = {
     hp: 2400, speed: 38, radius: 56, damage: 34, xp: 120, ai: 'boss_colossus', shape: 'hex',
     shootCd: 2.0, projSpeed: 180, projDmg: 14,
   },
+  maelstrom: {
+    id: 'maelstrom', name: 'The Maelstrom', color: '#8a7dff', boss: true,
+    hp: 3600, speed: 40, radius: 52, damage: 36, xp: 170, ai: 'boss_maelstrom', shape: 'star',
+    // Weaves an ever-rotating spiral of bolts, punctuated by a full ring-nova.
+    shootCd: 0.14, projSpeed: 200, projDmg: 12, spinStep: 0.42,
+    novaCd: 5.0, novaN: 22, novaSpeed: 150, novaDmg: 14,
+  },
   devourer: {
     id: 'devourer', name: 'The Devourer', color: '#c98bff', boss: true,
     hp: 4800, speed: 52, radius: 62, damage: 42, xp: 220, ai: 'boss_warden', shape: 'star',
@@ -100,8 +107,13 @@ const BOSSES = {
 const BOSS_SCHEDULE = [
   { time: 180, boss: 'warden' },     // 3:00
   { time: 360, boss: 'colossus' },   // 6:00
+  { time: 480, boss: 'maelstrom' },  // 8:00
   { time: 600, boss: 'devourer' },   // 10:00
 ];
+
+// Past the scheduled bosses, the endless rotation alternates the two toughest
+// so late-game encounters keep varying their mechanics.
+const ENDLESS_BOSSES = ['devourer', 'maelstrom'];
 
 class Director {
   constructor(game) {
@@ -156,7 +168,8 @@ class Director {
       this._endlessBossTimer = (this._endlessBossTimer || 0) + dt;
       if (this._endlessBossTimer >= 180) {
         this._endlessBossTimer = 0;
-        this.spawnBoss('devourer', 1 + (min - 10) * 0.15);
+        const id = ENDLESS_BOSSES[(this._endlessIndex = (this._endlessIndex || 0) + 1) % ENDLESS_BOSSES.length];
+        this.spawnBoss(id, 1 + (min - 10) * 0.15);
       }
     }
 
@@ -276,7 +289,7 @@ class Director {
   }
 
   _spawnGauntletRound(round) {
-    const keys = ['warden', 'colossus', 'devourer'];
+    const keys = ['warden', 'colossus', 'maelstrom', 'devourer'];
     const count = round >= 6 ? 2 : 1;        // double bosses in later rounds
     const scale = 1 + (round - 1) * 0.5;     // escalating boss HP
     const dmg = 1 + (round - 1) * 0.12;

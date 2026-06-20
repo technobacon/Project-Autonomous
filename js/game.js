@@ -341,6 +341,7 @@ class Game {
       dmgResist: 0, regen: 0, shield: 0, shieldMax: 0,
       arcane: false, affixShootTimer: 0, volatile: !!def.explodes, fuse: 0,
       castFx: 0,   // render-only conjure telegraph (summoner archetype)
+      spin: 0, novaT: 0,   // boss spiral angle + nova cadence (Maelstrom)
     };
     this.enemies.push(e);
     Save.markSeen('enemies', def.id);
@@ -642,6 +643,8 @@ class Game {
 
   onBossSpawn(e) {
     this.activeBoss = e;
+    // Stagger the Maelstrom's first ring-nova so it doesn't fire on arrival.
+    e.spin = 0; e.novaT = (e.type.novaCd || 5) * 0.7;
     Audio2.bossWarn();
     this.shake(10, 0.5);
     this.toast('☠ ' + e.type.name + ' approaches!');
@@ -1002,6 +1005,30 @@ class Game {
               const c = this.spawnEnemy('runner', e.x + rand(-30, 30), e.y + rand(-30, 30), 1 + this.time / 120, 1);
             }
           }
+        }
+        break;
+      }
+      case 'boss_maelstrom': {
+        // Drifts in slowly while weaving an ever-rotating spiral of bolts, then
+        // periodically unleashes a full ring-nova to weave through. Deterministic:
+        // the spiral angle advances by a fixed step and timers are dt-driven.
+        e.x += Math.cos(ang) * spd * dt; e.y += Math.sin(ang) * spd * dt;
+        e.shootTimer -= dt;
+        if (e.shootTimer <= 0) {
+          e.shootTimer = e.type.shootCd || 0.14;
+          e.spin += e.type.spinStep || 0.42;
+          const arms = 2;
+          for (let k = 0; k < arms; k++) {
+            this.spawnEnemyProjectile(e.x, e.y, e.spin + (k / arms) * TAU, e.type.projSpeed || 200, e.type.projDmg || 12, '#b6a8ff');
+          }
+        }
+        e.novaT -= dt;
+        if (e.novaT <= 0) {
+          e.novaT = e.type.novaCd || 5;
+          const n = e.type.novaN || 22;
+          const base = e.spin * 0.5;   // deterministic ring offset
+          for (let k = 0; k < n; k++) this.spawnEnemyProjectile(e.x, e.y, base + (k / n) * TAU, e.type.novaSpeed || 150, e.type.novaDmg || 14, '#d8c0ff');
+          this.shake(6, 0.3);
         }
         break;
       }

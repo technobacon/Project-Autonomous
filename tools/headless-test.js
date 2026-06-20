@@ -187,6 +187,34 @@ globalThis.__run = function(report) {
     }
   });
 
+  sectionTry('boss: Maelstrom weaves a spiral + ring-nova', () => {
+    ok('maelstrom registered + scheduled', !!BOSSES.maelstrom && BOSSES.maelstrom.ai === 'boss_maelstrom' &&
+      BOSS_SCHEDULE.some(s => s.boss === 'maelstrom') && ENDLESS_BOSSES.includes('maelstrom'));
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 21 });
+    g.player.invuln = 1e9; const origMove = Input.moveVector; Input.moveVector = () => ({ x: 0, y: 0 });
+    g.director.spawnBoss('maelstrom');
+    const boss = g.enemies.find(e => e.boss);
+    ok('maelstrom spawned as a boss', !!boss && boss.type.id === 'maelstrom');
+    const spin0 = boss.spin;
+    let maxBurst = 0, prev = g.enemyProjectiles.length;
+    for (let i = 0; i < 60 * 7; i++) {
+      const before = g.enemyProjectiles.length;
+      g.update(1 / 60);
+      const made = g.enemyProjectiles.length - before;
+      if (made > maxBurst) maxBurst = made;   // the ring-nova is the biggest burst
+    }
+    ok('spiral angle advanced', boss.spin > spin0);
+    ok('it fired a large ring-nova burst', maxBurst >= 16);
+    ok('player + boss state stay finite', Number.isFinite(g.player.hp) && Number.isFinite(boss.x));
+    // Reproducible on a seed: identical spin after identical scripted time.
+    const g2 = new Game(document.getElementById('game')); g2.start('spark', 0, { seed: 21 });
+    g2.player.invuln = 1e9; g2.director.spawnBoss('maelstrom');
+    const b2 = g2.enemies.find(e => e.boss);
+    for (let i = 0; i < 60 * 7; i++) g2.update(1 / 60);
+    Input.moveVector = origMove;
+    ok('spiral is reproducible on a seed', Math.abs(boss.spin - b2.spin) < 1e-9);
+  });
+
   // 6) Pickups.
   sectionTry('apply all pickups', () => {
     ['health', 'magnet', 'bomb', 'chest'].forEach(k => game.applyPickup(k));

@@ -35,8 +35,12 @@ the **Help** screen.
   an upgrade: a new weapon, a weapon level, or a passive boost.
 - **Pause** any time with `Esc` or `P`. During a level-up, press `1`–`4` or
   click a card.
-- Survive long enough and **bosses** arrive (3:00, 6:00, 10:00, then endlessly).
-  They hit hard but drop a flood of XP and treasure.
+- Survive long enough and **bosses** arrive (3:00, 6:00, 8:00, 10:00, then
+  endlessly). Each fights differently — the **Warden** sprays radial volleys,
+  the **Colossus** lobs aimed shots and summons adds, the **Maelstrom** weaves an
+  ever-rotating *spiral of bolts* punctuated by a full ring-nova, and the
+  **Devourer** does it all, faster. They hit hard but drop a flood of XP and
+  treasure, and the endless rotation keeps alternating their mechanics.
 
 ## ✦ The Sanctuary (meta-progression)
 
