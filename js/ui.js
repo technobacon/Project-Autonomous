@@ -99,6 +99,7 @@ const UI = {
         <div class="help-grid">
           <div class="help-card"><h3>🎯 Goal</h3><p>You are the last light. Endless waves of dark close in. Survive as long as you can — there is no winning, only how long you last.</p></div>
           <div class="help-card"><h3>🕹 Move</h3><p><b>WASD</b> or <b>Arrow keys</b> to move (drag on touch screens). Your weapons fire <b>automatically</b> — focus on positioning and dodging.</p></div>
+          <div class="help-card"><h3>⟫ Blink</h3><p>Tap <b>Space</b> or <b>Shift</b> (double-tap on touch) to <b>dash</b> a short distance with brief <b>invulnerability</b>, on a cooldown. Blink through a wall of foes or out of a closing ring — the HUD bar glows when it's ready.</p></div>
           <div class="help-card"><h3>💎 Grow</h3><p>Defeated foes drop light shards. Collect them to level up and <b>choose an upgrade</b> — new weapons, weapon levels, or passive boosts.</p></div>
           <div class="help-card"><h3>⚒ Build</h3><p>You hold up to <b>6 weapons</b> and <b>6 passives</b>. Combine them into a build. Every run is different.</p></div>
           <div class="help-card"><h3>☠ Bosses</h3><p>Bosses arrive on a timer and hit hard — but drop a flood of XP and treasure. Survive past 10:00 to face the Devourer.</p></div>

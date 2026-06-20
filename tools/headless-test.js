@@ -220,6 +220,50 @@ globalThis.__run = function(report) {
     ['health', 'magnet', 'bomb', 'chest'].forEach(k => game.applyPickup(k));
   });
 
+  // 5b) Blink dash: skill reposition with i-frames + cooldown.
+  sectionTry('dash: blinks, grants i-frames, then goes on cooldown', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 31 });
+    const p = g.player;
+    p.moveDir = { x: 1, y: 0 };
+    const x0 = p.x;
+    const fired = p.dash();
+    ok('dash fired off cooldown', fired === true);
+    ok('it moved roughly the blink distance', Math.abs((p.x - x0) - p.dashDist) < 1e-6 && p.dashCd > 0);
+    ok('it granted i-frames', p.invuln >= p.dashIFrames - 1e-9);
+    ok('a second dash is blocked while cooling down', p.dash() === false);
+    // Cooldown ticks down through update and then it can fire again.
+    for (let i = 0; i < Math.ceil(p.dashCdMax * 60) + 2; i++) g.update(1 / 60);
+    ok('cooldown recovers', p.dashCd <= 0 && p.dash() === true);
+  });
+  sectionTry('dash: clamps to the world + obeys direction', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 32 });
+    const p = g.player;
+    p.x = g.world.w - 10; p.y = 500; p.moveDir = { x: 1, y: 0 }; p.dashCd = 0;
+    p.dash();
+    ok('blink never leaves the world bounds', p.x <= g.world.w - p.radius + 1e-6 && p.x >= p.radius);
+    // Diagonal blink keeps total displacement at the blink distance.
+    const g2 = new Game(document.getElementById('game')); g2.start('spark', 0, { seed: 32 });
+    const q = g2.player; q.x = 1000; q.y = 1000; q.moveDir = { x: 1, y: 1 }; q.dashCd = 0;
+    const ox = q.x, oy = q.y; q.dash();
+    ok('diagonal blink uses normalized distance', Math.abs(Math.hypot(q.x - ox, q.y - oy) - q.dashDist) < 1e-6);
+  });
+  sectionTry('dash: input + touch queue trigger it; harness sim never does', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 33 });
+    const p = g.player; p.moveDir = { x: 0, y: -1 }; p.dashCd = 0;
+    const y0 = p.y;
+    Input.pressed['space'] = true;     // simulate a keypress this frame
+    g.update(1 / 60);
+    ok('Space triggers a blink in update', p.y < y0 && p.dashCd > 0);
+    // Touch double-tap path: the queued request is consumed once.
+    g._dashReq = true;
+    ok('queued request consumed once', g._consumeDashRequest() === true && g._consumeDashRequest() === false);
+    // The auto-sim (no input) must never dash on its own — cooldown stays full.
+    const g3 = new Game(document.getElementById('game')); g3.start('spark', 0, { seed: 34 });
+    Input.pressed = {};
+    for (let i = 0; i < 120; i++) g3.update(1 / 60);
+    ok('no phantom dashes without input', g3.player.dashCd === 0);
+  });
+
   // 7) Pause/resume + level-up UI screen.
   sectionTry('UI.showPause/showLevelUp', () => {
     UI.showPause(game);

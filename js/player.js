@@ -30,6 +30,16 @@ class Player {
     this.alive = true;
     this._regenAccum = 0;
 
+    // Blink dash: a short, skill-based reposition on a cooldown with brief
+    // i-frames. Input-triggered only (never fired by the auto-sim), so it adds
+    // player agency without affecting the deterministic harnesses.
+    this.dashCd = 0;            // remaining cooldown (seconds)
+    this.dashCdMax = 3.5;
+    this.dashDist = 155;
+    this.dashIFrames = 0.3;
+    this._dashFx = 0;           // render-only afterimage timer
+    this._dashGhosts = [];      // render-only blink endpoints
+
     // Mastery cosmetics (set at run start from lifetime rank). Purely visual —
     // never read by the simulation, so they can't affect fairness/determinism.
     this.masteryRank = 0;     // rank index of this hero (0 = Untrained)
@@ -232,6 +242,14 @@ class Player {
     this.x = clamp(this.x, this.radius, this.game.world.w - this.radius);
     this.y = clamp(this.y, this.radius, this.game.world.h - this.radius);
 
+    // Blink dash. Triggered by Space/Shift on keyboard or a double-tap on touch
+    // (queued on the game). Direction follows current/last movement.
+    if (this.dashCd > 0) this.dashCd -= dt;
+    if (this._dashFx > 0) this._dashFx -= dt;
+    const wantDash = (typeof Input !== 'undefined' && Input.justPressed && Input.justPressed('space', 'shift')) ||
+      (this.game._consumeDashRequest && this.game._consumeDashRequest());
+    if (wantDash) this.dash();
+
     // Timers.
     if (this.invuln > 0) this.invuln -= dt;
     if (this.hitFlash > 0) this.hitFlash -= dt;
@@ -259,9 +277,39 @@ class Player {
     }
   }
 
+  // Blink: instantly reposition along the move direction, with i-frames. Returns
+  // true if it fired (off cooldown + alive). Deterministic given inputs.
+  dash() {
+    if (!this.alive || this.dashCd > 0) return false;
+    let dx = this.moveDir.x, dy = this.moveDir.y;
+    const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
+    const fromX = this.x, fromY = this.y;
+    this.x = clamp(this.x + dx * this.dashDist, this.radius, this.game.world.w - this.radius);
+    this.y = clamp(this.y + dy * this.dashDist, this.radius, this.game.world.h - this.radius);
+    this.dashCd = this.dashCdMax;
+    this.invuln = Math.max(this.invuln, this.dashIFrames);
+    this._dashFx = 0.28;
+    this._dashGhosts = [{ x: fromX, y: fromY }, { x: this.x, y: this.y }];
+    if (typeof Audio2 !== 'undefined' && Audio2.dash) Audio2.dash();
+    if (this.game.particles) this.game.particles.burst(fromX, fromY, 12, { color: this.char.color, speed: vrand(60, 180), life: vrand(0.2, 0.5) });
+    return true;
+  }
+
   draw(ctx, cam) {
     const x = this.x - cam.x, y = this.y - cam.y;
     ctx.save();
+
+    // Blink afterimage: a fading streak between the two endpoints (render-only).
+    if (this._dashFx > 0 && this._dashGhosts.length === 2) {
+      const a = this._dashGhosts[0], b = this._dashGhosts[1];
+      const f = clamp(this._dashFx / 0.28, 0, 1);
+      ctx.save();
+      ctx.globalAlpha = f * 0.5;
+      ctx.strokeStyle = this.char.color; ctx.lineWidth = this.radius * 1.4;
+      ctx.lineCap = 'round'; ctx.shadowBlur = 16; ctx.shadowColor = this.char.color;
+      ctx.beginPath(); ctx.moveTo(a.x - cam.x, a.y - cam.y); ctx.lineTo(b.x - cam.x, b.y - cam.y); ctx.stroke();
+      ctx.restore();
+    }
 
     // Mastery trail (cosmetic prestige for Veteran+ heroes). Render-only: the
     // position buffer lives outside the simulation and is never hashed.

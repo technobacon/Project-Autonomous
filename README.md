@@ -29,6 +29,9 @@ the **Help** screen.
 ## 🎮 How to play
 
 - **Move** with `WASD` or the **arrow keys** (on touch devices, drag anywhere).
+- **Blink** with `Space` or `Shift` (double-tap on touch): a short dash with
+  brief invulnerability on a cooldown — punch through a wall of foes or slip out
+  of a closing ring. A readiness bar in the HUD glows when it's charged.
 - Your **weapons fire automatically** — your only job is positioning and
   survival.
 - Defeated foes drop **light shards**. Collect them to **level up** and choose

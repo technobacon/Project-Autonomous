@@ -63,6 +63,8 @@ class Game {
 
     // Touch joystick state (mobile).
     this.touch = { active: false, vector: { x: 0, y: 0 }, ox: 0, oy: 0 };
+    this._dashReq = false;       // queued Blink request (touch double-tap)
+    this._lastTouchStart = 0;
     this._initTouch();
 
     // Pre-render the starfield to an offscreen canvas (parallax background).
@@ -235,7 +237,7 @@ class Game {
     // and only until the core tips have all been seen once.
     this._coaching = !this.daily && !this.trial && !this.customRun && this.mode === 'survival' &&
       !(Save.tipSeen('move') && Save.tipSeen('shards') && Save.tipSeen('dodge') &&
-        Save.tipSeen('pause') && Save.tipSeen('levelup'));
+        Save.tipSeen('blink') && Save.tipSeen('pause') && Save.tipSeen('levelup'));
     Audio2.resume();
     Audio2.startMusic(0);
     if (this.trial) {
@@ -832,9 +834,10 @@ class Game {
     if (this.time > 1.2) this.coach('move', 'Move with WASD or arrows — your light fights on its own.');
     if (this.gems.length > 0) this.coach('shards', 'Gather light shards to fill the XP bar and level up.');
     if (this.damageTaken > 0) this.coach('dodge', 'The dark hurts on contact — keep moving to stay alive.');
+    if (this.time > 10) this.coach('blink', 'Press Space or Shift to Blink — a quick dash with brief invulnerability.');
     if (this.time > 24) this.coach('pause', 'Pause anytime with Esc or P.');
     if (Save.tipSeen('move') && Save.tipSeen('shards') && Save.tipSeen('dodge') &&
-        Save.tipSeen('pause') && Save.tipSeen('levelup')) this._coaching = false;
+        Save.tipSeen('blink') && Save.tipSeen('pause') && Save.tipSeen('levelup')) this._coaching = false;
   }
 
   // ---- Update -----------------------------------------------------------
@@ -1867,6 +1870,20 @@ class Game {
     ctx.fillText(Math.ceil(p.hp) + ' / ' + p.maxHp, hbX + 6, hbY + hbH / 2 + 1);
     if (p.revives > 0) ctx.fillText('  ♻×' + p.revives, hbX + hbW + 6, hbY + hbH / 2 + 1);
 
+    // Blink-dash readiness pill (top-right, under kills/score). Fills as it
+    // recharges; glows cyan when ready.
+    const dbW = 96, dbH = 9, dbX = W - 12 - dbW, dbY = 36;
+    const ready = p.dashCd <= 0;
+    const frac = ready ? 1 : clamp(1 - p.dashCd / p.dashCdMax, 0, 1);
+    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(dbX, dbY, dbW, dbH);
+    ctx.fillStyle = ready ? '#5ad9ff' : 'rgba(90,217,255,0.45)';
+    if (ready) { ctx.shadowBlur = 8; ctx.shadowColor = '#5ad9ff'; }
+    ctx.fillRect(dbX, dbY, dbW * frac, dbH); ctx.shadowBlur = 0;
+    ctx.fillStyle = ready ? '#cfeeff' : '#789'; ctx.font = 'bold 8px "Segoe UI", system-ui, sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText('⟫ BLINK', dbX + 5, dbY + dbH / 2 + 1);
+    ctx.textBaseline = 'top';
+
     // Weapon icons row.
     ctx.textBaseline = 'top';
     let wx = 12; const wy = 64;
@@ -1934,12 +1951,19 @@ class Game {
     ctx.restore();
   }
 
+  // Consume a queued Blink request (from a touch double-tap). One-shot.
+  _consumeDashRequest() { if (this._dashReq) { this._dashReq = false; return true; } return false; }
+
   // ---- Touch joystick ---------------------------------------------------
   _initTouch() {
     const canvas = this.canvas;
     const onStart = (e) => {
       if (this.state !== 'playing') return;
       const t = e.touches[0]; if (!t) return;
+      // Double-tap to Blink (within 300ms of the previous tap start).
+      const now = Date.now();
+      if (now - this._lastTouchStart < 300) this._dashReq = true;
+      this._lastTouchStart = now;
       const r = canvas.getBoundingClientRect();
       this.touch.active = true;
       this.touch.ox = t.clientX - r.left; this.touch.oy = t.clientY - r.top;
