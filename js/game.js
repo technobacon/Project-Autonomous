@@ -38,6 +38,10 @@ const BIOMES = [
     nebula: [[255, 70, 110], [220, 40, 80], [255, 120, 150]], bias: { bomber: 1.6, swarm: 1.5 },
     hazard: { kind: 'strike', name: 'Bloodstorm', icon: '✷', warnTip: 'a storm of strikes — stay mobile',
       every: [1.5, 2.6], count: [1, 3], radius: [82, 122], warn: 0.95, dmg: 17, color: '#ff5d7a' } },
+  { id: 'sundering', name: 'The Sundering', base: '#080611', grid: 'rgba(150,110,230,0.09)', accent: '#caa6ff',
+    nebula: [[150, 110, 255], [110, 70, 210], [190, 140, 255]], bias: { stalker: 1.5, wraith: 1.4, charger: 1.3 },
+    hazard: { kind: 'vortex', name: 'Riftvortex', icon: '🌀', warnTip: 'vortices drag you inward — fight outward',
+      every: [3.4, 5.0], count: [1, 1], radius: [150, 200], warn: 0.9, dur: 4.5, dot: 11, color: '#b07cff' } },
 ];
 function biomeForTime(t) { return BIOMES[Math.floor(Math.max(0, t) / BIOME_SECONDS) % BIOMES.length]; }
 function biomeIndexForTime(t) { return Math.floor(Math.max(0, t) / BIOME_SECONDS); }
@@ -1400,11 +1404,15 @@ class Game {
           else { h.phase = 'active'; }
         }
       } else if (h.phase === 'active') {
-        // Lingering field: tick damage/slow to anything standing inside.
-        h.tick -= dt;
-        if (h.tick <= 0) {
-          h.tick = 0.25;
-          this._fieldTick(h);
+        // Lingering field: tick damage/slow to anything standing inside. The
+        // Riftvortex additionally drags everything toward its core each frame.
+        if (h.kind === 'vortex') {
+          this._vortexPull(h, dt);
+          h.tick -= dt;
+          if (h.tick <= 0) { h.tick = 0.25; this._vortexTick(h); }
+        } else {
+          h.tick -= dt;
+          if (h.tick <= 0) { h.tick = 0.25; this._fieldTick(h); }
         }
         if (h.t >= h.dur) { h.phase = 'fade'; h.t = 0; }
       } else { // 'fade' — brief visual settle, then gone.
@@ -1450,6 +1458,39 @@ class Game {
       this.dealDamage(e, h.dot * 0.25, h.x, h.y, 0, true);
       if (h.slow > 0 && !e.dead) { e.slowAmount = Math.max(e.slowAmount, h.slow); e.slowTimer = Math.max(e.slowTimer, 0.5); }
     }
+  }
+
+  // Riftvortex pull: drags the player gently and foes strongly toward the core
+  // each frame (a pure function of positions — deterministic, no RNG). The pull
+  // is escapable by moving outward, and it bunches the horde for easy AoE.
+  _vortexPull(h, dt) {
+    const p = this.player, pr2 = h.r * h.r;
+    if (p.alive) {
+      const d2 = dist2(h.x, h.y, p.x, p.y);
+      if (d2 < pr2 && d2 > 1) {
+        const a = angleTo(p.x, p.y, h.x, h.y);
+        const f = 1 - Math.sqrt(d2) / h.r;
+        const pull = 78 * f * dt;
+        p.x = clamp(p.x + Math.cos(a) * pull, p.radius, this.world.w - p.radius);
+        p.y = clamp(p.y + Math.sin(a) * pull, p.radius, this.world.h - p.radius);
+      }
+    }
+    for (const e of this.enemiesInRadius(h.x, h.y, h.r)) {
+      if (e.boss) continue;
+      const d = dist(e.x, e.y, h.x, h.y) || 1;
+      const a = angleTo(e.x, e.y, h.x, h.y);
+      const f = 1 - d / h.r;
+      const pull = 165 * f * dt;
+      e.x += Math.cos(a) * pull; e.y += Math.sin(a) * pull;
+    }
+  }
+
+  // Damaging core at the vortex centre (smaller than the pull radius, so the
+  // outer field only tugs — reaching the eye is what hurts).
+  _vortexTick(h) {
+    const p = this.player, coreR = h.r * 0.45;
+    if (p.alive && dist2(h.x, h.y, p.x, p.y) <= coreR * coreR) p.hurt(h.dot * 0.25);
+    for (const e of this.enemiesInRadius(h.x, h.y, coreR)) this.dealDamage(e, h.dot * 0.25, h.x, h.y, 0, true);
   }
 
   // ---- Shrines (risk/reward altars) -------------------------------------
@@ -1922,6 +1963,21 @@ class Game {
         ctx.globalAlpha = 0.4 * a;
         ctx.strokeStyle = h.color; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke();
+        // Riftvortex: rotating spiral arms convey the inward drag.
+        if (h.kind === 'vortex') {
+          ctx.globalAlpha = 0.5 * a;
+          ctx.lineWidth = 2;
+          for (let k = 0; k < 3; k++) {
+            const base = this.time * 2.2 + k * (TAU / 3);
+            ctx.beginPath();
+            for (let s = 0; s <= 1.001; s += 0.1) {
+              const rad = r * s, ang = base + s * 5.5;
+              const px = x + Math.cos(ang) * rad, py = y + Math.sin(ang) * rad;
+              if (s === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+          }
+        }
       }
     }
     ctx.restore();

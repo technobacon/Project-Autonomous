@@ -806,10 +806,26 @@ globalThis.__run = function(report) {
     ok('the opening Verge has no hazard', !verge.hazard);
     for (const b of BIOMES.filter(x => x.hazard)) {
       const h = b.hazard;
-      ok(b.id + ' hazard well-formed', (h.kind === 'strike' || h.kind === 'field') &&
+      ok(b.id + ' hazard well-formed', (h.kind === 'strike' || h.kind === 'field' || h.kind === 'vortex') &&
         Array.isArray(h.every) && Array.isArray(h.radius) && typeof h.warn === 'number' &&
         typeof h.name === 'string' && typeof h.icon === 'string');
     }
+    ok('a sixth biome (The Sundering) with a vortex exists', (() => {
+      const s = BIOMES.find(b => b.id === 'sundering'); return s && s.hazard && s.hazard.kind === 'vortex' && BIOMES.length >= 6;
+    })());
+  });
+  sectionTry('hazards: the Riftvortex drags player + foes inward', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 17 });
+    const hz = BIOMES.find(b => b.id === 'sundering').hazard;
+    g.spawnHazard(hz);
+    const h = g.hazards[0]; h.phase = 'active'; h.t = 0;   // skip the telegraph
+    // Place player and a foe out near the rim; the pull should reel them in.
+    g.player.x = h.x + h.r * 0.8; g.player.y = h.y; const pd0 = dist(g.player.x, g.player.y, h.x, h.y);
+    const e = g.spawnEnemy('drifter', h.x + h.r * 0.8, h.y + 4, 1, 1); e.speed = 0; const ed0 = dist(e.x, e.y, h.x, h.y);
+    g.buildGrid();
+    for (let i = 0; i < 30; i++) { g.updateHazards(1 / 60); g.buildGrid(); }
+    ok('vortex pulls the player toward the eye', dist(g.player.x, g.player.y, h.x, h.y) < pd0 - 1e-6);
+    ok('vortex pulls foes harder than the player', (ed0 - dist(e.x, e.y, h.x, h.y)) > (pd0 - dist(g.player.x, g.player.y, h.x, h.y)));
   });
   sectionTry('hazards: none spawn in the Verge', () => {
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 3 });

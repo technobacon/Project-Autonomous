@@ -178,7 +178,7 @@ Champion is on the field.
 
 A survival run doesn't stay in one place. Every ~2½ minutes the world **shifts
 into a new biome** — *The Verge*, *Emberwaste*, *Glacial Rift*, *The Hollows*,
-*Bloodmoon* — each with its own palette, nebula tint and grid colour, announced
+*Bloodmoon*, *The Sundering* — each with its own palette, nebula tint and grid colour, announced
 with a wash of colour and a soft swell. Each biome also **leans the spawns**
 toward thematic foes (Emberwaste favours chargers and runners, Glacial Rift
 favours brutes, the Hollows crawl with wraiths and stalkers…) — it changes
@@ -197,6 +197,10 @@ environmental danger that turns the stage from a repaint into its own arena:
   eat at the light while you're inside.
 - **Bloodmoon — *Bloodstorm*:** a relentless, fast cadence of strikes — keep
   moving or get caught.
+- **The Sundering — *Riftvortex*:** a swirling vortex opens and **drags
+  everything toward its core** — you gently, the horde hard. Fight outward to
+  escape the damaging eye, or turn it to your advantage: it bunches foes into a
+  perfect target for area weapons.
 
 Every hazard is **telegraphed** (a warning phase before it bites), hurts
 **enemies as well as you**, and is always dodgeable — so it rewards the same

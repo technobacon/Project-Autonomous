@@ -117,6 +117,12 @@ globalThis.__det = function(report) {
   eq('hazards deterministic (same seed, warped biome)', haz, runSim({ seed: SEED, warp: 305, steps: 1200 }));
   ne('hazards differ by seed (warped biome)', haz, runSim({ seed: SEED + 7, warp: 305, steps: 1200 }));
 
+  // The Riftvortex (The Sundering, ~760s) drags the player/foes around — a
+  // movement-affecting hazard, so its determinism is worth pinning directly.
+  const vor = runSim({ seed: SEED, warp: 760, steps: 1200 });
+  eq('vortex hazard deterministic (warped to The Sundering)', vor, runSim({ seed: SEED, warp: 760, steps: 1200 }));
+  ne('vortex hazard differs by seed', vor, runSim({ seed: SEED + 7, warp: 760, steps: 1200 }));
+
   report(results);
 };
 `;
