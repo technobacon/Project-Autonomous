@@ -30,11 +30,14 @@ class Player {
     this.alive = true;
     this._regenAccum = 0;
 
-    // Blink dash: a short, skill-based reposition on a cooldown with brief
-    // i-frames. Input-triggered only (never fired by the auto-sim), so it adds
-    // player agency without affecting the deterministic harnesses.
-    this.dashCd = 0;            // remaining cooldown (seconds)
-    this.dashCdMax = 3.5;
+    // Blink dash: a short, skill-based reposition with brief i-frames, on a
+    // recharging charge system. Input-triggered only (never fired by the
+    // auto-sim), so it adds agency without affecting the deterministic harnesses.
+    // dashCdMax and dashMaxCharges are (re)derived from meta upgrades in recalc.
+    this.dashCd = 0;            // time until the next charge regenerates
+    this.dashCdMax = 3.5;       // base recharge time (Quickstep meta reduces it)
+    this.dashMaxCharges = 1;    // max stored charges (Echo Step meta adds one)
+    this.dashCharges = 1;       // current stored charges
     this.dashDist = 155;
     this.dashIFrames = 0.3;
     this._dashFx = 0;           // render-only afterimage timer
@@ -76,6 +79,11 @@ class Player {
     this.armor = base.armor + m('armor') + pv('guard');
     this.luck = m('luck') + pv('luck') * 0.06;
     this.regen = m('regen') + pv('regen') * 0.5;
+
+    // Blink tuning from the Sanctuary: Quickstep trims the recharge time,
+    // Echo Step grants an extra charge. (Capped reduction keeps it sane.)
+    this.dashCdMax = 3.5 * (1 - Math.min(0.6, m('blink')));
+    this.dashMaxCharges = 1 + m('echo');
 
     let newMax = base.maxHp + m('vigor') + pv('vigor') * 20;
 
@@ -120,8 +128,10 @@ class Player {
     if (initHp) {
       this.maxHp = newMax; this.hp = newMax;
       this.revives = m('revival') + (mod.reviveBonus || 0);
+      this.dashCharges = this.dashMaxCharges;
     } else {
       this.maxHp = newMax;
+      if (this.dashCharges > this.dashMaxCharges) this.dashCharges = this.dashMaxCharges;
     }
   }
 
@@ -244,7 +254,15 @@ class Player {
 
     // Blink dash. Triggered by Space/Shift on keyboard or a double-tap on touch
     // (queued on the game). Direction follows current/last movement.
-    if (this.dashCd > 0) this.dashCd -= dt;
+    if (this.dashCharges < this.dashMaxCharges) {
+      this.dashCd -= dt;
+      if (this.dashCd <= 0) {
+        this.dashCharges++;
+        this.dashCd = this.dashCharges < this.dashMaxCharges ? this.dashCdMax : 0;
+      }
+    } else {
+      this.dashCd = 0;
+    }
     if (this._dashFx > 0) this._dashFx -= dt;
     const wantDash = (typeof Input !== 'undefined' && Input.justPressed && Input.justPressed('space', 'shift')) ||
       (this.game._consumeDashRequest && this.game._consumeDashRequest());
@@ -280,13 +298,14 @@ class Player {
   // Blink: instantly reposition along the move direction, with i-frames. Returns
   // true if it fired (off cooldown + alive). Deterministic given inputs.
   dash() {
-    if (!this.alive || this.dashCd > 0) return false;
+    if (!this.alive || this.dashCharges <= 0) return false;
     let dx = this.moveDir.x, dy = this.moveDir.y;
     const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
     const fromX = this.x, fromY = this.y;
     this.x = clamp(this.x + dx * this.dashDist, this.radius, this.game.world.w - this.radius);
     this.y = clamp(this.y + dy * this.dashDist, this.radius, this.game.world.h - this.radius);
-    this.dashCd = this.dashCdMax;
+    this.dashCharges--;
+    if (this.dashCd <= 0) this.dashCd = this.dashCdMax;   // begin regen if idle
     this.invuln = Math.max(this.invuln, this.dashIFrames);
     this._dashFx = 0.28;
     this._dashGhosts = [{ x: fromX, y: fromY }, { x: this.x, y: this.y }];

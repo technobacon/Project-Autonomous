@@ -31,7 +31,9 @@ the **Help** screen.
 - **Move** with `WASD` or the **arrow keys** (on touch devices, drag anywhere).
 - **Blink** with `Space` or `Shift` (double-tap on touch): a short dash with
   brief invulnerability on a cooldown — punch through a wall of foes or slip out
-  of a closing ring. A readiness bar in the HUD glows when it's charged.
+  of a closing ring. A readiness bar in the HUD glows when it's charged, and the
+  Sanctuary can **shorten its cooldown** (*Quickstep*) and grant a **second
+  charge** (*Echo Step*) for back-to-back blinks.
 - Your **weapons fire automatically** — your only job is positioning and
   survival.
 - Defeated foes drop **light shards**. Collect them to **level up** and choose

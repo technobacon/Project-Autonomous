@@ -1870,11 +1870,12 @@ class Game {
     ctx.fillText(Math.ceil(p.hp) + ' / ' + p.maxHp, hbX + 6, hbY + hbH / 2 + 1);
     if (p.revives > 0) ctx.fillText('  ♻×' + p.revives, hbX + hbW + 6, hbY + hbH / 2 + 1);
 
-    // Blink-dash readiness pill (top-right, under kills/score). Fills as it
-    // recharges; glows cyan when ready.
+    // Blink-dash readiness pill (top-right, under kills/score). Fills as the
+    // next charge recharges; a dot per stored charge glows cyan when ready.
     const dbW = 96, dbH = 9, dbX = W - 12 - dbW, dbY = 36;
-    const ready = p.dashCd <= 0;
-    const frac = ready ? 1 : clamp(1 - p.dashCd / p.dashCdMax, 0, 1);
+    const ready = p.dashCharges > 0;
+    const full = p.dashCharges >= p.dashMaxCharges;
+    const frac = full ? 1 : clamp(1 - p.dashCd / p.dashCdMax, 0, 1);
     ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(dbX, dbY, dbW, dbH);
     ctx.fillStyle = ready ? '#5ad9ff' : 'rgba(90,217,255,0.45)';
     if (ready) { ctx.shadowBlur = 8; ctx.shadowColor = '#5ad9ff'; }
@@ -1882,6 +1883,15 @@ class Game {
     ctx.fillStyle = ready ? '#cfeeff' : '#789'; ctx.font = 'bold 8px "Segoe UI", system-ui, sans-serif';
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     ctx.fillText('⟫ BLINK', dbX + 5, dbY + dbH / 2 + 1);
+    // Charge dots (only when more than one charge is possible).
+    if (p.dashMaxCharges > 1) {
+      for (let k = 0; k < p.dashMaxCharges; k++) {
+        const cxk = dbX + dbW - 6 - k * 9;
+        const lit = k < p.dashCharges;
+        ctx.beginPath(); ctx.arc(cxk, dbY + dbH / 2, 2.6, 0, TAU);
+        ctx.fillStyle = lit ? '#9beaff' : 'rgba(255,255,255,0.22)'; ctx.fill();
+      }
+    }
     ctx.textBaseline = 'top';
 
     // Weapon icons row.

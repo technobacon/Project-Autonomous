@@ -261,7 +261,22 @@ globalThis.__run = function(report) {
     const g3 = new Game(document.getElementById('game')); g3.start('spark', 0, { seed: 34 });
     Input.pressed = {};
     for (let i = 0; i < 120; i++) g3.update(1 / 60);
-    ok('no phantom dashes without input', g3.player.dashCd === 0);
+    ok('no phantom dashes without input', g3.player.dashCd === 0 && g3.player.dashCharges === g3.player.dashMaxCharges);
+  });
+  sectionTry('dash: Sanctuary upgrades tune cooldown + charges', () => {
+    const l0 = { blink: Save.metaLevel('blink'), echo: Save.metaLevel('echo') };
+    ok('Quickstep + Echo Step meta defined', !!getMeta('blink') && !!getMeta('echo'));
+    Save.data.meta.blink = 0; Save.data.meta.echo = 0;
+    const a = new Game(document.getElementById('game')); a.start('spark', 0, { seed: 35 });
+    const baseCd = a.player.dashCdMax;
+    ok('defaults: one charge, 3.5s recharge', a.player.dashMaxCharges === 1 && Math.abs(baseCd - 3.5) < 1e-9);
+    Save.data.meta.blink = 5; Save.data.meta.echo = 1;
+    const b = new Game(document.getElementById('game')); b.start('spark', 0, { seed: 35 });
+    ok('Quickstep shortens the recharge', b.player.dashCdMax < baseCd - 1e-9);
+    ok('Echo Step grants a second charge', b.player.dashMaxCharges === 2 && b.player.dashCharges === 2);
+    b.player.moveDir = { x: 1, y: 0 };
+    ok('two charges allow back-to-back blinks', b.player.dash() === true && b.player.dash() === true && b.player.dash() === false);
+    Save.data.meta.blink = l0.blink; Save.data.meta.echo = l0.echo;
   });
 
   // 7) Pause/resume + level-up UI screen.
