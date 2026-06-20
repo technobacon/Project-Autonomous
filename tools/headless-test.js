@@ -333,7 +333,32 @@ globalThis.__run = function(report) {
   sectionTry('elites: data + new archetypes registered', () => {
     ok('stalker archetype', !!ENEMY_TYPES.stalker && ENEMY_TYPES.stalker.ai === 'stalker');
     ok('bomber archetype', !!ENEMY_TYPES.bomber && ENEMY_TYPES.bomber.ai === 'bomber' && ENEMY_TYPES.bomber.explodes === true);
+    ok('conjurer archetype', !!ENEMY_TYPES.conjurer && ENEMY_TYPES.conjurer.ai === 'summoner' &&
+      ENEMY_TYPES.conjurer.summonCount > 0 && ENEMY_TYPES.conjurer.summonType === 'swarm');
     ok('AFFIXES table has 6', Object.keys(AFFIXES).length === 6);
+  });
+  sectionTry('enemies: conjurer summons motes (deterministic, capped)', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 11 });
+    g.player.weapons = [];            // don't let our own fire delete the spawns
+    const origMove = Input.moveVector;
+    g.player.invuln = 1e9; Input.moveVector = () => ({ x: 0, y: 0 });
+    const c = g.spawnEnemy('conjurer', g.player.x + 400, g.player.y, 1, 1);
+    const id = c.id;
+    const motes0 = g.enemies.filter(e => e.type.id === 'swarm').length;
+    let cast = false;
+    for (let i = 0; i < 60 * 6; i++) { g.update(1 / 60); if (g.enemies.some(e => e.id === id && e.castFx > 0)) cast = true; }
+    const motes1 = g.enemies.filter(e => e.type.id === 'swarm').length;
+    ok('conjurer raised new motes', motes1 > motes0);
+    ok('summon telegraph fired', cast);
+    ok('motes never exceed the hard cap', g.enemies.length <= g.maxEnemies);
+    // Deterministic: same seed + same scripted inputs => identical mote count.
+    const g2 = new Game(document.getElementById('game')); g2.start('spark', 0, { seed: 11 });
+    g2.player.weapons = []; g2.player.invuln = 1e9;
+    g2.spawnEnemy('conjurer', g2.player.x + 400, g2.player.y, 1, 1);
+    for (let i = 0; i < 60 * 6; i++) g2.update(1 / 60);
+    const motes2 = g2.enemies.filter(e => e.type.id === 'swarm').length;
+    Input.moveVector = origMove;
+    ok('summoning is reproducible on a seed', motes1 === motes2);
   });
   sectionTry('elites: makeElite scales + assigns affix', () => {
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 3 });

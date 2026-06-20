@@ -340,6 +340,7 @@ class Game {
       elite: false, champion: false, affixes: [], eliteName: null, auraColor: null,
       dmgResist: 0, regen: 0, shield: 0, shieldMax: 0,
       arcane: false, affixShootTimer: 0, volatile: !!def.explodes, fuse: 0,
+      castFx: 0,   // render-only conjure telegraph (summoner archetype)
     };
     this.enemies.push(e);
     Save.markSeen('enemies', def.id);
@@ -1017,6 +1018,31 @@ class Game {
         e.x += (mx / m) * spd * dt; e.y += (my / m) * spd * dt;
         break;
       }
+      case 'summoner': {
+        // Conjurer: hold a stand-off distance and conjure fans of motes. It
+        // backs off when crowded and drifts in when too far, so it lingers at
+        // the edge of the fight — kill it fast or be buried. Placement is on
+        // fixed angles (no RNG), so summoning is fully deterministic.
+        const d = dist(e.x, e.y, p.x, p.y);
+        const keep = e.type.keepRange || 280;
+        if (d < keep * 0.85) { e.x -= Math.cos(ang) * spd * dt; e.y -= Math.sin(ang) * spd * dt; }
+        else if (d > keep * 1.25) { e.x += Math.cos(ang) * spd * dt; e.y += Math.sin(ang) * spd * dt; }
+        if (e.castFx > 0) e.castFx -= dt;   // render-only telegraph timer
+        e.shootTimer -= dt;
+        if (e.shootTimer <= 0) {
+          e.shootTimer = e.type.summonCd || 4.0;
+          const n = e.type.summonCount || 3;
+          const st = e.type.summonType || 'swarm';
+          const sc = 1 + this.time / 120;
+          let summoned = 0;
+          for (let k = 0; k < n && this.enemies.length < this.maxEnemies; k++) {
+            const a = (k / n) * TAU + e.spawnT;
+            if (this.spawnEnemy(st, e.x + Math.cos(a) * 28, e.y + Math.sin(a) * 28, sc, 1)) summoned++;
+          }
+          if (summoned > 0) { e.castFx = 0.45; Audio2.conjure(); }
+        }
+        break;
+      }
       case 'bomber': {
         // Slow approach, then detonate (its volatile flag handles the burst).
         e.x += Math.cos(ang) * spd * dt; e.y += Math.sin(ang) * spd * dt;
@@ -1433,6 +1459,16 @@ class Game {
       }
       case 'arrow':
         ctx.moveTo(x + r, y); ctx.lineTo(x - r, y - r * 0.8); ctx.lineTo(x - r * 0.4, y); ctx.lineTo(x - r, y + r * 0.8); ctx.closePath(); break;
+      case 'rune': {
+        // Slowly-rotating pentagram-like ring — reads as an arcane caster.
+        const pts = 5;
+        for (let k = 0; k < pts; k++) {
+          const a = k / pts * TAU - Math.PI / 2 + e.spawnT * 0.5;
+          const fn = k === 0 ? 'moveTo' : 'lineTo';
+          ctx[fn](x + Math.cos(a) * r, y + Math.sin(a) * r);
+        }
+        ctx.closePath(); break;
+      }
       case 'star': {
         const sp = 10;
         for (let k = 0; k < sp; k++) { const rr = k % 2 ? r * 0.5 : r; const a = k / sp * TAU + e.spawnT * 0.3; const fn = k === 0 ? 'moveTo' : 'lineTo'; ctx[fn](x + Math.cos(a) * rr, y + Math.sin(a) * rr); } ctx.closePath(); break;
@@ -1476,6 +1512,16 @@ class Game {
         ctx.lineWidth = e.champion ? 3.5 : 2.2;
         ctx.shadowBlur = e.champion ? 22 : 14; ctx.shadowColor = e.auraColor || '#ffd84d';
         ctx.beginPath(); ctx.arc(x, y, (e.radius + 6) * pulse, 0, TAU); ctx.stroke();
+        ctx.restore();
+      }
+      // Conjure burst: an expanding ring the instant a Conjurer summons (render-only).
+      if (e.castFx > 0) {
+        const t = 1 - e.castFx / 0.45;
+        ctx.save();
+        ctx.globalAlpha = (1 - t) * 0.7;
+        ctx.strokeStyle = e.color; ctx.lineWidth = 2.4;
+        ctx.shadowBlur = 16; ctx.shadowColor = e.color;
+        ctx.beginPath(); ctx.arc(x, y, e.radius + 4 + t * 34, 0, TAU); ctx.stroke();
         ctx.restore();
       }
       // Shield ring (arc length = remaining shield fraction).

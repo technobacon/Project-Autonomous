@@ -142,6 +142,7 @@ const Audio2 = {
   // An environmental hazard detonating — a low, gritty thud. Gated so a dense
   // Bloodstorm of strikes stays punchy instead of a wall of noise.
   hazardHit()  { if (!this._gate('hazard', 70)) return; this.noise(0.22, 0.20, 600); this.blip(vrand(90, 120), 0.18, 'square', 0.16, -50); },
+  conjure()    { if (!this._gate('conjure', 90)) return; this.blip(vrand(520, 600), 0.10, 'sine', 0.08, 200); this.blip(vrand(780, 880), 0.14, 'triangle', 0.07, 260); },
 
   // ---- Procedural music -------------------------------------------------
   // An evolving minor arpeggio whose tempo, brightness and harmony respond to

@@ -53,6 +53,13 @@ const ENEMY_TYPES = {
     hp: 46, speed: 40, radius: 16, damage: 0, xp: 4, ai: 'bomber', shape: 'dot',
     explodes: true, fuseR: 64, burstN: 12, burstSpeed: 210, burstDmg: 13,
   },
+  conjurer: {
+    id: 'conjurer', name: 'Conjurer', tier: 4.5, color: '#5affd0',
+    hp: 86, speed: 50, radius: 16, damage: 11, xp: 6, ai: 'summoner', shape: 'rune',
+    // Kites at range and periodically conjures a fan of motes. A priority target:
+    // ignore it and the screen fills. summonCd reused as the spawn timer.
+    shootCd: 4.0, summonCd: 4.0, summonCount: 3, summonType: 'swarm', keepRange: 280,
+  },
 };
 
 // ---- Affixes: single-enemy modifiers carried by "elite" foes ---------------

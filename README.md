@@ -198,10 +198,13 @@ loot:
   burst before its health is touched).
 
 Periodically a named **Champion** rises — a two-affix mini-boss with its own
-health bar that drops a chest. And two new foes prowl the field: the **Stalker**
-(orbits and harasses you at range) and the **Bomber** (closes in, then
-detonates). Affixes stack on the new foes too, so a *Shielded Bomber* or a
-*Swift Stalker* keeps every minute different.
+health bar that drops a chest. And distinct foes prowl the field: the **Stalker**
+(orbits and harasses you at range), the **Bomber** (closes in, then detonates),
+and the **Conjurer** — an arcane caster that hangs back and *summons fresh waves
+of motes* until you cut it down. It's a true **priority target**: ignore it and
+the screen fills faster than you can clear it. Affixes stack on these foes too,
+so a *Shielded Bomber*, a *Swift Stalker*, or a *Hardened Conjurer* keeps every
+minute different.
 
 ## 🏆 Achievements, difficulty & the Codex
 
