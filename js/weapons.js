@@ -405,6 +405,34 @@ const WEAPONS = {
       Audio2.blip(150, 0.12, 'square', 0.09, -40);
     },
   },
+
+  // -- Sentry: deploy a stationary auto-firing turret. The roster's only
+  //    placeable ally — reward good positioning (drop one to cover an angle).
+  sentry: {
+    id: 'sentry', name: 'Sentry Turret', icon: '🗼', color: '#7fe0b0', maxLevel: 8,
+    desc(l) {
+      return [
+        'Deploy a turret that fires at nearby foes.',
+        '+25% turret damage.', 'Turrets last longer.', '+1 active turret.',
+        'Faster turret fire.', '+25% damage.', '+1 active turret.',
+        'Turrets fire piercing bolts.',
+      ][l - 1] || 'Maxed.';
+    },
+    cooldown(l, p) { return cd(3.2 - l * 0.1, p); },
+    fire(game, inst) {
+      const p = game.player, l = inst.level;
+      const dmg = (12 * (1 + (l >= 2 ? 0.25 : 0) + (l >= 6 ? 0.25 : 0))) * p.might;
+      const life = (5 + (l >= 3 ? 2.5 : 0)) ;
+      const fireCd = (0.6 - (l >= 5 ? 0.18 : 0));
+      const cap = 1 + (l >= 4 ? 1 : 0) + (l >= 7 ? 1 : 0);
+      const pierce = l >= 8 ? 2 : 0;
+      game.deployTurret({
+        x: p.x, y: p.y, dmg, life, fireCd, cap, pierce,
+        range: 300 * p.area, projSpeed: 460 * p.projSpeed, color: '#7fe0b0',
+      });
+      Audio2.blip(300, 0.1, 'square', 0.08, 120);
+    },
+  },
 };
 
 const WEAPON_LIST = Object.values(WEAPONS);

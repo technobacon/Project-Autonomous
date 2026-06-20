@@ -115,6 +115,7 @@ class Game {
     this.chains = [];
     this.whips = [];
     this.zones = [];           // lingering ground effects (poison pools, etc.)
+    this.turrets = [];         // deployed Sentry/Arsenal turrets (auto-firing allies)
     this.pickups = [];
     this.particles = new Particles();
     this.grid = new Map();
@@ -897,6 +898,7 @@ class Game {
     this.updateEnemyProjectiles(dt);
     this.updateNovas(dt);
     this.updateZones(dt);
+    this.updateTurrets(dt);
     this.updateHazards(dt);
     this.updateShrines(dt);
     this.updateGems(dt);
@@ -1294,6 +1296,60 @@ class Game {
     }
   }
 
+  // ---- Sentry turrets (deployed auto-firing allies) ---------------------
+  deployTurret(opts) {
+    const t = {
+      x: opts.x, y: opts.y, life: opts.life, maxLife: opts.life,
+      dmg: opts.dmg, fireCd: Math.max(0.12, opts.fireCd), fireT: 0.15,
+      range: opts.range, range2: opts.range * opts.range, projSpeed: opts.projSpeed,
+      pierce: opts.pierce || 0, color: opts.color || '#7fe0b0', flash: 0, t: 0,
+    };
+    this.turrets.push(t);
+    // Honour the per-weapon active-turret cap: retire the oldest beyond it.
+    const cap = Math.max(1, opts.cap || 1);
+    while (this.turrets.length > cap) this.turrets.shift();
+  }
+
+  updateTurrets(dt) {
+    for (let i = this.turrets.length - 1; i >= 0; i--) {
+      const t = this.turrets[i];
+      t.life -= dt; t.t += dt;
+      if (t.flash > 0) t.flash -= dt;
+      t.fireT -= dt;
+      if (t.fireT <= 0) {
+        const target = this.nearestEnemy(t.x, t.y);
+        if (target && dist2(target.x, target.y, t.x, t.y) <= t.range2) {
+          t.fireT = t.fireCd; t.flash = 0.08;
+          this.spawnProjectile({
+            x: t.x, y: t.y, angle: angleTo(t.x, t.y, target.x, target.y),
+            speed: t.projSpeed, damage: t.dmg, radius: 5, pierce: t.pierce,
+            life: 1.2, color: t.color, glow: true,
+          });
+        } else {
+          t.fireT = 0.12; // no target in range — re-check soon
+        }
+      }
+      if (t.life <= 0) this.turrets.splice(i, 1);
+    }
+  }
+
+  _drawTurrets(ctx, cam) {
+    for (const t of this.turrets) {
+      const x = t.x - cam.x, y = t.y - cam.y;
+      if (x < -40 || y < -40 || x > this.view.w + 40 || y > this.view.h + 40) continue;
+      const fade = t.life < 1.2 ? clamp(t.life / 1.2, 0.2, 1) : 1;
+      ctx.save();
+      ctx.globalAlpha = fade;
+      ctx.shadowBlur = t.flash > 0 ? 16 : 8; ctx.shadowColor = t.color;
+      ctx.fillStyle = t.flash > 0 ? '#ffffff' : t.color;
+      // A small turret: base diamond + a pulsing core.
+      const r = 10;
+      ctx.beginPath(); ctx.moveTo(x, y - r); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r); ctx.lineTo(x - r, y); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = fade * 0.5; ctx.beginPath(); ctx.arc(x, y, r * 0.5, 0, TAU); ctx.fillStyle = '#ffffff'; ctx.fill();
+      ctx.restore();
+    }
+  }
+
   // ---- Environmental hazards -------------------------------------------
   // Drive the current biome's signature hazard. Spawn cadence and positions
   // come from the seeded sim RNG (rand/randInt), so a seed reproduces the exact
@@ -1538,6 +1594,7 @@ class Game {
       this._drawHazards(ctx, cam);
       this._drawShrines(ctx, cam);
       this._drawZones(ctx, cam);
+      this._drawTurrets(ctx, cam);
       this._drawGems(ctx, cam);
       this._drawPickups(ctx, cam);
       this.particles.draw(ctx, cam);

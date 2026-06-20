@@ -77,6 +77,7 @@ globalThis.__det = function(report) {
     let sx = 0, sy = 0, sl = 0; const stypes = [];
     for (const s of g.shrines) { sx += s.x; sy += s.y; sl += s.life; stypes.push(s.type); }
     let bt = 0; for (const b of g.player.buffs) bt += b.t;
+    let tx = 0, tl = 0; for (const t of g.turrets) { tx += t.x + t.y; tl += t.life; }
     return [g.time.toFixed(3), g.kills, g.score, g.player.level, g.player.hp.toFixed(3),
       g.player.x.toFixed(3), g.player.y.toFixed(3), g.enemies.length, ehp.toFixed(2),
       ex.toFixed(2), ey.toFixed(2), g.gems.length, g.projectiles.length,
@@ -84,6 +85,7 @@ globalThis.__det = function(report) {
       g.hazards.length, hx.toFixed(2), hy.toFixed(2), hp,
       g.shrines.length, sx.toFixed(2), sy.toFixed(2), sl.toFixed(2), stypes.join(','),
       g.player.buffs.length, bt.toFixed(3), ew.toFixed(2),
+      g.turrets.length, tx.toFixed(2), tl.toFixed(2),
       (g.player.synergies || []).map(s => s.id).join(','), g.player.weapons.length].join('|');
   }
 

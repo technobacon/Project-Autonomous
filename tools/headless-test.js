@@ -1280,6 +1280,27 @@ globalThis.__run = function(report) {
     ok('Lance + Caltrops = Entrench', activeSynergies([wi('lance'), wi('caltrops')]).some(s => s.id === 'entrench'));
     ok('evolved forms still count', activeSynergies([wi('sunpiercer'), wi('whip')]).some(s => s.id === 'entrench'));
   });
+  sectionTry('expansion: Sentry deploys turrets that fire at foes', () => {
+    ok('sentry in pool, arsenal evolved + wired', !!getWeapon('sentry') && WEAPON_LIST.some(w => w.id === 'sentry') &&
+      !!getWeapon('arsenal') && getWeapon('arsenal').evolved && EVOLUTIONS.some(e => e.base === 'sentry' && e.into === 'arsenal'));
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 71 });
+    g.player.weapons = [{ def: getWeapon('sentry'), level: 4, timer: 0 }];
+    g.player.x = 1300; g.player.y = 1300;
+    g.spawnEnemy('brute', 1300 + 120, 1300, 1, 1);   // a target in range, but not on top
+    g.projectiles = []; g.turrets = [];
+    let sawTurret = false, sawShot = false;
+    for (let i = 0; i < 240; i++) { g.update(1 / 60); if (g.turrets.length) sawTurret = true; if (g.projectiles.length) sawShot = true; }
+    ok('a turret was deployed', sawTurret);
+    ok('the turret fired at a foe', sawShot);
+    ok('active turrets respect the cap', g.turrets.length <= 2);
+  });
+  sectionTry('expansion: turrets expire + cap retires the oldest', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 72 });
+    for (let i = 0; i < 4; i++) g.deployTurret({ x: 100 + i, y: 100, dmg: 5, life: 0.3, fireCd: 0.5, cap: 2, range: 200, projSpeed: 400 });
+    ok('cap keeps only the newest', g.turrets.length === 2 && g.turrets[g.turrets.length - 1].x === 103);
+    for (let i = 0; i < 30; i++) g.updateTurrets(1 / 60);   // past their 0.3s life
+    ok('turrets expire after their lifetime', g.turrets.length === 0);
+  });
 
   // 11.5) Gauntlet (boss-rush) mode (v6).
   // Auto-resolve a fresh game's level-up screens (the opening Gauntlet picks

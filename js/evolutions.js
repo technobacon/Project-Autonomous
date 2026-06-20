@@ -20,6 +20,7 @@ const EVOLUTIONS = [
   { base: 'prism',  passive: 'multishot', passiveLvl: 2, into: 'spectrum' },
   { base: 'lance',  passive: 'pierce',    passiveLvl: 2, into: 'sunpiercer' },
   { base: 'caltrops', passive: 'area',    passiveLvl: 2, into: 'thornfield' },
+  { base: 'sentry', passive: 'haste',     passiveLvl: 2, into: 'arsenal' },
 ];
 
 // Evolved weapon definitions (maxLevel 1; power scales with player stats).
@@ -280,6 +281,23 @@ const EVOLVED_WEAPONS = {
         game.spawnZone(zx, zy, radius, dps, 4.5, '#d7ff6a', 0.45);
       }
       Audio2.blip(170, 0.14, 'square', 0.1, -30);
+    },
+  },
+  arsenal: {
+    id: 'arsenal', name: 'Arsenal', icon: '🏯', color: '#9fffe0', maxLevel: 1, evolved: true,
+    desc() { return 'EVOLVED: deploy a pair of long-lived turrets that fire fast, piercing volleys.'; },
+    cooldown(l, p) { return cd(2.4, p); },
+    fire(game, inst) {
+      const p = game.player;
+      const dmg = 22 * p.might;
+      for (let i = 0; i < 2; i++) {
+        const off = i === 0 ? -34 : 34;
+        game.deployTurret({
+          x: clamp(p.x + off, 30, game.world.w - 30), y: p.y, dmg, life: 9, fireCd: 0.32, cap: 4,
+          pierce: 3, range: 340 * p.area, projSpeed: 520 * p.projSpeed, color: '#9fffe0',
+        });
+      }
+      Audio2.blip(360, 0.12, 'square', 0.09, 160);
     },
   },
 };
