@@ -446,7 +446,7 @@ globalThis.__run = function(report) {
     ok('conjurer archetype', !!ENEMY_TYPES.conjurer && ENEMY_TYPES.conjurer.ai === 'summoner' &&
       ENEMY_TYPES.conjurer.summonCount > 0 && ENEMY_TYPES.conjurer.summonType === 'swarm');
     ok('acolyte archetype', !!ENEMY_TYPES.acolyte && ENEMY_TYPES.acolyte.ai === 'warder' && ENEMY_TYPES.acolyte.auraR > 0);
-    ok('AFFIXES table has 6', Object.keys(AFFIXES).length === 6);
+    ok('AFFIXES table has 9', Object.keys(AFFIXES).length === 9);
   });
   sectionTry('enemies: acolyte wards nearby foes (faster + tougher)', () => {
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 61 });
@@ -532,6 +532,26 @@ globalThis.__run = function(report) {
     for (let i = 0; i < 60 * 4 && !fired; i++) { g.player.invuln = 9999; g.update(1 / 60); if (g.enemyProjectiles.some(pr => pr.color === '#c98bff')) fired = true; }
     Input.moveVector = savedMV;
     ok('arcane fires bolts', fired);
+  });
+  sectionTry('elites: leech heals, frenzied speeds, phaser blinks', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 81 });
+    g.player.weapons = [];
+    // Leech: a connecting hit heals the attacker; an i-framed hit does not.
+    const lz = g.spawnEnemy('brute', g.player.x, g.player.y, 1, 1);
+    g._applyAffix(lz, 'leech'); lz.hp = lz.maxHp * 0.5; const lh0 = lz.hp;
+    g.player.invuln = 0; g.update(1 / 60);
+    ok('leech healed on a connecting hit', lz.hp > lh0);
+    // Frenzied: a badly wounded one outruns a healthy copy over the same time.
+    const a = g.spawnEnemy('drifter', g.player.x + 600, g.player.y, 1, 1); g._applyAffix(a, 'frenzied'); a.hp = a.maxHp * 0.1;
+    const b = g.spawnEnemy('drifter', g.player.x + 600, g.player.y + 4, 1, 1); g._applyAffix(b, 'frenzied'); b.hp = b.maxHp;
+    const aD0 = dist(a.x, a.y, g.player.x, g.player.y), bD0 = dist(b.x, b.y, g.player.x, g.player.y);
+    for (let i = 0; i < 30; i++) g.update(1 / 60);
+    ok('frenzied (wounded) closes faster', (aD0 - dist(a.x, a.y, g.player.x, g.player.y)) > (bD0 - dist(b.x, b.y, g.player.x, g.player.y)));
+    // Phaser: lunges toward the player when its timer fires.
+    const ph = g.spawnEnemy('drifter', g.player.x + 500, g.player.y, 1, 1); ph.speed = 0; g._applyAffix(ph, 'phaser'); ph.phaseT = 0.01;
+    const pd0 = dist(ph.x, ph.y, g.player.x, g.player.y);
+    g.player.invuln = 1e9; for (let i = 0; i < 4; i++) g.update(1 / 60);
+    ok('phaser blinked closer', dist(ph.x, ph.y, g.player.x, g.player.y) < pd0 - 80);
   });
   sectionTry('elites: bomber detonates safely in the update loop', () => {
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 6 });

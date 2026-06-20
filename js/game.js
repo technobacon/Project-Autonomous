@@ -379,6 +379,7 @@ class Game {
       elite: false, champion: false, affixes: [], eliteName: null, auraColor: null,
       dmgResist: 0, regen: 0, shield: 0, shieldMax: 0,
       arcane: false, affixShootTimer: 0, volatile: !!def.explodes, fuse: 0,
+      leech: false, frenzied: false, phaser: false, phaseT: 0,
       castFx: 0,   // render-only conjure telegraph (summoner archetype)
       spin: 0, novaT: 0,   // boss spiral angle + nova cadence (Maelstrom)
       warded: 0,   // remaining "empowered by an Acolyte" buff time (sim state)
@@ -427,6 +428,9 @@ class Game {
       case 'volatile': e.volatile = true; break;
       case 'arcane':   e.arcane = true; e.affixShootTimer = rand(0.6, 1.4); break;
       case 'shielded': e.shield = e.maxHp * 0.6; e.shieldMax = e.shield; break;
+      case 'leech':    e.leech = true; break;
+      case 'frenzied': e.frenzied = true; break;
+      case 'phaser':   e.phaser = true; e.phaseT = rand(1.6, 2.8); break;
     }
   }
 
@@ -966,8 +970,10 @@ class Game {
       // Acolyte ward: empowered foes move faster (and resist damage, in dealDamage).
       if (e.warded > 0) e.warded -= dt;
       const ward = e.warded > 0 ? 1.28 : 1;
+      // Frenzied affix: the more wounded it is, the faster it moves.
+      const frenzy = e.frenzied ? 1 + (1 - e.hp / e.maxHp) * 0.6 : 1;
       const slow = 1 - e.slowAmount;
-      const spd = e.speed * slow * ward;
+      const spd = e.speed * slow * ward * frenzy;
 
       // AI movement.
       this._enemyAI(e, dt, spd);
@@ -987,7 +993,12 @@ class Game {
       // Contact damage to player.
       if (p.alive) {
         const rr = e.radius + p.radius;
-        if (dist2(e.x, e.y, p.x, p.y) <= rr * rr) p.hurt(e.damage);
+        if (dist2(e.x, e.y, p.x, p.y) <= rr * rr) {
+          const lands = p.invuln <= 0;   // a hit actually connects (not i-framed)
+          p.hurt(e.damage);
+          // Leeching affix: a connecting hit heals the attacker.
+          if (lands && e.leech && !e.dead) e.hp = Math.min(e.maxHp, e.hp + e.damage * 1.5);
+        }
       }
     }
   }
@@ -1001,6 +1012,19 @@ class Game {
       if (e.affixShootTimer <= 0) {
         e.affixShootTimer = 2.2;
         this.spawnEnemyProjectile(e.x, e.y, ang, 240, Math.max(6, e.damage * 0.6), '#c98bff');
+      }
+    }
+    // Phasing affix: periodic sudden lunges toward the player (seeded cadence;
+    // the blink distance is bounded so it never lands directly on you).
+    if (e.phaser) {
+      e.phaseT -= dt;
+      if (e.phaseT <= 0) {
+        e.phaseT = rand(2.0, 3.2);
+        const d = dist(e.x, e.y, p.x, p.y);
+        const hop = Math.min(150, Math.max(0, d - 60));
+        e.x += Math.cos(ang) * hop; e.y += Math.sin(ang) * hop;
+        e.flash = 0.12;
+        this.particles.burst(e.x, e.y, 8, { color: '#b6f0ff', speed: vrand(60, 160), life: vrand(0.2, 0.4) });
       }
     }
     switch (e.ai) {

@@ -234,7 +234,9 @@ loot:
 - **Swift** (much faster), **Hardened** (resists damage, extra health),
   **Regenerating** (heals — burst it down), **Volatile** (bursts projectiles on
   death), **Arcane** (fires bolts at you), **Shielded** (a shield soaks a
-  burst before its health is touched).
+  burst before its health is touched), **Leeching** (heals itself when it
+  wounds you), **Frenzied** (grows faster the more it's hurt), and **Phasing**
+  (blinks toward you in sudden lunges) — **9** in all.
 
 Periodically a named **Champion** rises — a two-affix mini-boss with its own
 health bar that drops a chest. And distinct foes prowl the field: the **Stalker**

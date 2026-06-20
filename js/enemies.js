@@ -79,6 +79,9 @@ const AFFIXES = {
   volatile: { id: 'volatile', name: 'Volatile',     color: '#ff7a3c', desc: 'Bursts projectiles on death.' },
   arcane:   { id: 'arcane',   name: 'Arcane',       color: '#c98bff', desc: 'Periodically fires bolts at you.' },
   shielded: { id: 'shielded', name: 'Shielded',     color: '#8fd8ff', desc: 'A shield absorbs a burst of damage.' },
+  leech:    { id: 'leech',    name: 'Leeching',     color: '#e0405a', desc: 'Heals itself whenever it wounds you.' },
+  frenzied: { id: 'frenzied', name: 'Frenzied',     color: '#ff8a3c', desc: 'Grows faster the more it is hurt.' },
+  phaser:   { id: 'phaser',   name: 'Phasing',      color: '#b6f0ff', desc: 'Blinks toward you in sudden lunges.' },
 };
 const AFFIX_LIST = Object.values(AFFIXES);
 function getAffix(id) { return AFFIXES[id]; }
