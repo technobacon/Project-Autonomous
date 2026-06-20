@@ -275,6 +275,22 @@ and pays a one-time shard **bounty** (replays pay a small one); two achievements
 reward clearing your first and *all* of them. Your live objective and progress
 show at the top of the screen.
 
+## 🧪 Custom Run (mutators)
+
+Where Trials are *authored*, a **Custom Run** is *yours*. Toggle any combination
+of **mutators** — **boons** that ease the run (+damage, +health, lifesteal, more
+XP…) or **banes** that brutalise it (more foes, tougher/faster/angrier enemies,
+Glass Cannon, Berserker, Onslaught…) — then pick a hero and play. There are
+**15** to mix freely, for effectively endless make-your-own variety.
+
+Your self-imposed difficulty **scales the shard payout**: every mutator carries a
+weight, and the net total moves a reward multiplier (shown live) from **×0.25**
+(stacked boons) up to **×2.5** (a brutal gauntlet) — so a Custom Run can't be
+cheesed for loot, and punishing builds feel worth it, like a personal Ascension
+dial. Custom runs use the full survival rules (bosses, biomes, hazards), ignore
+Omens & Relics, and keep their own books (they never touch your standard
+best-time/score records).
+
 ---
 
 ## 🛠 Project layout
@@ -300,6 +316,7 @@ js/
   upgrades.js       # passives + level-up choice generator
   achievements.js   # achievement definitions + live/game-over checker
   modifiers.js      # "omens" — drafted per-run modifiers
+  mutators.js       # Custom Run mutators (free-stacked twists + reward scaling)
   relics.js         # permanent, equippable run modifiers (loadout)
   trials.js         # Trials of Light: fixed-rule challenge runs + win conditions
   player.js         # player entity, stat recalculation, leveling
@@ -318,17 +335,18 @@ game — a full simulated run, every weapon, all bosses, all 11 evolutions, the
 weapon-synergy set bonuses, all 32 achievements, every omen, the relic loadout
 system, the run-history Chronicle, the lifetime-mastery system (ranks +
 per-hero/weapon accrual), the Trials of Light (rule twists + win/fail paths),
-the Gauntlet boss-rush flow, the elite/affix/champion system, the
-boomerang/poison-pool mechanics, difficulty scaling, level-ups, pickups, the
-polish FX (nebula, projectile trails, tiered damage numbers), the time-driven
-biome progression (palette + spawn bias + environmental hazards), the adaptive
-audio engine (limiter, combat SFX, boss-aware music), the first-run onboarding
-(intro + coaching tips), every UI screen, death, persistence, and the shop (370+
+the Custom Run mutators (free-stacked twists + reward scaling), the Gauntlet
+boss-rush flow, the elite/affix/champion system, the boomerang/poison-pool
+mechanics, difficulty scaling, level-ups, pickups, the polish FX (nebula,
+projectile trails, tiered damage numbers), the time-driven biome progression
+(palette + spawn bias + environmental hazards), the adaptive audio engine
+(limiter, combat SFX, boss-aware music), the first-run onboarding (intro +
+coaching tips), every UI screen, death, persistence, and the shop (390+
 assertions):
 
 ```bash
 npm test                          # functional + determinism suites
- node tools/headless-test.js       # functional suite (370+ assertions)
+ node tools/headless-test.js       # functional suite (390+ assertions)
 node tools/determinism-test.js    # proves Daily seeds are framerate/settings-independent
 node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```

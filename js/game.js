@@ -107,6 +107,9 @@ class Game {
     this.mode = 'survival';    // 'survival' | 'gauntlet' (boss rush)
     this.trial = null;         // active Trial definition (challenge run), or null
     this.trialWon = false;
+    this.customRun = false;    // a player-crafted run with stacked mutators?
+    this.mutators = [];        // active mutator ids (custom run)
+    this.mutatorRewardMul = 1; // shard payout scale from self-imposed difficulty
     this.gauntletRound = 0;    // round currently in progress
     this.gauntletCleared = 0;  // highest round fully cleared
     this.mods = defaultMods(); // run modifier ("omen") effects
@@ -175,6 +178,11 @@ class Game {
     this.daily = !!opts.daily;
     this.trial = (opts.trial && typeof getTrial === 'function') ? getTrial(opts.trial) : null;
     this.trialWon = false;
+    this.customRun = opts.mode === 'custom' && !this.trial && !this.daily;
+    this.mutators = (this.customRun && Array.isArray(opts.mutators)) ? opts.mutators.slice() : [];
+    this.mutatorRewardMul = 1;
+    // Custom runs are survival under the hood (bosses, biomes, hazards all apply)
+    // — the mutators are the only twist, so keep the underlying mode 'survival'.
     this.mode = opts.mode === 'gauntlet' ? 'gauntlet' : 'survival';
     if (this.daily) {
       this.dailyDate = opts.date || dailyDateString();
@@ -193,6 +201,12 @@ class Game {
       Object.assign(this.mods, this.trial.mods || {});
       this.relics = [];
       diffIndex = this.trial.diff || 0;
+    } else if (this.customRun) {
+      // Free-stacked mutators are the whole modifier story; omens & relics off.
+      this.omen = null;
+      this.mods = buildMutatorMods(this.mutators);
+      this.relics = [];
+      this.mutatorRewardMul = mutatorRewardMul(this.mutators);
     } else {
       this.omen = getModifier(opts.omen);
       this.mods = buildMods(opts.omen);
@@ -210,13 +224,15 @@ class Game {
     this.state = 'playing';
     // Coach a brand-new player through the basics in standard Survival only,
     // and only until the core tips have all been seen once.
-    this._coaching = !this.daily && !this.trial && this.mode === 'survival' &&
+    this._coaching = !this.daily && !this.trial && !this.customRun && this.mode === 'survival' &&
       !(Save.tipSeen('move') && Save.tipSeen('shards') && Save.tipSeen('dodge') &&
         Save.tipSeen('pause') && Save.tipSeen('levelup'));
     Audio2.resume();
     Audio2.startMusic(0);
     if (this.trial) {
       this.toast(this.trial.icon + ' ' + this.trial.name + ' — ' + trialGoalText(this.trial), this.trial.color, 3.6);
+    } else if (this.customRun) {
+      this.toast('🧪 Custom Run — ' + this.mutators.length + ' mutator' + (this.mutators.length === 1 ? '' : 's') + ' · ×' + this.mutatorRewardMul.toFixed(2) + ' shards', '#c9a8ff', 3.4);
     } else if (this.mode === 'gauntlet') {
       this.toast('⚔ GAUNTLET — endless bosses await.');
       this.onLevelUp(3); // opening picks so you arrive armed for the first boss
@@ -653,10 +669,11 @@ class Game {
     }));
     return {
       t: Date.now(),
-      mode: this.trial ? 'trial' : (this.daily ? 'daily' : this.mode),
+      mode: this.trial ? 'trial' : (this.customRun ? 'custom' : (this.daily ? 'daily' : this.mode)),
       trialId: this.trial ? this.trial.id : null,
       trialName: this.trial ? this.trial.name : null,
       trialWon: !!this.trialWon,
+      mutators: (this.mutators || []).slice(),
       char: p && p.char ? p.char.id : 'spark',
       charName: p && p.char ? p.char.name : 'Spark',
       charColor: p && p.char ? p.char.color : '#ffd84d',
@@ -689,15 +706,17 @@ class Game {
 
     // Compute shards earned and persist progression (difficulty boosts reward).
     // Gauntlet pays out by rounds cleared; survival by time + slaughter.
-    const earned = this.mode === 'gauntlet'
+    let earned = this.mode === 'gauntlet'
       ? Math.floor((this.gauntletCleared * 45 + this.kills * 0.2 + this.bossKills * 12)
         * this.player.shardMult * this.diff.reward)
       : Math.floor((this.time / 8 + this.kills * 0.25 + this.bossKills * 30)
         * this.player.shardMult * this.diff.reward);
+    // Custom runs scale payout by self-imposed difficulty (harder = more).
+    if (this.customRun) earned = Math.floor(earned * this.mutatorRewardMul);
     Save.addShards(earned);
-    // Trials keep their own books (no best-time/score pollution of standard
-    // records) but still feed run/kill totals and the chronicle.
-    if (this.trial) Save.recordTrialRun(this.kills, this.bossKills);
+    // Trials and Custom runs keep their own books (no best-time/score pollution
+    // of standard records) but still feed run/kill totals and the chronicle.
+    if (this.trial || this.customRun) Save.recordSideRun(this.kills, this.bossKills);
     else Save.recordRun(this.time, this.score, this.kills, this.bossKills);
     if (this.mode === 'gauntlet') this.lastGauntlet = Save.recordGauntlet(this.gauntletCleared, this.score);
     const snap = this.runSnapshot(earned);
@@ -739,7 +758,7 @@ class Game {
     const reward = first ? this.trial.reward : Math.max(10, Math.round(this.trial.reward * 0.25));
     Save.completeTrial(this.trial.id);
     Save.addShards(reward);
-    Save.recordTrialRun(this.kills, this.bossKills);
+    Save.recordSideRun(this.kills, this.bossKills);
     const snap = this.runSnapshot(reward);
     Save.recordHistory(snap);
     Save.recordMastery(snap);
@@ -1739,6 +1758,11 @@ class Game {
       ctx.font = 'bold 12px "Segoe UI", system-ui, sans-serif';
       ctx.fillStyle = this.trial.color; ctx.shadowBlur = 4; ctx.shadowColor = '#000';
       ctx.fillText(this.trial.icon + ' ' + trialGoalText(this.trial) + '  ·  ' + trialProgressText(this.trial, this), W / 2, this.activeBoss ? 64 : 62);
+      ctx.shadowBlur = 0;
+    } else if (this.customRun && this.mutators.length) {
+      ctx.font = 'bold 11px "Segoe UI", system-ui, sans-serif';
+      ctx.fillStyle = '#c9a8ff'; ctx.shadowBlur = 4; ctx.shadowColor = '#000';
+      ctx.fillText('🧪 Custom · ' + this.mutators.length + ' mutators · ×' + this.mutatorRewardMul.toFixed(2), W / 2, this.activeBoss ? 64 : 62);
       ctx.shadowBlur = 0;
     }
 

@@ -46,6 +46,7 @@ const UI = {
           <button class="btn" id="btn-gauntlet">⚔ GAUNTLET${this._gauntletChip()}</button>
           <button class="btn" id="btn-daily">🗓 DAILY CHALLENGE${this._dailyChip()}</button>
           <button class="btn" id="btn-trials">🎯 TRIALS${this._trialsChip()}</button>
+          <button class="btn" id="btn-custom">🧪 CUSTOM RUN</button>
           <button class="btn" id="btn-shop">⚙ SANCTUARY <span class="shard-chip">✦ ${formatNum(d.shards)}</span></button>
           <button class="btn" id="btn-relics">🔮 RELICS <span class="shard-chip">${Save.relicCount()}/${RELIC_LIST.length}</span></button>
           <div class="menu-buttons row">
@@ -74,6 +75,7 @@ const UI = {
     document.getElementById('btn-gauntlet').onclick = () => { Audio2.uiSelect(); this.showCharacterSelect('gauntlet'); };
     document.getElementById('btn-daily').onclick = () => { Audio2.uiSelect(); this.hide(); App.startRun('spark', 0, { daily: true }); };
     document.getElementById('btn-trials').onclick = () => { Audio2.uiSelect(); this.showTrials(); };
+    document.getElementById('btn-custom').onclick = () => { Audio2.uiSelect(); this.showMutators(); };
     document.getElementById('btn-shop').onclick = () => { Audio2.uiSelect(); this.showShop(); };
     document.getElementById('btn-relics').onclick = () => { Audio2.uiSelect(); this.showRelics(); };
     document.getElementById('btn-ach').onclick = () => { Audio2.uiSelect(); this.showAchievements(); };
@@ -104,6 +106,7 @@ const UI = {
           <div class="help-card"><h3>🎴 Omens</h3><p>Before each run, draft a powerful <b>Omen</b> that reshapes the whole run — usually a big upside with a tradeoff. Or play with none.</p></div>
           <div class="help-card"><h3>⚔ Gauntlet</h3><p>A boss-rush mode: <b>endless rounds of bosses</b>, escalating each time, with a short breather between. You start with extra upgrades — how many rounds can you clear?</p></div>
           <div class="help-card"><h3>🎯 Trials</h3><p><b>${TRIALS.length} fixed-rule challenges</b>, each with a twist and a clear objective (survive, slay, or score). They ignore Omens & Relics — pure skill. Clear one for a shard bounty.</p></div>
+          <div class="help-card"><h3>🧪 Custom Run</h3><p>Stack <b>any mutators you like</b> — boons that ease the run or banes that brutalise it — then play. Your self-imposed difficulty <b>scales the shard payout</b>. Endless make-your-own variety.</p></div>
           <div class="help-card"><h3>⭐ Elites &amp; Champions</h3><p>Glowing <b>elite</b> foes carry an affix and drop extra loot; <b>Champions</b> are named two-affix mini-bosses with a chest. Affixes: ${AFFIX_LIST.map(a => `<b style="color:${a.color}">${a.name}</b>`).join(', ')}.</p></div>
           <div class="help-card"><h3>🗓 Daily</h3><p>A <b>seeded</b> run that's the same for everyone today. Pure skill — beat your own best score each day.</p></div>
           <div class="help-card"><h3>🔮 Relics</h3><p>Spend shards to <b>unlock relics</b> (some gated behind achievements), then <b>equip</b> a few into your loadout for permanent bonuses. Collect more to earn extra slots.</p></div>
@@ -189,7 +192,7 @@ const UI = {
     this.root.innerHTML = `
       <div class="screen panel wide">
         <div class="panel-head">
-          <h2>${this._mode === 'gauntlet' ? '⚔ Gauntlet — Choose your Light' : 'Choose your Light'}</h2>
+          <h2>${this._mode === 'gauntlet' ? '⚔ Gauntlet — Choose your Light' : (this._mode === 'custom' ? '🧪 Custom Run — Choose your Light' : 'Choose your Light')}</h2>
           <span class="shard-chip big">✦ ${formatNum(Save.data.shards)}</span>
         </div>
         <div class="diff-row">${diffBtns}</div>
@@ -201,7 +204,11 @@ const UI = {
       b.onclick = () => { this._selectedDiff = +b.dataset.i; Audio2.uiMove(); this.showCharacterSelect(); };
     });
     this.root.querySelectorAll('.select-btn').forEach(b => {
-      b.onclick = () => { Audio2.uiSelect(); this.showOmenDraft(b.dataset.id, this._selectedDiff, this._mode); };
+      b.onclick = () => {
+        Audio2.uiSelect();
+        if (this._mode === 'custom') { this.hide(); App.startRun(b.dataset.id, this._selectedDiff, { mode: 'custom', mutators: (this._mutators || []).slice() }); }
+        else this.showOmenDraft(b.dataset.id, this._selectedDiff, this._mode);
+      };
     });
     this.root.querySelectorAll('.unlock-btn').forEach(b => {
       b.onclick = () => {
@@ -210,7 +217,7 @@ const UI = {
         else Audio2.deny();
       };
     });
-    document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
+    document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this._mode === 'custom' ? this.showMutators() : this.showMenu(); };
   },
 
   // ---- Omen draft (run modifier) ----------------------------------------
@@ -283,6 +290,7 @@ const UI = {
     if (r.mode === 'daily') return `<span class="hist-mode" style="color:#9ad8ff;border-color:#9ad8ff">🗓 Daily</span>`;
     if (r.mode === 'gauntlet') return `<span class="hist-mode" style="color:#ffd84d;border-color:#ffd84d">⚔ Gauntlet</span>`;
     if (r.mode === 'trial') return `<span class="hist-mode" style="color:#ff86c8;border-color:#ff86c8">🎯 ${r.trialWon ? '✓ ' : ''}${r.trialName || 'Trial'}</span>`;
+    if (r.mode === 'custom') return `<span class="hist-mode" style="color:#c9a8ff;border-color:#c9a8ff">🧪 Custom${r.mutators && r.mutators.length ? ' ×' + r.mutators.length : ''}</span>`;
     return `<span class="hist-mode" style="color:${r.diffColor || '#7affc4'};border-color:${r.diffColor || '#7affc4'}">✦ ${r.diff > 0 ? r.diffName : 'Survival'}</span>`;
   },
 
@@ -436,6 +444,54 @@ const UI = {
         App.startRun(charId, t.diff || 0, { trial: t.id });
       };
     });
+    document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
+  },
+
+  // ---- Custom Run (mutators) --------------------------------------------
+  showMutators() {
+    this.clear(); this.show();
+    if (!Array.isArray(this._mutators)) this._mutators = [];
+    const sel = new Set(this._mutators);
+    const boons = MUTATOR_LIST.filter(m => m.weight < 0);
+    const banes = MUTATOR_LIST.filter(m => m.weight >= 0);
+    const cardOf = m => {
+      const on = sel.has(m.id);
+      return `<button class="mut-card ${on ? 'on' : ''}" data-mut="${m.id}" style="--c:${m.color}">
+        <span class="mut-ic">${m.icon}</span>
+        <span class="mut-body"><b style="color:${m.color}">${m.name}</b><span class="mut-desc">${m.desc}</span></span>
+        <span class="mut-check">${on ? '✓' : ''}</span>
+      </button>`;
+    };
+    const mul = mutatorRewardMul(this._mutators);
+    const score = mutatorScore(this._mutators);
+    const tone = score > 0 ? '#ff9d3c' : (score < 0 ? '#8affc1' : '#9fb4d6');
+    this.root.innerHTML = `
+      <div class="screen panel wide">
+        <div class="panel-head">
+          <h2>🧪 Custom Run</h2>
+          <span class="shard-chip big" style="color:${tone};border-color:${tone}">✦ ×${mul.toFixed(2)}</span>
+        </div>
+        <p class="trial-intro">Stack any mutators you like, then choose a hero. Harder choices raise your shard payout; easier ones lower it. Omens & Relics are off.</p>
+        <h3 class="mast-section">Boons <small>(easier — less reward)</small></h3>
+        <div class="mut-grid">${boons.map(cardOf).join('')}</div>
+        <h3 class="mast-section">Banes <small>(harder — more reward)</small></h3>
+        <div class="mut-grid">${banes.map(cardOf).join('')}</div>
+        <div class="menu-buttons row">
+          <button class="btn btn-primary" id="btn-go">Choose Hero → <span class="mut-count">${this._mutators.length} active</span></button>
+          <button class="btn" id="btn-clear">Clear</button>
+          <button class="btn" id="btn-back">← Back</button>
+        </div>
+      </div>`;
+    this.root.querySelectorAll('[data-mut]').forEach(b => {
+      b.onclick = () => {
+        const id = b.getAttribute('data-mut');
+        const i = this._mutators.indexOf(id);
+        if (i >= 0) this._mutators.splice(i, 1); else this._mutators.push(id);
+        Audio2.uiMove(); this.showMutators();
+      };
+    });
+    document.getElementById('btn-go').onclick = () => { Audio2.uiSelect(); this.showCharacterSelect('custom'); };
+    document.getElementById('btn-clear').onclick = () => { this._mutators = []; Audio2.uiMove(); this.showMutators(); };
     document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
   },
 
@@ -687,6 +743,8 @@ const UI = {
     const gauntlet = game.mode === 'gauntlet';
     const diffTag = trial
       ? `<span class="diff-chip" style="color:${trial.color};border-color:${trial.color}">${trial.icon} Trial: ${trial.name}</span>`
+      : game.customRun
+      ? `<span class="diff-chip" style="color:#c9a8ff;border-color:#c9a8ff">🧪 Custom · ${game.mutators.length} mut · ×${game.mutatorRewardMul.toFixed(2)}</span>`
       : game.daily
       ? `<span class="diff-chip" style="color:#9ad8ff;border-color:#9ad8ff">🗓 Daily ${game.dailyDate}</span>`
       : gauntlet
@@ -732,12 +790,16 @@ const UI = {
     const wasDaily = game.daily;
     const wasMode = game.mode;
     const wasTrial = trial ? trial.id : null;
+    const wasCustom = game.customRun ? game.mutators.slice() : null;
     const wasChar = (game.player && game.player.char) ? game.player.char.id : 'spark';
+    const wasDiff = game.diffIndex || 0;
     const retryBtn = document.getElementById('btn-retry');
     if (wasTrial) retryBtn.textContent = '↺ Retry Trial';
+    else if (wasCustom) retryBtn.textContent = '↺ Run Again';
     retryBtn.onclick = () => {
       Audio2.uiSelect(); this.hide();
       if (wasTrial) App.startRun(wasChar, trial.diff || 0, { trial: wasTrial });
+      else if (wasCustom) App.startRun(wasChar, wasDiff, { mode: 'custom', mutators: wasCustom });
       else if (wasDaily) App.startRun('spark', 0, { daily: true });
       else this.showCharacterSelect(wasMode);
     };

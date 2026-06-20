@@ -224,9 +224,10 @@ const Save = {
   isTrialDone(id) { return !!(this.data.trials && this.data.trials[id]); },
   completeTrial(id) { if (!this.data.trials) this.data.trials = {}; this.data.trials[id] = true; this.save(); },
   trialsDone() { return this.data.trials ? Object.keys(this.data.trials).length : 0; },
-  // A Trial run feeds run/kill totals (for achievements) but deliberately does
-  // NOT touch best time/score, keeping the standard records about standard play.
-  recordTrialRun(kills, bosses) {
+  // A Trial or Custom run feeds run/kill totals (for achievements) but
+  // deliberately does NOT touch best time/score, keeping the standard records
+  // about standard play.
+  recordSideRun(kills, bosses) {
     this.data.runs++;
     this.data.totalKills += kills;
     this.data.bossKills += bosses;

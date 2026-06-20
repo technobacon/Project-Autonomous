@@ -101,7 +101,7 @@ sandbox.document = {
 
 // ---- Load & concatenate the game source (skip main.js auto-init) ---------
 const order = ['utils', 'audio', 'input', 'particles', 'save', 'content',
-  'weapons', 'evolutions', 'synergies', 'enemies', 'upgrades', 'achievements', 'modifiers', 'relics', 'trials', 'player', 'game', 'ui'];
+  'weapons', 'evolutions', 'synergies', 'enemies', 'upgrades', 'achievements', 'modifiers', 'mutators', 'relics', 'trials', 'player', 'game', 'ui'];
 let src = '';
 for (const f of order) src += fs.readFileSync(path.join(__dirname, '..', 'js', f + '.js'), 'utf8') + '\n;\n';
 
@@ -850,6 +850,62 @@ globalThis.__run = function(report) {
     UI.showGameOver(g);
     ok('victory screen frames a win', /Trial Complete/.test(UI.root.innerHTML));
     Save.data.trials = {};
+  });
+
+  // 11.14) Custom Run / mutators (v18): free-stacked rule twists + reward scale.
+  sectionTry('mutators: registry shape + boons/banes', () => {
+    ok('mutator list well-formed', MUTATOR_LIST.length >= 8 && MUTATOR_LIST.every(m =>
+      m.id && m.name && m.icon && m.color && typeof m.weight === 'number' && typeof m.apply === 'function' && m.desc));
+    ok('has both boons and banes', MUTATOR_LIST.some(m => m.weight < 0) && MUTATOR_LIST.some(m => m.weight > 0));
+    ok('getMutator resolves + misses', getMutator('overpower') && getMutator('nope') === null);
+  });
+  sectionTry('mutators: fold into mods (stacking multiplies)', () => {
+    const m1 = buildMutatorMods(['overpower', 'horde']);
+    ok('distinct channels apply', Math.abs(m1.dmgMul - 1.45) < 1e-9 && Math.abs(m1.enemyCountMul - 1.5) < 1e-9);
+    const m2 = buildMutatorMods(['overpower', 'glass']);
+    ok('same channel stacks multiplicatively', Math.abs(m2.dmgMul - 1.45 * 1.6) < 1e-9 && Math.abs(m2.hpMul - 0.55) < 1e-9);
+    ok('empty selection = neutral mods', buildMutatorMods([]).dmgMul === 1 && buildMutatorMods([]).enemyCountMul === 1);
+  });
+  sectionTry('mutators: reward scales with self-imposed difficulty', () => {
+    ok('empty run pays normal', mutatorRewardMul([]) === 1);
+    ok('banes raise the payout', mutatorScore(['onslaught', 'horde', 'brutes']) === 7 && mutatorRewardMul(['onslaught', 'horde', 'brutes']) > 1);
+    ok('boons lower the payout (floored)', mutatorRewardMul(['overpower', 'titan', 'fleet']) < 1 && mutatorRewardMul(['overpower', 'titan', 'fleet']) >= 0.25);
+  });
+  sectionTry('mutators: start builds a custom run', () => {
+    Save.data.relics = { glass_lens: true }; Save.data.equipped = ['glass_lens'];
+    const g = new Game(document.getElementById('game'));
+    g.start('spark', 0, { mode: 'custom', mutators: ['glass', 'horde'], seed: 5 });
+    ok('flagged custom, survival underneath', g.customRun === true && g.mode === 'survival');
+    ok('omens + relics off', g.omen === null && g.relics.length === 0);
+    ok('mutator mods folded in', Math.abs(g.mods.dmgMul - 1.6) < 1e-9 && Math.abs(g.mods.enemyCountMul - 1.5) < 1e-9);
+    ok('reward multiplier captured', Math.abs(g.mutatorRewardMul - mutatorRewardMul(['glass', 'horde'])) < 1e-9);
+    Save.data.relics = {}; Save.data.equipped = [];
+  });
+  sectionTry('mutators: same seed + set is deterministic', () => {
+    const a = new Game(document.getElementById('game')); a.start('spark', 0, { mode: 'custom', mutators: ['glass', 'brutes'], seed: 77 });
+    const b = new Game(document.getElementById('game')); b.start('spark', 0, { mode: 'custom', mutators: ['glass', 'brutes'], seed: 77 });
+    ok('identical derived stats', a.player.maxHp === b.player.maxHp && Math.abs(a.player.might - b.player.might) < 1e-9);
+  });
+  sectionTry('mutators: custom death records aside from standard records', () => {
+    const bt0 = Save.data.bestTime, bs0 = Save.data.bestScore, runs0 = Save.data.runs, sh0 = Save.data.shards;
+    const g = new Game(document.getElementById('game'));
+    g.start('spark', 0, { mode: 'custom', mutators: ['onslaught', 'horde'], seed: 9 });
+    g.time = 5000; g.score = 999999; g.kills = 40; // would smash records if it counted
+    g.player.invuln = 0; g.player.revives = 0; g.player.hurt(1e9);
+    ok('best time/score untouched by custom', Save.data.bestTime === bt0 && Save.data.bestScore === bs0);
+    ok('run + shards still counted', Save.data.runs === runs0 + 1 && Save.data.shards > sh0);
+    ok('chronicle tags it custom + lists mutators', Save.data.history[0].mode === 'custom' && Save.data.history[0].mutators.length === 2);
+  });
+  sectionTry('mutators: screens render + toggle state', () => {
+    const g = new Game(document.getElementById('game'));
+    UI.init(document.getElementById('overlay'), g);
+    UI._mutators = [];
+    UI.showMutators();
+    ok('custom screen lists mutators', /Custom Run/.test(UI.root.innerHTML) && /Onslaught/.test(UI.root.innerHTML) && /Choose Hero/.test(UI.root.innerHTML));
+    g.start('spark', 0, { mode: 'custom', mutators: ['glass', 'horde'], seed: 1 });
+    UI.showGameOver(g);
+    ok('game-over shows the custom chip', /Custom/.test(UI.root.innerHTML));
+    UI._mutators = [];
   });
 
   // 11.3) New content (v7): glaive (boomerang), toxin (zones), prism, Comet.
