@@ -70,8 +70,8 @@ globalThis.__det = function(report) {
   }
 
   function hashState(g) {
-    let ehp = 0, ex = 0, ey = 0;
-    for (const e of g.enemies) { ehp += e.hp; ex += e.x; ey += e.y; }
+    let ehp = 0, ex = 0, ey = 0, ew = 0;
+    for (const e of g.enemies) { ehp += e.hp; ex += e.x; ey += e.y; ew += e.warded; }
     let hx = 0, hy = 0, hp = '';
     for (const h of g.hazards) { hx += h.x; hy += h.y; hp += h.phase[0]; }
     let sx = 0, sy = 0, sl = 0; const stypes = [];
@@ -83,7 +83,7 @@ globalThis.__det = function(report) {
       g.eliteKills, g.championKills, g.enemyProjectiles.length, g.zones.length,
       g.hazards.length, hx.toFixed(2), hy.toFixed(2), hp,
       g.shrines.length, sx.toFixed(2), sy.toFixed(2), sl.toFixed(2), stypes.join(','),
-      g.player.buffs.length, bt.toFixed(3),
+      g.player.buffs.length, bt.toFixed(3), ew.toFixed(2),
       (g.player.synergies || []).map(s => s.id).join(','), g.player.weapons.length].join('|');
   }
 

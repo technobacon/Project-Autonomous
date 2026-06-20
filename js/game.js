@@ -380,6 +380,7 @@ class Game {
       arcane: false, affixShootTimer: 0, volatile: !!def.explodes, fuse: 0,
       castFx: 0,   // render-only conjure telegraph (summoner archetype)
       spin: 0, novaT: 0,   // boss spiral angle + nova cadence (Maelstrom)
+      warded: 0,   // remaining "empowered by an Acolyte" buff time (sim state)
     };
     this.enemies.push(e);
     Save.markSeen('enemies', def.id);
@@ -512,6 +513,8 @@ class Game {
     if (this.mods.berserk) dmg *= 1 + (1 - this.player.hp / this.player.maxHp);
     // Affixes: Hardened resists, Shielded absorbs a burst before health is hit.
     if (e.dmgResist) dmg *= (1 - e.dmgResist);
+    if (e.warded > 0) dmg *= 0.75;   // Acolyte's ward softens incoming damage
+
     if (e.shield > 0 && dmg > 0) {
       const absorbed = Math.min(e.shield, dmg);
       e.shield -= absorbed; dmg -= absorbed;
@@ -958,8 +961,11 @@ class Game {
       e.x += e.vx * dt; e.y += e.vy * dt;
       e.vx *= (1 - Math.min(1, 8 * dt)); e.vy *= (1 - Math.min(1, 8 * dt));
 
+      // Acolyte ward: empowered foes move faster (and resist damage, in dealDamage).
+      if (e.warded > 0) e.warded -= dt;
+      const ward = e.warded > 0 ? 1.28 : 1;
       const slow = 1 - e.slowAmount;
-      const spd = e.speed * slow;
+      const spd = e.speed * slow * ward;
 
       // AI movement.
       this._enemyAI(e, dt, spd);
@@ -1070,6 +1076,26 @@ class Game {
           const base = e.spin * 0.5;   // deterministic ring offset
           for (let k = 0; k < n; k++) this.spawnEnemyProjectile(e.x, e.y, base + (k / n) * TAU, e.type.novaSpeed || 150, e.type.novaDmg || 14, '#d8c0ff');
           this.shake(6, 0.3);
+        }
+        break;
+      }
+      case 'warder': {
+        // Acolyte: drift toward the fray and bathe nearby foes in an empowering
+        // aura (refreshes their `warded` timer). Uses the spatial grid so it's
+        // cheap, and only distance checks — fully deterministic, no RNG.
+        e.x += Math.cos(ang) * spd * dt; e.y += Math.sin(ang) * spd * dt;
+        const auraR = e.type.auraR || 160, ar2 = auraR * auraR;
+        const cs = this._cs || 90, span = Math.ceil(auraR / cs);
+        const cx = (e.x / cs) | 0, cy = (e.y / cs) | 0;
+        for (let gx = cx - span; gx <= cx + span; gx++) {
+          for (let gy = cy - span; gy <= cy + span; gy++) {
+            const cell = this.grid.get(this._cellKey(gx, gy));
+            if (!cell) continue;
+            for (const o of cell) {
+              if (o === e || o.dead || o.boss) continue;
+              if (dist2(o.x, o.y, e.x, e.y) <= ar2) o.warded = Math.max(o.warded, 0.35);
+            }
+          }
         }
         break;
       }
@@ -1606,6 +1632,15 @@ class Game {
       }
       case 'arrow':
         ctx.moveTo(x + r, y); ctx.lineTo(x - r, y - r * 0.8); ctx.lineTo(x - r * 0.4, y); ctx.lineTo(x - r, y + r * 0.8); ctx.closePath(); break;
+      case 'cross': {
+        // A plus / banner glyph — reads as a support unit.
+        const a2 = r * 0.42;
+        ctx.moveTo(x - a2, y - r); ctx.lineTo(x + a2, y - r); ctx.lineTo(x + a2, y - a2);
+        ctx.lineTo(x + r, y - a2); ctx.lineTo(x + r, y + a2); ctx.lineTo(x + a2, y + a2);
+        ctx.lineTo(x + a2, y + r); ctx.lineTo(x - a2, y + r); ctx.lineTo(x - a2, y + a2);
+        ctx.lineTo(x - r, y + a2); ctx.lineTo(x - r, y - a2); ctx.lineTo(x - a2, y - a2);
+        ctx.closePath(); break;
+      }
       case 'rune': {
         // Slowly-rotating pentagram-like ring — reads as an arcane caster.
         const pts = 5;
@@ -1659,6 +1694,24 @@ class Game {
         ctx.lineWidth = e.champion ? 3.5 : 2.2;
         ctx.shadowBlur = e.champion ? 22 : 14; ctx.shadowColor = e.auraColor || '#ffd84d';
         ctx.beginPath(); ctx.arc(x, y, (e.radius + 6) * pulse, 0, TAU); ctx.stroke();
+        ctx.restore();
+      }
+      // Acolyte aura (a soft empowering field) + a warded glow on buffed foes.
+      if (e.ai === 'warder') {
+        const auraR = (e.type.auraR || 160);
+        const pulse = 1 + Math.sin(this.time * 2.4 + e.id) * 0.06;
+        ctx.save();
+        const ag = ctx.createRadialGradient(x, y, auraR * 0.2, x, y, auraR * pulse);
+        ag.addColorStop(0, 'rgba(255,206,90,0.12)');
+        ag.addColorStop(1, 'rgba(255,206,90,0)');
+        ctx.fillStyle = ag;
+        ctx.beginPath(); ctx.arc(x, y, auraR * pulse, 0, TAU); ctx.fill();
+        ctx.restore();
+      } else if (e.warded > 0) {
+        ctx.save();
+        ctx.globalAlpha = 0.5; ctx.strokeStyle = '#ffce5a'; ctx.lineWidth = 1.6;
+        ctx.shadowBlur = 8; ctx.shadowColor = '#ffce5a';
+        ctx.beginPath(); ctx.arc(x, y, e.radius + 3, 0, TAU); ctx.stroke();
         ctx.restore();
       }
       // Conjure burst: an expanding ring the instant a Conjurer summons (render-only).

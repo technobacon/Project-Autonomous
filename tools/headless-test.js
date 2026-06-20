@@ -445,7 +445,25 @@ globalThis.__run = function(report) {
     ok('bomber archetype', !!ENEMY_TYPES.bomber && ENEMY_TYPES.bomber.ai === 'bomber' && ENEMY_TYPES.bomber.explodes === true);
     ok('conjurer archetype', !!ENEMY_TYPES.conjurer && ENEMY_TYPES.conjurer.ai === 'summoner' &&
       ENEMY_TYPES.conjurer.summonCount > 0 && ENEMY_TYPES.conjurer.summonType === 'swarm');
+    ok('acolyte archetype', !!ENEMY_TYPES.acolyte && ENEMY_TYPES.acolyte.ai === 'warder' && ENEMY_TYPES.acolyte.auraR > 0);
     ok('AFFIXES table has 6', Object.keys(AFFIXES).length === 6);
+  });
+  sectionTry('enemies: acolyte wards nearby foes (faster + tougher)', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 61 });
+    g.player.weapons = []; g.player.crit = 0; g.player.x = 200; g.player.y = 200;
+    const ac = g.spawnEnemy('acolyte', 1500, 1500, 1, 1);
+    const d = g.spawnEnemy('drifter', 1500 + 30, 1500 + 30, 1, 1);   // inside the aura
+    for (let i = 0; i < 6; i++) g.update(1 / 60);
+    ok('a foe inside the aura is warded', d.warded > 0);
+    // A warded foe takes less damage than an identical unwarded one.
+    const dhp = d.hp; g.dealDamage(d, 20, d.x, d.y, 0); const wardedLoss = dhp - d.hp;
+    const u = g.spawnEnemy('drifter', 200, 2400, 1, 1); u.warded = 0;   // far from the acolyte
+    const uhp = u.hp; g.dealDamage(u, 20, u.x, u.y, 0); const plainLoss = uhp - u.hp;
+    ok('warded foe resists damage', wardedLoss > 0 && wardedLoss < plainLoss - 1e-9);
+    // The ward decays once a foe leaves the aura (isolate: no acolyte nearby).
+    const lone = g.spawnEnemy('drifter', 200, 2600, 1, 1); lone.warded = 0.5;
+    const w0 = lone.warded; for (let i = 0; i < 6; i++) g.update(1 / 60);
+    ok('ward decays away from the aura', lone.dead || lone.warded < w0);
   });
   sectionTry('enemies: conjurer summons motes (deterministic, capped)', () => {
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 11 });

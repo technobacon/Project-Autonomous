@@ -236,11 +236,13 @@ loot:
 Periodically a named **Champion** rises — a two-affix mini-boss with its own
 health bar that drops a chest. And distinct foes prowl the field: the **Stalker**
 (orbits and harasses you at range), the **Bomber** (closes in, then detonates),
-and the **Conjurer** — an arcane caster that hangs back and *summons fresh waves
-of motes* until you cut it down. It's a true **priority target**: ignore it and
-the screen fills faster than you can clear it. Affixes stack on these foes too,
-so a *Shielded Bomber*, a *Swift Stalker*, or a *Hardened Conjurer* keeps every
-minute different.
+the **Conjurer** (an arcane caster that *summons fresh waves of motes*), and the
+**Acolyte** — a support caster whose aura **empowers every foe around it**, making
+them faster and tougher. The Conjurer and Acolyte are true **priority targets**
+in different ways: one *creates* the horde, the other *strengthens* it, and the
+Acolyte gets deadlier the more crowded the screen — so cut it down first. Affixes
+stack on these foes too, so a *Shielded Bomber*, a *Swift Stalker*, or a
+*Hardened Conjurer* keeps every minute different.
 
 ## 🏆 Achievements, difficulty & the Codex
 

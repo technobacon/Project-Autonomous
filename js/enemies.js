@@ -60,6 +60,13 @@ const ENEMY_TYPES = {
     // ignore it and the screen fills. summonCd reused as the spawn timer.
     shootCd: 4.0, summonCd: 4.0, summonCount: 3, summonType: 'swarm', keepRange: 280,
   },
+  acolyte: {
+    id: 'acolyte', name: 'Acolyte', tier: 3.8, color: '#ffce5a',
+    hp: 64, speed: 46, radius: 14, damage: 9, xp: 5, ai: 'warder', shape: 'cross',
+    // Empowers nearby foes (faster + damage-resistant) via a sustained aura. The
+    // more crowded the field, the deadlier it is — so cut it down first.
+    auraR: 165,
+  },
 };
 
 // ---- Affixes: single-enemy modifiers carried by "elite" foes ---------------
