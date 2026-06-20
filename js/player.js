@@ -43,6 +43,10 @@ class Player {
     this._dashFx = 0;           // render-only afterimage timer
     this._dashGhosts = [];      // render-only blink endpoints
 
+    // Timed buffs (e.g. from Shrines): each {id, mods, t}. Applied at the end of
+    // recalc and ticked down in update — pure, seeded-safe (no RNG of their own).
+    this.buffs = [];
+
     // Mastery cosmetics (set at run start from lifetime rank). Purely visual —
     // never read by the simulation, so they can't affect fairness/determinism.
     this.masteryRank = 0;     // rank index of this hero (0 = Untrained)
@@ -122,6 +126,9 @@ class Player {
       }
     }
 
+    // Timed buffs (Shrines, etc.) fold in last so they stack on everything.
+    for (const b of this.buffs) this._applyStatMods(b.mods);
+
     if (initHp) {
       this.maxHp = newMax; this.hp = newMax;
       this.revives = m('revival') + (mod.reviveBonus || 0);
@@ -131,6 +138,17 @@ class Player {
       if (this.dashCharges > this.dashMaxCharges) this.dashCharges = this.dashMaxCharges;
     }
   }
+
+  // Add (or refresh) a timed buff and recompute stats. `mods` uses the same
+  // partial-mods channels as synergies/relics; `dur` is its lifetime in seconds.
+  addBuff(id, mods, dur) {
+    const ex = this.buffs.find(b => b.id === id);
+    if (ex) { ex.mods = mods; ex.t = Math.max(ex.t, dur); }
+    else this.buffs.push({ id, mods, t: dur });
+    this.recalc();
+    return true;
+  }
+  hasBuff(id) { return this.buffs.some(b => b.id === id); }
 
   // Fold a partial mods object (the same channels synergies/omens use) into the
   // already-derived stats. Multiplicative *Mul fields, additive *Bonus / add*.
@@ -283,6 +301,16 @@ class Player {
     const wantDash = (typeof Input !== 'undefined' && Input.justPressed && Input.justPressed('space', 'shift')) ||
       (this.game._consumeDashRequest && this.game._consumeDashRequest());
     if (wantDash) this.dash();
+
+    // Tick timed buffs; recompute stats once any expire.
+    if (this.buffs.length) {
+      let expired = false;
+      for (let i = this.buffs.length - 1; i >= 0; i--) {
+        this.buffs[i].t -= dt;
+        if (this.buffs[i].t <= 0) { this.buffs.splice(i, 1); expired = true; }
+      }
+      if (expired) this.recalc();
+    }
 
     // Timers.
     if (this.invuln > 0) this.invuln -= dt;

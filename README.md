@@ -202,6 +202,26 @@ minutes) stays clean, easing newcomers in. Spawn timing and positions come from
 the seeded simulation, so hazards are perfectly reproducible — the Daily stays
 fair.
 
+## 🔯 Shrines (risk & reward)
+
+Every so often an **altar** materialises out in the world. Step onto it and it
+grants a powerful boon — but every shrine **summons fresh danger** in the same
+breath, so claiming one means choosing to detour *toward* trouble:
+
+- **🔥 Shrine of Power** — **+50% damage for 18 seconds**, but an elite pack
+  answers the call.
+- **❤ Shrine of Vigor** — instantly **heal 45% of max health**, but a ring of
+  foes closes in around you.
+- **💰 Shrine of Fortune** — a **shower of light shards**, but elites are drawn
+  to the gleam.
+
+Shrines bring a moment-to-moment *decision* to a genre that's usually pure
+reaction — is the buff worth fighting through what it spawns? (The temporary
+buff stacks on top of everything else via the same modifier pipeline.) Their
+timing, placement, type and the threat they conjure are all seeded, so they're
+fully deterministic and the Daily stays fair. Trials and the Gauntlet — fixed,
+comparable challenges — leave them out.
+
 ## ⭐ Elites & Champions
 
 The dark isn't just fodder. Any foe can spawn as a glowing **elite** — scaled

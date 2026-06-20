@@ -830,6 +830,41 @@ globalThis.__run = function(report) {
     ok('render survives with hazards present', (g.render(), Number.isFinite(g.player.x)));
   });
 
+  // 11.10b) Shrines (v28): risk/reward altars + the timed-buff system.
+  sectionTry('shrines: registry shape + lookup', () => {
+    ok('shrine types well-formed', SHRINE_TYPES.length >= 3 && SHRINE_TYPES.every(s =>
+      s.id && s.name && s.icon && s.color && typeof s.invoke === 'function'));
+    ok('getShrineType resolves + misses', !!getShrineType('power') && getShrineType('nope') === null);
+  });
+  sectionTry('shrines: stepping on one grants the boon + a consequence', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 51 });
+    g.player.hp = g.player.maxHp * 0.4; const hp0 = g.player.hp;
+    const foes0 = g.enemies.length;
+    g.shrines.push({ type: 'vigor', color: '#7affc4', icon: '❤', x: g.player.x, y: g.player.y, radius: 24, t: 0, life: 26 });
+    g.updateShrines(1 / 60);
+    ok('Vigor shrine healed on touch', g.player.hp > hp0);
+    ok('shrine consumed once used', g.shrines.length === 0);
+    ok('consequence summoned foes', g.enemies.length > foes0);
+  });
+  sectionTry('shrines: Power grants a timed damage buff that expires', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 52 });
+    const m0 = g.player.might;
+    g.player.addBuff('shrine_power', { dmgMul: 1.5 }, 0.5);
+    ok('buff boosts damage + is active', Math.abs(g.player.might - m0 * 1.5) < 1e-4 && g.player.hasBuff('shrine_power'));
+    for (let i = 0; i < 40; i++) g.player.update(1 / 60);   // tick past 0.5s
+    ok('buff expires + damage restored', !g.player.hasBuff('shrine_power') && Math.abs(g.player.might - m0) < 1e-4);
+  });
+  sectionTry('shrines: none in Gauntlet or Trials', () => {
+    Save.data.trials = { kindling: true };
+    const gg = new Game(document.getElementById('game')); gg.start('spark', 0, { mode: 'gauntlet' });
+    gg._shrineTimer = -1; gg.updateShrines(0.1);
+    ok('no shrine spawns in Gauntlet', gg.shrines.length === 0);
+    const gt = new Game(document.getElementById('game')); gt.start('spark', 0, { trial: 'kindling' });
+    gt._shrineTimer = -1; gt.updateShrines(0.1);
+    ok('no shrine spawns in a Trial', gt.shrines.length === 0);
+    Save.data.trials = {};
+  });
+
   // 11.11) Lifetime Mastery (v15): per-hero / per-weapon totals, ranks, goals.
   sectionTry('mastery: ranks climb with points', () => {
     ok('rank ladder is ordered', MASTERY_RANKS.length >= 4 && MASTERY_RANKS[0].min === 0 && MASTERY_RANKS[1].min > 0);

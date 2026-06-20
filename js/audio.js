@@ -144,6 +144,7 @@ const Audio2 = {
   hazardHit()  { if (!this._gate('hazard', 70)) return; this.noise(0.22, 0.20, 600); this.blip(vrand(90, 120), 0.18, 'square', 0.16, -50); },
   conjure()    { if (!this._gate('conjure', 90)) return; this.blip(vrand(520, 600), 0.10, 'sine', 0.08, 200); this.blip(vrand(780, 880), 0.14, 'triangle', 0.07, 260); },
   dash()       { if (!this._gate('dash', 90)) return; this.noise(0.14, 0.14, 1800, 'highpass'); this.blip(vrand(440, 520), 0.10, 'sine', 0.09, 380); },
+  shrine()     { [523, 784, 1046].forEach((f, i) => setTimeout(() => this.blip(f, 0.3, 'sine', 0.12, 80), i * 70)); },
 
   // ---- Procedural music -------------------------------------------------
   // An evolving minor arpeggio whose tempo, brightness and harmony respond to

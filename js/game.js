@@ -42,6 +42,38 @@ const BIOMES = [
 function biomeForTime(t) { return BIOMES[Math.floor(Math.max(0, t) / BIOME_SECONDS) % BIOMES.length]; }
 function biomeIndexForTime(t) { return Math.floor(Math.max(0, t) / BIOME_SECONDS); }
 
+// Shrines: periodic in-world altars that offer a deliberate RISK / REWARD gamble.
+// Touch one and it grants a strong boon AND triggers an immediate consequence,
+// so the decision is whether the detour (into fresh danger) is worth it. The
+// spawn timing, position, type and the spawned threat all use the seeded sim RNG,
+// so Shrines are fully deterministic and the Daily stays fair. `invoke(game)`
+// runs the boon+consequence; helper effects (heal/buff/elite pack) already exist.
+const SHRINE_TYPES = [
+  { id: 'power', name: 'Shrine of Power', icon: '🔥', color: '#ff8a3c',
+    desc: '+50% damage for 18s — but an elite pack answers the call.',
+    invoke(g) {
+      g.player.addBuff('shrine_power', { dmgMul: 1.5 }, 18);
+      g.spawnShrinePack(3, true);
+      g.toast('🔥 Power surges through you!');
+    } },
+  { id: 'vigor', name: 'Shrine of Vigor', icon: '❤', color: '#7affc4',
+    desc: 'Heal 45% of max health — but a ring of foes closes in.',
+    invoke(g) {
+      g.player.heal(g.player.maxHp * 0.45);
+      g.director.spawnRing(g.time / 60);
+      g.toast('❤ Vigor floods your light!');
+    } },
+  { id: 'fortune', name: 'Shrine of Fortune', icon: '💰', color: '#ffe14d',
+    desc: 'A shower of light shards — but elites are drawn to the gleam.',
+    invoke(g) {
+      const min = g.time / 60;
+      for (let i = 0; i < 14; i++) g.spawnGem(g.player.x + rand(-60, 60), g.player.y + rand(-60, 60), 2 + Math.floor(min));
+      g.spawnShrinePack(2, false);
+      g.toast('💰 Fortune favors the bold!');
+    } },
+];
+function getShrineType(id) { return SHRINE_TYPES.find(s => s.id === id) || null; }
+
 class Game {
   constructor(canvas) {
     this.canvas = canvas;
@@ -99,6 +131,8 @@ class Game {
     this._biomeFlash = 0;         // cosmetic transition wash (decays)
     this.hazards = [];            // active environmental hazards (seeded; in-sim)
     this._hazardTimer = 0;        // countdown to the next hazard spawn (seeded)
+    this.shrines = [];            // active risk/reward altars (seeded; in-sim)
+    this._shrineTimer = 0;        // countdown to the next shrine (armed after seeding)
     this._coaching = false;       // first-run coaching tips active?
     this.activeBoss = null;
     this.pendingLevels = 0;
@@ -196,6 +230,8 @@ class Game {
       this.seed = (opts.seed != null ? opts.seed : (Date.now() ^ Math.floor(Math.random() * 0xffffffff))) >>> 0;
     }
     RNG.seed(this.seed);
+    // Arm the first Shrine now that the RNG is seeded (deterministic per seed).
+    this._shrineTimer = rand(26, 40);
     // Build the run modifiers. A Trial forces its own rule twist and ignores
     // omens AND relics, so each is a fixed, comparable challenge. Otherwise the
     // drafted omen and equipped relics fold into the same pipeline (the Daily
@@ -859,6 +895,7 @@ class Game {
     this.updateNovas(dt);
     this.updateZones(dt);
     this.updateHazards(dt);
+    this.updateShrines(dt);
     this.updateGems(dt);
     this.updatePickups(dt);
     this.particles.update(dt);
@@ -1309,6 +1346,84 @@ class Game {
     }
   }
 
+  // ---- Shrines (risk/reward altars) -------------------------------------
+  updateShrines(dt) {
+    // Gauntlet is pure boss-rush, and Trials are fixed challenges — no shrines.
+    const allowed = this.mode !== 'gauntlet' && !this.trial;
+    if (allowed) {
+      this._shrineTimer -= dt;
+      if (this._shrineTimer <= 0 && this.shrines.length === 0) {
+        this._shrineTimer = rand(34, 52);
+        this.spawnShrine();
+      }
+    }
+    const p = this.player;
+    for (let i = this.shrines.length - 1; i >= 0; i--) {
+      const s = this.shrines[i];
+      s.t += dt; s.life -= dt;
+      // Activated when the player steps onto it.
+      const rr = p.radius + s.radius;
+      if (p.alive && dist2(s.x, s.y, p.x, p.y) <= rr * rr) {
+        const def = getShrineType(s.type);
+        if (def) def.invoke(this);
+        this.particles.ring(s.x, s.y, 30, { color: s.color, speed: 240, life: 0.7, size: 4 });
+        if (Audio2.shrine) Audio2.shrine();
+        this.shrines.splice(i, 1);
+        continue;
+      }
+      if (s.life <= 0) this.shrines.splice(i, 1);   // faded unused
+    }
+  }
+
+  spawnShrine() {
+    const type = pick(SHRINE_TYPES);
+    // Place at mid-range from the player so reaching it is a real decision.
+    const a = rand(0, TAU), r = rand(300, 460);
+    const x = clamp(this.player.x + Math.cos(a) * r, 60, this.world.w - 60);
+    const y = clamp(this.player.y + Math.sin(a) * r, 60, this.world.h - 60);
+    this.shrines.push({ type: type.id, color: type.color, icon: type.icon, x, y, radius: 24, t: 0, life: 26 });
+    this.toast(type.icon + ' A ' + type.name + ' appears — claim it?');
+  }
+
+  // A clustered elite pack drawn to the shrine's caller (the consequence).
+  spawnShrinePack(n, leadElite) {
+    const min = this.time / 60;
+    const c = this.offscreenPoint(0.7);
+    const base = min >= 3.2 ? 'charger' : (min >= 1.8 ? 'brute' : 'drifter');
+    for (let i = 0; i < n; i++) {
+      const e = this.spawnEnemy(base, c.x + rand(-40, 40), c.y + rand(-40, 40),
+        this.director.hpScale(min) * 1.1, this.director.dmgScale(min));
+      if (!e) continue;
+      if (i === 0 && leadElite) this.makeElite(e, 1, false); else if (chance(0.4)) this.makeElite(e, 1, false);
+    }
+  }
+
+  _drawShrines(ctx, cam) {
+    for (const s of this.shrines) {
+      const x = s.x - cam.x, y = s.y - cam.y;
+      if (x < -60 || y < -60 || x > this.view.w + 60 || y > this.view.h + 60) continue;
+      const pulse = 1 + Math.sin(this.time * 3 + s.x) * 0.12;
+      const fade = s.life < 4 ? clamp(s.life / 4, 0.2, 1) : 1;   // dim as it expires
+      ctx.save();
+      ctx.globalAlpha = 0.85 * fade;
+      // Glowing ground halo.
+      const g = ctx.createRadialGradient(x, y, 2, x, y, s.radius * 2.4 * pulse);
+      g.addColorStop(0, s.color); g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.globalAlpha = 0.22 * fade; ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(x, y, s.radius * 2.4 * pulse, 0, TAU); ctx.fill();
+      // Diamond altar.
+      ctx.globalAlpha = fade;
+      ctx.strokeStyle = s.color; ctx.lineWidth = 2.5; ctx.shadowBlur = 16; ctx.shadowColor = s.color;
+      const r = s.radius * pulse;
+      ctx.beginPath(); ctx.moveTo(x, y - r); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r); ctx.lineTo(x - r, y); ctx.closePath(); ctx.stroke();
+      ctx.shadowBlur = 0;
+      // Icon.
+      ctx.globalAlpha = fade; ctx.font = '18px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(s.icon, x, y + 1);
+      ctx.restore();
+    }
+  }
+
   updateGems(dt) {
     const p = this.player;
     const range = p.pickupRange;
@@ -1395,6 +1510,7 @@ class Game {
     if (this.player) {
       this._drawWorldBounds(ctx, cam);
       this._drawHazards(ctx, cam);
+      this._drawShrines(ctx, cam);
       this._drawZones(ctx, cam);
       this._drawGems(ctx, cam);
       this._drawPickups(ctx, cam);
