@@ -138,13 +138,20 @@ opens differently.
 Where Omens are random and per-run, **Relics are permanent and chosen**. Spend
 shards to **unlock** relics — several are gated behind achievements for a long
 unlock arc — then **equip** a few into a limited loadout that carries into every
-run. There are **17**, e.g. *Titan Heart* (+30% max HP), *Glass Lens* (+25%
+run. There are **20**, e.g. *Titan Heart* (+30% max HP), *Glass Lens* (+25%
 damage, −15% HP), *Chrono Core* (+18% attack speed), *Keenstone* (crit chance &
 damage), *Vampiric Charm* (heal on kill), *Phoenix Feather* (an extra revive),
 and the master-tier *Void Shard*. You start with **2 equip slots and earn more
 as you collect relics** (up to 4), so you deliberately craft a build identity
 before the run even begins. (The Daily Challenge ignores relics so its
 leaderboard stays fair.)
+
+Three relics are **synergy-aware** — they read your live arsenal and pay off the
+more weapon synergies you've assembled: *Resonance Crystal* (+8% damage per
+active synergy), *Harmonic Core* (+5% attack speed & +4% move speed per synergy),
+and *Confluence* (+20% damage and +2 armor once 3+ synergies are live). They turn
+a deep, themed build into a loadout choice that compounds, weaving the relic and
+synergy layers together.
 
 ## ✨ Game feel
 

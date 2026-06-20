@@ -594,6 +594,32 @@ globalThis.__run = function(report) {
     // Clean up so equipped relics don't leak into later sections.
     Save.data.relics = {}; Save.data.equipped = [];
   });
+  sectionTry('relics: synergy-aware relics scale with active synergies', () => {
+    ok('synergy relics registered', ['resonance', 'harmonics', 'confluence'].every(id => {
+      const r = getRelic(id); return r && typeof r.synergyMods === 'function';
+    }));
+    // Pure-function checks (threshold + per-synergy scaling).
+    ok('harmonics scales per synergy', (() => { const h = getRelic('harmonics').synergyMods(2); return Math.abs(h.hasteMul - 1.10) < 1e-9 && Math.abs(h.speedMul - 1.08) < 1e-9; })());
+    ok('confluence dormant under 3', Object.keys(getRelic('confluence').synergyMods(2)).length === 0);
+    ok('confluence fires at 3+', (() => { const c = getRelic('confluence').synergyMods(3); return Math.abs(c.dmgMul - 1.20) < 1e-9 && c.armorBonus === 2; })());
+    // Integration: the bonus flows through recalc off the live arsenal.
+    Save.data.relics = {}; Save.data.equipped = [];
+    const mkWild = (g) => { g.player.weapons = []; g.player.addWeapon('flame'); g.player.addWeapon('toxin'); g.player.recalc(true); };
+    const base = new Game(document.getElementById('game')); base.start('spark', 0, { seed: 7, noRelics: true });
+    mkWild(base);
+    ok('one synergy active (Wildfire)', base.player.synergies.length === 1);
+    const baseMight = base.player.might;
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 7, noRelics: true });
+    g.relics = ['resonance'];
+    mkWild(g);
+    ok('Resonance adds +8% damage per synergy', Math.abs(g.player.might - baseMight * 1.08) < 1e-4);
+    // No synergies => synergy relics are inert (×1.00).
+    const g2 = new Game(document.getElementById('game')); g2.start('spark', 0, { seed: 7, noRelics: true });
+    g2.relics = ['resonance']; g2.player.weapons = []; g2.player.recalc(true);
+    const plainMight = (new Game(document.getElementById('game')));
+    plainMight.start('spark', 0, { seed: 7, noRelics: true }); plainMight.player.weapons = []; plainMight.player.recalc(true);
+    ok('Resonance inert with no synergies', Math.abs(g2.player.might - plainMight.player.might) < 1e-9);
+  });
 
   // 11.6) Run History / Chronicle (v10): snapshots, cap, and the screen.
   sectionTry('history: snapshot captures run shape', () => {

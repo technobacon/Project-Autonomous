@@ -108,21 +108,18 @@ class Player {
     // no RNG, never persisted — so it's deterministic and Daily-fair. Applied
     // after omens; deliberately excludes max-HP to keep recalc heal-safe.
     this.synergies = (typeof activeSynergies === 'function') ? activeSynergies(this.weapons) : [];
-    for (const s of this.synergies) {
-      const sm = s.mods;
-      if (sm.dmgMul) this.might *= sm.dmgMul;
-      if (sm.hasteMul) this.haste *= sm.hasteMul;
-      if (sm.speedMul) this.speed *= sm.speedMul;
-      if (sm.areaMul) this.area *= sm.areaMul;
-      if (sm.projSpeedMul) this.projSpeed *= sm.projSpeedMul;
-      if (sm.pickupMul) this.pickupRange *= sm.pickupMul;
-      if (sm.xpMul) this.xpMult *= sm.xpMul;
-      if (sm.critChanceBonus) this.crit += sm.critChanceBonus;
-      if (sm.critDmgBonus) this.critMult += sm.critDmgBonus;
-      if (sm.armorBonus) this.armor += sm.armorBonus;
-      if (sm.addProj) this.bonusProj += sm.addProj;
-      if (sm.addPierce) this.bonusPierce += sm.addPierce;
-      if (sm.regenBonus) this.regen += sm.regenBonus;
+    for (const s of this.synergies) this._applyStatMods(s.mods);
+
+    // Synergy-aware relics: a few equipped relics scale with how many synergies
+    // are live this instant, so a deep, themed arsenal pays off twice. Applied
+    // here (not at run start) because synergies emerge as you draft weapons.
+    // Pure function of arsenal + loadout — no RNG — so the Daily stays fair.
+    if (this.game.relics && this.game.relics.length && typeof getRelic === 'function') {
+      const synCount = this.synergies.length;
+      for (const id of this.game.relics) {
+        const r = getRelic(id);
+        if (r && r.synergyMods) this._applyStatMods(r.synergyMods(synCount));
+      }
     }
 
     if (initHp) {
@@ -133,6 +130,25 @@ class Player {
       this.maxHp = newMax;
       if (this.dashCharges > this.dashMaxCharges) this.dashCharges = this.dashMaxCharges;
     }
+  }
+
+  // Fold a partial mods object (the same channels synergies/omens use) into the
+  // already-derived stats. Multiplicative *Mul fields, additive *Bonus / add*.
+  _applyStatMods(sm) {
+    if (!sm) return;
+    if (sm.dmgMul) this.might *= sm.dmgMul;
+    if (sm.hasteMul) this.haste *= sm.hasteMul;
+    if (sm.speedMul) this.speed *= sm.speedMul;
+    if (sm.areaMul) this.area *= sm.areaMul;
+    if (sm.projSpeedMul) this.projSpeed *= sm.projSpeedMul;
+    if (sm.pickupMul) this.pickupRange *= sm.pickupMul;
+    if (sm.xpMul) this.xpMult *= sm.xpMul;
+    if (sm.critChanceBonus) this.crit += sm.critChanceBonus;
+    if (sm.critDmgBonus) this.critMult += sm.critDmgBonus;
+    if (sm.armorBonus) this.armor += sm.armorBonus;
+    if (sm.addProj) this.bonusProj += sm.addProj;
+    if (sm.addPierce) this.bonusPierce += sm.addPierce;
+    if (sm.regenBonus) this.regen += sm.regenBonus;
   }
 
   hasWeapon(id) { return this.weapons.some(w => w.def.id === id); }

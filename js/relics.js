@@ -49,6 +49,18 @@ const RELICS = [
   { id: 'lucky_clover', name: 'Lucky Clover', icon: '🍀', color: '#7affc4', cost: 220,
     desc: '+12% luck (better upgrade rolls).',
     apply(m) { m.luckBonus += 0.12; } },
+  // --- Synergy-aware relics: reward a deep, themed arsenal -----------------
+  // These grant nothing at run start (apply is a no-op); their power scales with
+  // how many weapon synergies are active, evaluated live in player.recalc.
+  { id: 'resonance', name: 'Resonance Crystal', icon: '🔆', color: '#ffd1f5', cost: 260,
+    desc: '+8% damage for each active weapon synergy.',
+    apply() {}, synergyMods(n) { return { dmgMul: 1 + 0.08 * n }; } },
+  { id: 'harmonics', name: 'Harmonic Core', icon: '🎶', color: '#8affe0', cost: 280,
+    desc: '+5% attack speed & +4% move speed per active synergy.',
+    apply() {}, synergyMods(n) { return { hasteMul: 1 + 0.05 * n, speedMul: 1 + 0.04 * n }; } },
+  { id: 'confluence', name: 'Confluence', icon: '🌐', color: '#9ad8ff', cost: 340,
+    desc: 'With 3+ active synergies: +20% damage and +2 armor.',
+    apply() {}, synergyMods(n) { return n >= 3 ? { dmgMul: 1.20, armorBonus: 2 } : {}; } },
   // --- Achievement-gated relics: the long unlock arc -----------------------
   { id: 'vampiric_charm', name: 'Vampiric Charm', icon: '🩸', color: '#e0405a', cost: 250,
     achievement: 'slayer', desc: 'Heal 0.8% of max health on each kill.',
