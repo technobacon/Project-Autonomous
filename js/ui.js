@@ -68,6 +68,7 @@ const UI = {
           <button class="mini" id="btn-music">${Audio2.musicMuted ? '🎵̶' : '🎵'} Music</button>
           <button class="mini" id="btn-shake">${d.shakeOff ? '⬚' : '⬛'} Shake</button>
           <button class="mini" id="btn-dmg">${d.dmgNumbers ? '🔢' : '⬚'} Damage #</button>
+          <button class="mini" id="btn-trail">${d.trailFx !== false ? '✦' : '⬚'} Trail</button>
         </div>
         <p class="hint">Move: WASD / Arrows • Pause: Esc/P • Weapons fire automatically</p>
       </div>`;
@@ -87,6 +88,7 @@ const UI = {
     document.getElementById('btn-music').onclick = (e) => { Audio2.resume(); const m = Audio2.toggleMusic(); Save.data.musicMuted = m; Save.save(); e.target.textContent = (m ? '🎵̶' : '🎵') + ' Music'; };
     document.getElementById('btn-shake').onclick = (e) => { Save.data.shakeOff = !Save.data.shakeOff; Save.save(); e.target.textContent = (Save.data.shakeOff ? '⬚' : '⬛') + ' Shake'; Audio2.uiMove(); };
     document.getElementById('btn-dmg').onclick = (e) => { Save.data.dmgNumbers = !Save.data.dmgNumbers; Save.save(); e.target.textContent = (Save.data.dmgNumbers ? '🔢' : '⬚') + ' Damage #'; Audio2.uiMove(); };
+    document.getElementById('btn-trail').onclick = (e) => { Save.data.trailFx = Save.data.trailFx === false; Save.save(); e.target.textContent = (Save.data.trailFx !== false ? '✦' : '⬚') + ' Trail'; Audio2.uiMove(); };
   },
 
   showHelp() {
@@ -113,7 +115,7 @@ const UI = {
           <div class="help-card"><h3>🌌 Biomes</h3><p>The world <b>shifts biome</b> every few minutes — new palette, new skies, and a lean toward different foes. The sequence is the same for a given seed, so the Daily stays fair.</p></div>
           <div class="help-card"><h3>⚠ Hazards</h3><p>Each biome past the first brings an <b>environmental hazard</b> — meteor strikes, frost pools, gloom, a bloodstorm. They're always <b>telegraphed</b> and hurt foes too: watch for the warning ring and <b>step out</b>.</p></div>
           <div class="help-card"><h3>📜 Chronicle</h3><p>Every run is logged in your <b>History</b> — its mode, character, build, score and time — so you can track your records and revisit your best runs.</p></div>
-          <div class="help-card"><h3>🎖 Mastery</h3><p>Every run builds <b>lifetime mastery</b> for the hero you played and the weapons you wielded. Climb the rank ladder — <b>Initiate → Ascendant</b> — for each one. A long-game goal beyond any single score.</p></div>
+          <div class="help-card"><h3>🎖 Mastery</h3><p>Every run builds <b>lifetime mastery</b> for the hero you played and the weapons you wielded. Climb the rank ladder — <b>Initiate → Ascendant</b> — for each one. Veterans earn a glowing <b>trail</b>, and an Ascendant hero wears a <b>halo</b>. A long-game goal beyond any single score.</p></div>
           <div class="help-card"><h3>⚙ Options</h3><p>From the menu, toggle <b>SFX</b>, <b>Music</b>, <b>screen shake</b>, and floating <b>damage numbers</b> to taste.</p></div>
         </div>
         <div class="menu-buttons row">
@@ -166,10 +168,14 @@ const UI = {
       if (unlocked) action = `<button class="btn btn-primary select-btn" data-id="${c.id}">SELECT</button>`;
       else if (c.secret) action = `<div class="char-locktag">🔒 ${getAchievement(c.achievement).name}</div>`;
       else action = `<button class="btn ${affordable ? '' : 'disabled'} unlock-btn" data-id="${c.id}">🔒 Unlock ✦${c.cost}</button>`;
+      const rk = masteryRank(charMasteryPoints(Save.charStats(c.id)));
+      const badge = (unlocked && rk.index > 0)
+        ? `<div class="char-mastery" style="color:${rk.color};border-color:${rk.color}">🎖 ${rk.name}</div>` : '';
       return `
         <div class="char-card ${unlocked ? '' : 'locked'} ${c.secret ? 'secret' : ''}" data-id="${c.id}">
           <div class="char-orb" style="--c:${c.color}"></div>
           <h3 style="color:${c.color}">${unlocked || !c.secret ? c.name : '???'}</h3>
+          ${badge}
           <p class="char-desc">${unlocked || !c.secret ? c.desc : 'A hidden light awaits the worthy.'}</p>
           <p class="char-blurb">${c.blurb}</p>
           <div class="char-stats">
@@ -392,6 +398,7 @@ const UI = {
           <span class="shard-chip big">${Save.data.runs} run${Save.data.runs === 1 ? '' : 's'}</span>
         </div>
         ${playedAny ? '' : '<p class="empty-note">Play a run to begin earning mastery with your heroes and weapons.</p>'}
+        <p class="trial-intro">Reach <b style="color:#ffd84d">Veteran</b> with a hero for a glowing trail; <b style="color:#ff6b8a">Ascendant</b> earns a halo. Titles show on the character screen.</p>
         <h3 class="mast-section">Heroes</h3>
         <div class="mast-grid">${charCards}</div>
         <h3 class="mast-section">Weapons</h3>
@@ -760,9 +767,13 @@ const UI = {
       ? `<p class="new-best" ${game.lastDaily.isNew ? '' : 'style="color:var(--muted)"'}>${game.lastDaily.isNew ? '★ New Daily Best!' : 'Daily best: ' + formatNum(game.lastDaily.best.score) + ' (' + formatTime(game.lastDaily.best.time) + ')'}</p>`
       : '';
     const title = game.trialWon ? 'Trial Complete!' : (trial ? 'Trial Failed' : 'The light fades…');
+    const hero = game.player && game.player.char;
+    const heroLine = hero
+      ? `<p class="go-hero" style="color:${hero.color}">${hero.name}${game.player.masteryTitle && game.player.masteryRank > 0 ? ' · 🎖 ' + game.player.masteryTitle : ''}</p>` : '';
     this.root.innerHTML = `
       <div class="screen panel">
         <h2 class="gameover-title" ${game.trialWon ? `style="color:${trial.color}"` : ''}>${title}</h2>
+        ${heroLine}
         ${diffTag} ${omenTag} ${relicTag}
         ${trialBlock}
         ${dailyBlock}

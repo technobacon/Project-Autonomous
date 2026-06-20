@@ -217,6 +217,12 @@ class Game {
     this.diff = getDifficulty(this.diffIndex);
     const char = getCharacter(charId);
     this.player = new Player(this, char);
+    // Mastery cosmetics: reflect this hero's lifetime rank (visual prestige only).
+    if (typeof masteryRank === 'function') {
+      const rk = masteryRank(charMasteryPoints(Save.charStats(char.id)));
+      this.player.masteryRank = rk.index;
+      this.player.masteryTitle = rk.name;
+    }
     this.cam.x = this.player.x - this.view.w / 2;
     this.cam.y = this.player.y - this.view.h / 2;
     this.director = new Director(this);

@@ -30,6 +30,12 @@ class Player {
     this.alive = true;
     this._regenAccum = 0;
 
+    // Mastery cosmetics (set at run start from lifetime rank). Purely visual —
+    // never read by the simulation, so they can't affect fairness/determinism.
+    this.masteryRank = 0;     // rank index of this hero (0 = Untrained)
+    this.masteryTitle = '';   // rank name, shown in the HUD / game over
+    this._trail = [];         // recent positions for the cosmetic trail (render-only)
+
     this.recalc(true);
     this.addWeapon(character.startWeapon);
   }
@@ -257,6 +263,22 @@ class Player {
     const x = this.x - cam.x, y = this.y - cam.y;
     ctx.save();
 
+    // Mastery trail (cosmetic prestige for Veteran+ heroes). Render-only: the
+    // position buffer lives outside the simulation and is never hashed.
+    if (this.masteryRank >= 3 && (!Save.data || Save.data.trailFx !== false)) {
+      const maxLen = this.masteryRank >= 4 ? 20 : 13;
+      this._trail.push({ x: this.x, y: this.y });
+      if (this._trail.length > maxLen) this._trail.shift();
+      for (let i = 0; i < this._trail.length - 1; i++) {
+        const t = this._trail[i];
+        const f = i / this._trail.length;
+        ctx.globalAlpha = f * (this.masteryRank >= 4 ? 0.5 : 0.35);
+        ctx.fillStyle = this.char.color;
+        ctx.beginPath(); ctx.arc(t.x - cam.x, t.y - cam.y, this.radius * (0.25 + 0.55 * f), 0, TAU); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
     // Continuous-weapon visuals (base + evolved), drawn under the player.
     for (const inst of this.weapons) {
       // Aura (Flame Aura / Inferno).
@@ -285,11 +307,18 @@ class Player {
       }
     }
 
-    // Player body — glowing orb in the character color.
+    // Player body — glowing orb in the character color. High mastery brightens
+    // the aura, and an Ascendant hero wears a faint halo ring (cosmetic only).
     const flashing = this.invuln > 0 && Math.floor(this.game.time * 20) % 2 === 0;
     const col = this.hitFlash > 0 ? '#ffffff' : this.char.color;
+    if (this.masteryRank >= 5) {
+      ctx.globalAlpha = 0.5 + 0.18 * Math.sin(this.game.time * 3);
+      ctx.strokeStyle = this.char.color; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, this.radius + 7, 0, TAU); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
     ctx.globalAlpha = flashing ? 0.45 : 1;
-    ctx.shadowBlur = 22; ctx.shadowColor = this.char.color;
+    ctx.shadowBlur = 22 + (this.masteryRank >= 4 ? 12 : 0); ctx.shadowColor = this.char.color;
     ctx.fillStyle = col;
     ctx.beginPath(); ctx.arc(x, y, this.radius, 0, TAU); ctx.fill();
     // Inner core.

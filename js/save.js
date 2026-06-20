@@ -71,6 +71,7 @@ const Save = {
       musicMuted: false,
       shakeOff: false,
       dmgNumbers: true,          // floating damage numbers (game-feel)
+      trailFx: true,             // cosmetic mastery trail (prestige FX)
     };
   },
 

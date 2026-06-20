@@ -908,6 +908,48 @@ globalThis.__run = function(report) {
     UI._mutators = [];
   });
 
+  // 11.15) Mastery rewards (v19): rank-gated titles, trail + halo (cosmetic).
+  sectionTry('mastery rewards: run reflects the hero rank', () => {
+    Save.data.mastery = { chars: {}, weapons: {} };
+    Save.data.mastery.chars.spark = { runs: 99, kills: 99999, time: 99999, bosses: 99, bestTime: 0, bestScore: 0 };
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 1 });
+    ok('player carries the mastery rank/title', g.player.masteryRank >= 4 && /\\w/.test(g.player.masteryTitle));
+    Save.data.mastery = { chars: {}, weapons: {} };
+    const g2 = new Game(document.getElementById('game')); g2.start('spark', 0, { seed: 1 });
+    ok('a fresh hero starts Untrained (no trail)', g2.player.masteryRank === 0);
+  });
+  sectionTry('mastery rewards: trail renders + respects the toggle', () => {
+    Save.data.mastery = { chars: {}, weapons: {} };
+    Save.data.mastery.chars.spark = { runs: 99, kills: 99999, time: 99999, bosses: 99, bestTime: 0, bestScore: 0 };
+    Save.data.trailFx = true;
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 2 });
+    g.player._trail = []; for (let i = 0; i < 6; i++) { g.player.x += 5; g.render(); }
+    ok('high-rank hero leaves a trail', g.player._trail.length > 0);
+    Save.data.trailFx = false; g.player._trail = [];
+    for (let i = 0; i < 6; i++) { g.player.x += 5; g.render(); }
+    ok('the Trail toggle suppresses it', g.player._trail.length === 0);
+    Save.data.trailFx = true; Save.data.mastery = { chars: {}, weapons: {} };
+  });
+  sectionTry('mastery rewards: surfaced on char-select + game over', () => {
+    Save.data.mastery = { chars: {}, weapons: {} };
+    Save.data.mastery.chars.spark = { runs: 99, kills: 99999, time: 99999, bosses: 99, bestTime: 0, bestScore: 0 };
+    const g = new Game(document.getElementById('game'));
+    UI.init(document.getElementById('overlay'), g);
+    UI.showCharacterSelect('survival');
+    ok('character screen shows the rank badge', /🎖/.test(UI.root.innerHTML) && /char-mastery/.test(UI.root.innerHTML));
+    g.start('spark', 0, { seed: 3 });
+    UI.showGameOver(g);
+    ok('game over shows the hero title', /go-hero/.test(UI.root.innerHTML) && /Spark/.test(UI.root.innerHTML));
+    Save.data.mastery = { chars: {}, weapons: {} };
+  });
+  sectionTry('mastery rewards: trail option default + persistence', () => {
+    ok('trail FX on by default', Save.defaults().trailFx === true);
+    const prev = Save.data.trailFx;
+    Save.data.trailFx = false; Save.save(); Save.load();
+    ok('toggle persists across load', Save.data.trailFx === false);
+    Save.data.trailFx = prev === false ? false : true; Save.save();
+  });
+
   // 11.3) New content (v7): glaive (boomerang), toxin (zones), prism, Comet.
   sectionTry('content: new weapons + evolutions registered', () => {
     for (const id of ['glaive', 'toxin', 'prism']) ok('base weapon ' + id, !!getWeapon(id) && WEAPON_LIST.some(w => w.id === id));

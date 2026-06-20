@@ -207,8 +207,8 @@ detonates). Affixes stack on the new foes too, so a *Shielded Bomber* or a
   tier below.
 - **Codex** — a bestiary + arsenal that fills in as you discover foes, weapons,
   and evolutions.
-- **Options** — toggle SFX, music, screen shake, and floating damage numbers
-  (accessibility / clarity).
+- **Options** — toggle SFX, music, screen shake, floating damage numbers, and
+  the mastery trail FX (accessibility / clarity).
 
 ## 📜 Chronicle (run history & records)
 
@@ -229,9 +229,15 @@ Veteran → Master → Ascendant** — shown with a progress bar toward the next
 Every **weapon** you wield earns its own track too, lit up by how often you've
 used it, the levels you've reached and the evolutions you've unlocked (a 0–5★
 rating). Two achievements reward the climb (reach **Adept**, then **Master**,
-with any hero). It's a deliberate long-game: a reason to keep returning to a
+with any hero).
+
+Rank also brings **visible prestige**: your hero's title shows on the character
+screen and the game-over banner, a **Veteran** earns a glowing motion **trail**,
+**Master** burns brighter, and an **Ascendant** wears a pulsing **halo** (all
+toggleable). It's a deliberate long-game: a reason to keep returning to a
 favourite hero, and to give every weapon a real run. Mastery is pure
-record-keeping — it's never read by the simulation, so it can't tip the Daily.
+record-keeping and the rewards are purely cosmetic — never read by the
+simulation, so it can't tip the Daily.
 
 ## ⚔ Gauntlet (boss rush)
 
@@ -341,12 +347,12 @@ mechanics, difficulty scaling, level-ups, pickups, the polish FX (nebula,
 projectile trails, tiered damage numbers), the time-driven biome progression
 (palette + spawn bias + environmental hazards), the adaptive audio engine
 (limiter, combat SFX, boss-aware music), the first-run onboarding (intro +
-coaching tips), every UI screen, death, persistence, and the shop (390+
-assertions):
+coaching tips), the mastery rewards (rank-gated titles + cosmetic trail/halo),
+every UI screen, death, persistence, and the shop (400+ assertions):
 
 ```bash
 npm test                          # functional + determinism suites
- node tools/headless-test.js       # functional suite (390+ assertions)
+ node tools/headless-test.js       # functional suite (400+ assertions)
 node tools/determinism-test.js    # proves Daily seeds are framerate/settings-independent
 node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```
