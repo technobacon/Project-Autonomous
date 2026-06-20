@@ -414,22 +414,33 @@ const UI = {
     const done = Save.trialsDone();
     const cards = TRIALS.map(t => {
       const cleared = Save.isTrialDone(t.id);
+      const unlocked = trialUnlocked(t);
       const ch = getCharacter(t.char);
       const diff = getDifficulty(t.diff || 0);
-      return `
-        <div class="trial-card ${cleared ? 'cleared' : ''}" style="--c:${t.color}">
-          <div class="trial-top">
-            <span class="trial-name" style="color:${t.color}">${t.icon} ${t.name}</span>
-            ${cleared ? '<span class="trial-done">✓ Cleared</span>' : ''}
-          </div>
-          <p class="trial-desc">${t.desc}</p>
+      const lockedBy = unlocked ? [] : trialLockedBy(t);
+      const state = cleared ? 'cleared' : (unlocked ? '' : 'locked');
+      const body = unlocked
+        ? `<p class="trial-desc">${t.desc}</p>
           <div class="trial-meta">
             <span class="trial-goal">🎯 ${trialGoalText(t)}</span>
             <span class="trial-tag" style="color:${ch ? ch.color : '#fff'}">${ch ? ch.name : 'Spark'}</span>
             ${t.diff ? `<span class="trial-tag" style="color:${diff.color};border-color:${diff.color}">${diff.name}</span>` : ''}
             <span class="trial-reward">✦ ${t.reward}</span>
           </div>
-          <button class="btn ${cleared ? '' : 'btn-primary'}" data-trial="${t.id}">${cleared ? '↺ Replay' : '▶ Begin'}</button>
+          <button class="btn ${cleared ? '' : 'btn-primary'}" data-trial="${t.id}">${cleared ? '↺ Replay' : '▶ Begin'}</button>`
+        : `<p class="trial-desc trial-locked-desc">🔒 Locked — clear ${lockedBy.join(' & ')} to unlock.</p>
+          <div class="trial-meta">
+            <span class="trial-goal">🎯 ${trialGoalText(t)}</span>
+            <span class="trial-reward">✦ ${t.reward}</span>
+          </div>
+          <button class="btn" disabled>🔒 Locked</button>`;
+      return `
+        <div class="trial-card ${state}" style="--c:${t.color}">
+          <div class="trial-top">
+            <span class="trial-name" style="color:${unlocked ? t.color : '#7488a8'}">${unlocked ? t.icon : '🔒'} ${t.name}</span>
+            ${cleared ? '<span class="trial-done">✓ Cleared</span>' : ''}
+          </div>
+          ${body}
         </div>`;
     }).join('');
     this.root.innerHTML = `
@@ -438,14 +449,14 @@ const UI = {
           <h2>Trials of Light</h2>
           <span class="shard-chip big">${done} / ${TRIALS.length}</span>
         </div>
-        <p class="trial-intro">Fixed-rule challenges with a clear objective. They ignore Omens and Relics — pure skill. First clear pays the full bounty.</p>
+        <p class="trial-intro">Fixed-rule challenges with a clear objective. They ignore Omens and Relics — pure skill. Clearing a Trial unlocks the next on its path; first clear pays the full bounty.</p>
         <div class="trial-grid">${cards}</div>
         <button class="btn" id="btn-back">← Back</button>
       </div>`;
     this.root.querySelectorAll('[data-trial]').forEach(btn => {
       btn.onclick = () => {
         const t = getTrial(btn.getAttribute('data-trial'));
-        if (!t) return;
+        if (!t || !trialUnlocked(t)) return;
         Audio2.uiSelect(); this.hide();
         const charId = Save.isUnlocked(t.char) ? t.char : 'spark';
         App.startRun(charId, t.diff || 0, { trial: t.id });

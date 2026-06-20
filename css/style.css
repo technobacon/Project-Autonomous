@@ -330,6 +330,9 @@ html, body {
 .trial-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; width: 100%; }
 .trial-card { background: rgba(255,255,255,0.04); border: 1px solid var(--c, var(--panel-border)); border-radius: 12px; padding: 14px; text-align: left; display: flex; flex-direction: column; gap: 8px; box-shadow: inset 0 0 20px rgba(255,255,255,0.03); }
 .trial-card.cleared { box-shadow: inset 0 0 20px rgba(122,255,196,0.06); }
+.trial-card.locked { border-color: rgba(116,136,168,0.4); opacity: 0.62; box-shadow: none; }
+.trial-card.locked .btn[disabled] { opacity: 0.5; cursor: not-allowed; filter: grayscale(0.6); }
+.trial-locked-desc { color: #8aa0c2; font-style: italic; }
 .trial-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .trial-name { font-weight: 700; font-size: 16px; }
 .trial-done { font-size: 11px; color: #7affc4; border: 1px solid #7affc4; border-radius: 999px; padding: 1px 8px; }

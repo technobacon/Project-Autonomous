@@ -789,6 +789,7 @@ globalThis.__run = function(report) {
   });
   sectionTry('trials: start forces config, ignores omens & relics', () => {
     Save.data.relics = { volatile: true }; Save.data.equipped = ['volatile'];
+    Save.data.trials = { kindling: true };   // unlock Glass (req: kindling)
     const g = new Game(document.getElementById('game'));
     g.start('spark', 0, { trial: 'glass' });
     ok('trial set on the game', g.trial && g.trial.id === 'glass');
@@ -813,6 +814,7 @@ globalThis.__run = function(report) {
     Save.data.trials = {};
   });
   sectionTry('trials: a kills objective is detected', () => {
+    Save.data.trials = { kindling: true };   // unlock Swarm (req: kindling)
     const g = new Game(document.getElementById('game'));
     g.start('spark', 0, { trial: 'swarm' });
     ok('kills objective starts unmet', !trialGoalMet(g.trial, g));
@@ -820,7 +822,8 @@ globalThis.__run = function(report) {
     ok('reaching the kill count meets it', trialGoalMet(g.trial, g) && trialCurrent(g.trial, g) === g.kills);
   });
   sectionTry('trials: failing records the run but no clear', () => {
-    Save.data.trials = {}; const runs0 = Save.data.runs, bt0 = Save.data.bestTime;
+    Save.data.trials = { kindling: true, glass: true };   // unlock Tortoise (req: glass)
+    const runs0 = Save.data.runs, bt0 = Save.data.bestTime;
     const g = new Game(document.getElementById('game'));
     g.start('spark', 0, { trial: 'tortoise' });
     g.time = 30; g.kills = 12;
@@ -849,6 +852,38 @@ globalThis.__run = function(report) {
     g.start('spark', 0, { trial: 'kindling' }); g.trialWon = true; g.lastTrialFirst = true; g.lastEarned = 50;
     UI.showGameOver(g);
     ok('victory screen frames a win', /Trial Complete/.test(UI.root.innerHTML));
+    Save.data.trials = {};
+  });
+  sectionTry('trials: unlock chain gates progression', () => {
+    // Every trial declares a req list; the opener is the only thing open at zero.
+    ok('all trials declare req array', TRIALS.every(t => Array.isArray(t.req)));
+    ok('exactly one opener (no prerequisites)', TRIALS.filter(t => t.req.length === 0).length === 1);
+    ok('all reqs reference real trials', TRIALS.every(t => t.req.every(id => !!getTrial(id))));
+    // Pure predicate form: nothing cleared => only the opener is unlocked.
+    const none = () => false;
+    ok('locked until prereqs met', !trialUnlocked(getTrial('glass'), none) &&
+      !trialUnlocked(getTrial('ascendant'), none) && trialUnlocked(getTrial('kindling'), none));
+    ok('lockedBy names the blocker', trialLockedBy(getTrial('glass'), none).join() === 'Kindling');
+    // Capstone needs BOTH branches; one alone is not enough.
+    const onlyTortoise = id => id === 'kindling' || id === 'glass' || id === 'tortoise';
+    ok('capstone needs both branches', !trialUnlocked(getTrial('ascendant'), onlyTortoise));
+    const both = id => ['kindling', 'glass', 'swarm', 'tortoise', 'bloodlust'].includes(id);
+    ok('capstone opens when both met', trialUnlocked(getTrial('ascendant'), both));
+    // Live against the Save book: clearing the opener unlocks its children.
+    Save.data.trials = {};
+    ok('Save view: children locked at start', trialUnlocked(getTrial('kindling')) &&
+      !trialUnlocked(getTrial('glass')) && !trialUnlocked(getTrial('swarm')));
+    Save.completeTrial('kindling');
+    ok('clearing opener unlocks its branch', trialUnlocked(getTrial('glass')) && trialUnlocked(getTrial('swarm')) &&
+      !trialUnlocked(getTrial('tortoise')));
+    // Engine guard: a locked trial cannot be force-started, it degrades to survival.
+    Save.data.trials = {};
+    const g = new Game(document.getElementById('game'));
+    g.start('spark', 0, { trial: 'ascendant' });
+    ok('locked trial refused at start', g.trial === null && g.mode === 'survival');
+    // UI reflects the lock with a disabled control.
+    UI.showTrials();
+    ok('locked card shows a lock + disabled button', /🔒/.test(UI.root.innerHTML) && /disabled/.test(UI.root.innerHTML));
     Save.data.trials = {};
   });
 

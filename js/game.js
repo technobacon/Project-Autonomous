@@ -177,6 +177,9 @@ class Game {
     // (everyone faces the same world); normal runs get a fresh random seed.
     this.daily = !!opts.daily;
     this.trial = (opts.trial && typeof getTrial === 'function') ? getTrial(opts.trial) : null;
+    // Guard the unlock chain: a locked Trial can't be entered (defends against a
+    // stale UI launching one out of order). Falls back to a normal survival run.
+    if (this.trial && typeof trialUnlocked === 'function' && !trialUnlocked(this.trial)) this.trial = null;
     this.trialWon = false;
     this.customRun = opts.mode === 'custom' && !this.trial && !this.daily;
     this.mutators = (this.customRun && Array.isArray(opts.mutators)) ? opts.mutators.slice() : [];

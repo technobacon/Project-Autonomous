@@ -272,20 +272,35 @@ Beyond freeform survival, **Trials** are curated challenge runs — each with a
 fixed rule-twist and a concrete **win condition**, turning the open-ended loop
 into structured goals you can actually *complete*:
 
-| Trial | Twist | Objective |
-|---|---|---|
-| 🕯 **Kindling** | none — a gentle first test | Survive 3:30 |
-| 💥 **Glass Gauntlet** | double damage, quarter health | Survive 5:00 |
-| 🐜 **The Swarm** | twice the foes (frailer), more XP | Slay 800 |
-| 🐢 **Tortoise** | 60% move speed, sturdier, faster foes | Survive 5:30 |
-| 🩸 **Bloodlust** | Berserker on Hard | Survive 6:00 |
-| 🌑 **Ascendant Trial** | Nightmare + 50% more foes | Score 80,000 |
+| Trial | Twist | Objective | Unlocks after |
+|---|---|---|---|
+| 🕯 **Kindling** | none — a gentle first test | Survive 3:30 | *(open)* |
+| 💥 **Glass Gauntlet** | double damage, quarter health | Survive 5:00 | Kindling |
+| 🐜 **The Swarm** | twice the foes (frailer), more XP | Slay 800 | Kindling |
+| 🐢 **Tortoise** | 60% move speed, sturdier, faster foes | Survive 5:30 | Glass Gauntlet |
+| 🩸 **Bloodlust** | Berserker on Hard | Survive 6:00 | The Swarm |
+| 🌑 **Ascendant Trial** | Nightmare + 50% more foes | Score 80,000 | Tortoise **&** Bloodlust |
+
+The Trials form an **unlock chain** — a diamond that branches after the opener
+and rejoins at a capstone, so clearing one opens the next on its path and the
+Ascendant Trial only appears once you've conquered *both* branches:
+
+```
+       Kindling
+       /      \
+    Glass    Swarm
+      |        |
+  Tortoise  Bloodlust
+       \      /
+       Ascendant
+```
 
 Trials force their own character, difficulty and rules and **ignore Omens and
 Relics**, so each is a fixed, comparable test of skill. Clearing one is saved
 and pays a one-time shard **bounty** (replays pay a small one); two achievements
 reward clearing your first and *all* of them. Your live objective and progress
-show at the top of the screen.
+show at the top of the screen. Unlock state is a pure function of which Trials
+you've cleared — no extra randomness, so the chain is fully deterministic.
 
 ## 🧪 Custom Run (mutators)
 
@@ -354,11 +369,11 @@ projectile trails, tiered damage numbers), the time-driven biome progression
 (palette + spawn bias + environmental hazards), the adaptive audio engine
 (limiter, combat SFX, boss-aware music), the first-run onboarding (intro +
 coaching tips), the mastery rewards (rank-gated titles + cosmetic trail/halo),
-every UI screen, death, persistence, and the shop (430+ assertions):
+every UI screen, death, persistence, and the shop (440+ assertions):
 
 ```bash
 npm test                          # functional + determinism suites
- node tools/headless-test.js       # functional suite (430+ assertions)
+ node tools/headless-test.js       # functional suite (440+ assertions)
 node tools/determinism-test.js    # proves Daily seeds are framerate/settings-independent
 node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```
