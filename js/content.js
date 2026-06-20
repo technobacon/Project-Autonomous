@@ -56,6 +56,14 @@ const CHARACTERS = [
     blurb: 'Hit-and-run striker. Blades return — so keep on the move.',
   },
   {
+    id: 'astra', name: 'Astra', color: '#cfe3ff',
+    desc: 'Impales the dark with piercing lances of light.',
+    startWeapon: 'lance',
+    cost: 950,
+    stats: { maxHp: 95, speed: 180, might: 1.15, haste: 1.0, armor: 0, pickup: 155 },
+    blurb: 'A precise striker — line up the horde and run it through.',
+  },
+  {
     // Secret character — not purchasable; unlocked by the "Into the Void"
     // achievement (survive 15:00). Powerful but high-risk.
     id: 'void', name: 'Void', color: '#ff4dff',

@@ -53,15 +53,18 @@ each with a distinct starting weapon and playstyle:
 | **Gale**  | Fast, fragile, far reach | Orbit Wisps |
 | **Monarch** | Slow, devastating bursts | Nova Burst |
 | **Comet** | Hit-and-run, blades return | Whirling Glaive |
+| **Astra** | Precise piercing striker | Light Lance |
 
-Progress is saved automatically in your browser (`localStorage`).
+…plus a secret hero, **Void**, unlocked by surviving 15:00. Progress is saved
+automatically in your browser (`localStorage`).
 
 ## ⚒ Build variety
 
-**11 weapons** — Light Bolt, Frost Shard, Flame Aura, Orbit Wisps, Nova Burst,
+**13 weapons** — Light Bolt, Frost Shard, Flame Aura, Orbit Wisps, Nova Burst,
 Arc Lightning, Spirit Seekers, Light Whip, **Whirling Glaive** (a returning
-boomerang), **Toxic Flask** (lingering poison pools), and **Prism Cross**
-(rotating beams) — each with 8 levels.
+boomerang), **Toxic Flask** (lingering poison pools), **Prism Cross** (rotating
+beams), **Light Lance** (a fast spear that skewers a whole line), and
+**Caltrops** (scattered ground spikes for zone control) — each with 8 levels.
 **14 passives** — damage, attack speed, move speed, area, projectiles, pierce,
 projectile speed, pickup range, max health, regen, XP gain, crit, armor, luck.
 
@@ -87,6 +90,8 @@ a golden **EVOLUTION** — transforming it into a devastating new form:
 | Whirling Glaive + Velocity Rune | **Ouroboros** — an eternal ring of returning blades |
 | Toxic Flask + Wide Lens | **Pandemic** — a creeping plague that engulfs the field |
 | Prism Cross + Split Prism | **Spectrum** — a rotating storm of prismatic beams |
+| Light Lance + Piercer | **Sunpiercer** — a volley of lances that run through everything |
+| Caltrops + Wide Lens | **Thornfield** — a sprawling ring of barbs that grips the horde |
 
 ## ✷ Weapon synergies
 
@@ -102,6 +107,7 @@ building around a theme, so every level-up choice carries a little extra weight:
 | 🛡 **Bastion** | any 2 of Orbit / Whip / Flame | +2 armor, +10% area |
 | 👻 **Wild Hunt** | Spirit Seekers + Glaive | +1 projectile, +10% projectile speed |
 | 🌈 **Refraction** | any 2 of Prism / Nova / Arc | +10% crit, +0.5× crit damage |
+| 🛡 **Entrench** | any 2 of Lance / Caltrops / Whip | +2 armor, lances/whips pierce +1 |
 
 Evolved weapons still count as their base, active synergies show under your
 weapon row (and on the pause screen), and the full set lives in the **Codex**.
@@ -315,8 +321,8 @@ js/
   particles.js      # particle + floating-text system
   save.js           # localStorage meta-progression
   content.js        # characters, difficulty tiers + meta-upgrade shop
-  weapons.js        # 11 base weapons (periodic, continuous, boomerang, zones)
-  evolutions.js     # 11 weapon evolutions + evolution rules
+  weapons.js        # 13 base weapons (periodic, continuous, boomerang, zones, lances)
+  evolutions.js     # 13 weapon evolutions + evolution rules
   synergies.js      # weapon set bonuses (pure function of the arsenal)
   enemies.js        # enemy archetypes + affixes + the spawn Director + bosses/champions
   upgrades.js       # passives + level-up choice generator
@@ -337,7 +343,7 @@ tools/
 ## ✅ Tests
 
 A headless harness stubs the DOM/Canvas/WebAudio APIs and actually runs the
-game — a full simulated run, every weapon, all bosses, all 11 evolutions, the
+game — a full simulated run, every weapon, all bosses, all 13 evolutions, the
 weapon-synergy set bonuses, all 32 achievements, every omen, the relic loadout
 system, the run-history Chronicle, the lifetime-mastery system (ranks +
 per-hero/weapon accrual), the Trials of Light (rule twists + win/fail paths),
@@ -348,11 +354,11 @@ projectile trails, tiered damage numbers), the time-driven biome progression
 (palette + spawn bias + environmental hazards), the adaptive audio engine
 (limiter, combat SFX, boss-aware music), the first-run onboarding (intro +
 coaching tips), the mastery rewards (rank-gated titles + cosmetic trail/halo),
-every UI screen, death, persistence, and the shop (400+ assertions):
+every UI screen, death, persistence, and the shop (430+ assertions):
 
 ```bash
 npm test                          # functional + determinism suites
- node tools/headless-test.js       # functional suite (400+ assertions)
+ node tools/headless-test.js       # functional suite (430+ assertions)
 node tools/determinism-test.js    # proves Daily seeds are framerate/settings-independent
 node tools/balance-sim.js 6 0     # auto-play a run (args: metaLevel difficulty)
 ```

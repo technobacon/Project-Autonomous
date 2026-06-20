@@ -985,6 +985,53 @@ globalThis.__run = function(report) {
     ok('roster unlocks with all standard chars', Save.hasAchievement('roster'));
   });
 
+  // 11.16) Content expansion (v20): Lance, Caltrops, evolutions, Astra, Entrench.
+  sectionTry('expansion: new weapons registered + in the pool', () => {
+    for (const id of ['lance', 'caltrops']) ok('base weapon ' + id, !!getWeapon(id) && WEAPON_LIST.some(w => w.id === id) && !getWeapon(id).evolved);
+    for (const id of ['sunpiercer', 'thornfield']) ok('evolved weapon ' + id, !!getWeapon(id) && getWeapon(id).evolved && !WEAPON_LIST.some(w => w.id === id));
+    ok('evolution table wired', EVOLUTIONS.some(e => e.into === 'sunpiercer' && e.base === 'lance') && EVOLUTIONS.some(e => e.into === 'thornfield' && e.base === 'caltrops'));
+  });
+  sectionTry('expansion: Lance fires a piercing line', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 31 });
+    g.player.weapons = [{ def: getWeapon('lance'), level: 5, timer: 0 }];
+    g.projectiles = [];
+    let sawLance = false, maxPierce = 0;
+    for (let i = 0; i < 180; i++) {
+      g.update(1 / 60);
+      for (const pr of g.projectiles) { sawLance = true; maxPierce = Math.max(maxPierce, pr.maxHits); }
+    }
+    ok('lance launched projectiles', sawLance);
+    ok('lances pierce several foes', maxPierce >= 4);
+  });
+  sectionTry('expansion: Caltrops scatter damaging zones', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 32 });
+    g.player.weapons = [{ def: getWeapon('caltrops'), level: 5, timer: 0 }];
+    g.zones = [];
+    for (let i = 0; i < 200; i++) g.update(1 / 60);
+    ok('caltrops created ground zones', g.zones.length > 0);
+  });
+  sectionTry('expansion: evolutions resolve for the new weapons', () => {
+    const g = new Game(document.getElementById('game')); g.start('astra', 0, { seed: 33 });
+    const p = g.player;
+    p.weapons = [{ def: getWeapon('lance'), level: getWeapon('lance').maxLevel, timer: 0 }];
+    p.passives.pierce = 2;
+    const evos = availableEvolutions(p);
+    ok('Lance offers Sunpiercer when paired with Pierce', evos.some(e => e.into === 'sunpiercer'));
+    p.applyUpgrade({ kind: 'evolve', baseId: 'lance', id: 'sunpiercer' });
+    ok('evolve swaps in Sunpiercer', p.hasWeapon('sunpiercer') && !p.hasWeapon('lance'));
+  });
+  sectionTry('expansion: Astra hero is purchasable + lance-armed', () => {
+    const a = getCharacter('astra');
+    ok('Astra exists, lance start, buyable', a && a.id === 'astra' && a.startWeapon === 'lance' && a.cost > 0 && !a.secret);
+    const g = new Game(document.getElementById('game')); g.start('astra', 0, { seed: 34 });
+    ok('Astra starts wielding the Lance', g.player.hasWeapon('lance'));
+  });
+  sectionTry('expansion: Entrench synergy ties the new weapons in', () => {
+    const wi = id => ({ def: getWeapon(id), level: 1, timer: 0 });
+    ok('Lance + Caltrops = Entrench', activeSynergies([wi('lance'), wi('caltrops')]).some(s => s.id === 'entrench'));
+    ok('evolved forms still count', activeSynergies([wi('sunpiercer'), wi('whip')]).some(s => s.id === 'entrench'));
+  });
+
   // 11.5) Gauntlet (boss-rush) mode (v6).
   // Auto-resolve a fresh game's level-up screens (the opening Gauntlet picks
   // arrive during start(), so this must be installed before start()).

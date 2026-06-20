@@ -341,6 +341,70 @@ const WEAPONS = {
       Audio2.blip(680, 0.1, 'square', 0.1, 160);
     },
   },
+
+  // -- Light Lance: a fast, far-reaching spear that skewers a whole line. ----
+  lance: {
+    id: 'lance', name: 'Light Lance', icon: '🔱', color: '#cfe3ff', maxLevel: 8,
+    desc(l) {
+      return [
+        'Hurl a swift lance that pierces all in a line.',
+        'Pierces +1 foe.', '+25% damage.', '+1 lance.',
+        'Pierces +2 foes.', '+30% damage.', 'Longer reach.',
+        '+1 lance, devastating thrust.',
+      ][l - 1] || 'Maxed.';
+    },
+    cooldown(l, p) { return cd(1.15 - l * 0.05, p); },
+    fire(game, inst) {
+      const p = game.player, l = inst.level;
+      const count = 1 + (l >= 4 ? 1 : 0) + (l >= 8 ? 1 : 0) + p.bonusProj;
+      const dmg = (26 * (1 + (l >= 3 ? 0.25 : 0) + (l >= 6 ? 0.30 : 0))) * p.might;
+      const pierce = 3 + (l >= 2 ? 1 : 0) + (l >= 5 ? 2 : 0) + p.bonusPierce;
+      const life = (l >= 7 ? 1.05 : 0.85);
+      const base = game.aimAngle();
+      const spread = 0.16;
+      for (let i = 0; i < count; i++) {
+        const ang = base + (count > 1 ? lerp(-spread, spread, i / (count - 1)) : 0);
+        game.spawnProjectile({
+          x: p.x, y: p.y, angle: ang, speed: 640 * p.projSpeed,
+          damage: dmg, radius: 6 * p.area, pierce, life,
+          color: '#eaf4ff', glow: '#cfe3ff', kb: 120,
+        });
+      }
+      Audio2.blip(520, 0.09, 'sawtooth', 0.1, 220);
+    },
+  },
+
+  // -- Caltrops: scatter damaging spikes in a ring around you (zone control). -
+  caltrops: {
+    id: 'caltrops', name: 'Caltrops', icon: '🪤', color: '#c0d860', maxLevel: 8,
+    desc(l) {
+      return [
+        'Scatter spikes around you that wound foes.',
+        '+1 spike.', '+20% damage.', 'Wider spread.',
+        '+2 spikes.', '+25% damage.', 'Spikes linger longer.',
+        '+2 spikes, and they slow foes.',
+      ][l - 1] || 'Maxed.';
+    },
+    cooldown(l, p) { return cd(2.2 - l * 0.06, p); },
+    fire(game, inst) {
+      const p = game.player, l = inst.level;
+      const count = 3 + (l >= 2 ? 1 : 0) + (l >= 5 ? 2 : 0) + (l >= 8 ? 2 : 0);
+      const dps = (9 * (1 + (l >= 3 ? 0.20 : 0) + (l >= 6 ? 0.25 : 0))) * p.might;
+      const radius = (40 + l * 3) * p.area;
+      const life = 2.2 + (l >= 7 ? 1.6 : 0);
+      const slow = l >= 8 ? 0.3 : 0;
+      const ringR = 64 + (l >= 4 ? 28 : 0);
+      inst._spin = (inst._spin || 0) + 0.7;
+      for (let i = 0; i < count; i++) {
+        const ang = inst._spin + (i / count) * TAU + rand(-0.12, 0.12);
+        const d = ringR + rand(-12, 12);
+        const zx = clamp(p.x + Math.cos(ang) * d, 30, game.world.w - 30);
+        const zy = clamp(p.y + Math.sin(ang) * d, 30, game.world.h - 30);
+        game.spawnZone(zx, zy, radius, dps, life, '#c0d860', slow);
+      }
+      Audio2.blip(150, 0.12, 'square', 0.09, -40);
+    },
+  },
 };
 
 const WEAPON_LIST = Object.values(WEAPONS);

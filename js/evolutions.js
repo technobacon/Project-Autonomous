@@ -18,6 +18,8 @@ const EVOLUTIONS = [
   { base: 'glaive', passive: 'velocity',  passiveLvl: 2, into: 'ouroboros' },
   { base: 'toxin',  passive: 'area',      passiveLvl: 2, into: 'pandemic' },
   { base: 'prism',  passive: 'multishot', passiveLvl: 2, into: 'spectrum' },
+  { base: 'lance',  passive: 'pierce',    passiveLvl: 2, into: 'sunpiercer' },
+  { base: 'caltrops', passive: 'area',    passiveLvl: 2, into: 'thornfield' },
 ];
 
 // Evolved weapon definitions (maxLevel 1; power scales with player stats).
@@ -236,6 +238,48 @@ const EVOLVED_WEAPONS = {
         });
       }
       Audio2.blip(720, 0.1, 'square', 0.1, 180);
+    },
+  },
+  sunpiercer: {
+    id: 'sunpiercer', name: 'Sunpiercer', icon: '☀', color: '#eaf4ff', maxLevel: 1, evolved: true,
+    desc() { return 'EVOLVED: a volley of radiant lances that run through everything.'; },
+    cooldown(l, p) { return cd(0.7, p); },
+    fire(game, inst) {
+      const p = game.player;
+      const count = 3 + p.bonusProj;
+      const dmg = 48 * p.might;
+      const base = game.aimAngle();
+      const spread = 0.22;
+      for (let i = 0; i < count; i++) {
+        const ang = base + (count > 1 ? lerp(-spread, spread, i / (count - 1)) : 0);
+        game.spawnProjectile({
+          x: p.x, y: p.y, angle: ang, speed: 720 * p.projSpeed,
+          damage: dmg, radius: 8 * p.area, pierce: 99, life: 1.05,
+          color: '#ffffff', glow: '#cfe3ff', kb: 150,
+        });
+      }
+      Audio2.blip(640, 0.1, 'sawtooth', 0.12, 260);
+    },
+  },
+
+  thornfield: {
+    id: 'thornfield', name: 'Thornfield', icon: '🌿', color: '#d7ff6a', maxLevel: 1, evolved: true,
+    desc() { return 'EVOLVED: a sprawling ring of barbs that grips and grinds the horde.'; },
+    cooldown(l, p) { return cd(1.5, p); },
+    fire(game, inst) {
+      const p = game.player;
+      const count = 9;
+      const dps = 22 * p.might;
+      const radius = 64 * p.area;
+      inst._spin = (inst._spin || 0) + 0.5;
+      for (let i = 0; i < count; i++) {
+        const ang = inst._spin + (i / count) * TAU;
+        const d = 96 + rand(-14, 14);
+        const zx = clamp(p.x + Math.cos(ang) * d, 30, game.world.w - 30);
+        const zy = clamp(p.y + Math.sin(ang) * d, 30, game.world.h - 30);
+        game.spawnZone(zx, zy, radius, dps, 4.5, '#d7ff6a', 0.45);
+      }
+      Audio2.blip(170, 0.14, 'square', 0.1, -30);
     },
   },
 };

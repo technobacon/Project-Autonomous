@@ -48,6 +48,10 @@ const SYNERGIES = [
     members: ['prism', 'nova', 'chain'], need: 2,
     desc: 'Two energy bursts refract into killing crits. +10% crit, +0.5× crit damage.',
     mods: { critChanceBonus: 0.10, critDmgBonus: 0.5 } },
+  { id: 'entrench', name: 'Entrench', icon: '🛡', color: '#c0d860',
+    members: ['lance', 'caltrops', 'whip'], need: 2,
+    desc: 'Hold the line with reach and barbs. +2 armor, lances/whips pierce +1.',
+    mods: { armorBonus: 2, addPierce: 1 } },
 ];
 
 function getSynergy(id) { return SYNERGIES.find(s => s.id === id) || null; }
