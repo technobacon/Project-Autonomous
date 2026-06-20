@@ -217,14 +217,15 @@ minute different.
 
 ## 🏆 Achievements, difficulty & the Codex
 
-- **32 achievements** with shard rewards and long-term goals — survive 15:00 to
+- **34 achievements** with shard rewards and long-term goals — survive 15:00 to
   unlock the secret character **Void**; hunt elites, slay a Champion, collect
-  relics, climb the mastery ranks, clear the Trials.
+  relics, climb the mastery ranks, clear the Trials, defeat **every kind of
+  boss** (*Apex Predator*) and **25 bosses** in total (*Nemesis*).
 - **Ascension difficulties** — Normal → Hard → Nightmare → Abyss. Each scales
   enemies *and* shard rewards up, and unlocks by surviving a threshold on the
   tier below.
 - **Codex** — a bestiary + arsenal that fills in as you discover foes, weapons,
-  and evolutions.
+  and evolutions, and now tracks your **lifetime kill count for each boss**.
 - **Options** — toggle SFX, music, screen shake, floating damage numbers, and
   the mastery trail FX (accessibility / clarity).
 

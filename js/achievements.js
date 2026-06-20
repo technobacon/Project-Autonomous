@@ -37,6 +37,8 @@ const ACHIEVEMENTS = [
   { id: 'grandmaster',  icon: '🏅', name: 'Grandmaster',          desc: 'Reach Master mastery with any hero.',    reward: 120, check: c => c.topCharMastery >= 4 },
   { id: 'trialist',     icon: '🎯', name: 'Trialist',             desc: 'Complete a Trial of Light.',             reward: 50,  check: c => c.trialsDone >= 1 },
   { id: 'trialmaster',  icon: '🎓', name: 'Trial Master',         desc: 'Complete every Trial of Light.',         reward: 200, check: c => c.trialsTotal > 0 && c.trialsDone >= c.trialsTotal },
+  { id: 'apex',         icon: '🐲', name: 'Apex Predator',         desc: 'Defeat every kind of boss at least once.', reward: 120, check: c => c.bossTypesTotal > 0 && c.bossTypesSlain >= c.bossTypesTotal },
+  { id: 'nemesis',      icon: '☄', name: 'Nemesis',               desc: 'Defeat 25 bosses in total.',             reward: 100, check: c => c.save.bossKills >= 25 },
 ];
 
 function getAchievement(id) { return ACHIEVEMENTS.find(a => a.id === id); }
@@ -70,6 +72,8 @@ const Achievements = {
         Math.max(best, masteryRank(charMasteryPoints(Save.charStats(ch.id))).index), 0),
       trialsDone: Save.trialsDone(),
       trialsTotal: (typeof TRIALS !== 'undefined') ? TRIALS.length : 0,
+      bossTypesSlain: Save.bossTypesSlain(),
+      bossTypesTotal: (typeof BOSSES !== 'undefined') ? Object.keys(BOSSES).length : 0,
     };
   },
 

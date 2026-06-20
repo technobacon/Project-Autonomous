@@ -63,6 +63,7 @@ const Save = {
       runs: 0,
       totalKills: 0,
       bossKills: 0,
+      bossLog: {},               // lifetime per-boss-type kills (id -> count)
       totalShardsEarned: 0,
       evolutionsMade: 0,
       seenIntro: false,
@@ -92,6 +93,7 @@ const Save = {
       this.data.mastery.chars = Object.assign({}, this.data.mastery.chars || {});
       this.data.mastery.weapons = Object.assign({}, this.data.mastery.weapons || {});
       this.data.trials = Object.assign({}, this.data.trials || {});
+      this.data.bossLog = Object.assign({}, this.data.bossLog || {});
       this.data.tips = Object.assign({}, this.data.tips || {});
       this.data.achievements = Object.assign({}, this.data.achievements || {});
       this.data.seen = Object.assign(d.seen, this.data.seen || {});
@@ -220,6 +222,18 @@ const Save = {
     if (score > this.data.bestScore) this.data.bestScore = score;
     this.save();
   },
+
+  // ---- Boss log ------------------------------------------------------------
+  // Lifetime per-boss-type kill counts. Recorded the instant a boss falls (sim
+  // path) — separate from the run-total bossKills, and never affects the seed.
+  recordBossKill(id) {
+    if (!id) return;
+    if (!this.data.bossLog) this.data.bossLog = {};
+    this.data.bossLog[id] = (this.data.bossLog[id] || 0) + 1;
+    this.save();
+  },
+  bossKillsOf(id) { return (this.data.bossLog && this.data.bossLog[id]) || 0; },
+  bossTypesSlain() { return this.data.bossLog ? Object.keys(this.data.bossLog).filter(k => this.data.bossLog[k] > 0).length : 0; },
 
   // ---- Trials --------------------------------------------------------------
   isTrialDone(id) { return !!(this.data.trials && this.data.trials[id]); },

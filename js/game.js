@@ -532,6 +532,7 @@ class Game {
     // XP gems — bosses & champions shower the player with them.
     if (e.boss) {
       this.bossKills++;
+      Save.recordBossKill(e.type.id);   // lifetime per-boss-type tally
       this.activeBoss = null;
       Audio2.bossDie();
       this.shake(16, 0.6);

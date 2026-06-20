@@ -519,10 +519,15 @@ const UI = {
     this.clear(); this.show();
     const enemyCards = Object.values(ENEMY_TYPES).concat(Object.values(BOSSES)).map(e => {
       const seen = Save.isSeen('enemies', e.id);
+      let info = 'Undiscovered';
+      if (seen) {
+        if (e.boss) { const n = Save.bossKillsOf(e.id); info = n > 0 ? `Boss · ⚔ ${formatNum(n)} slain` : 'Boss'; }
+        else info = 'HP ' + e.hp + ' · DMG ' + e.damage;
+      }
       return `<div class="codex-card ${seen ? '' : 'locked'}" style="--c:${e.color}">
         <div class="codex-glyph" style="color:${seen ? e.color : '#444'}">${e.boss ? '☠' : '◆'}</div>
         <h4>${seen ? e.name : '???'}</h4>
-        <p>${seen ? (e.boss ? 'Boss' : 'HP ' + e.hp + ' · DMG ' + e.damage) : 'Undiscovered'}</p>
+        <p>${info}</p>
       </div>`;
     }).join('');
     const weaponCards = WEAPON_LIST.concat(Object.values(EVOLVED_WEAPONS)).map(w => {

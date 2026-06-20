@@ -349,6 +349,29 @@ globalThis.__run = function(report) {
     ok('achievement shards rewarded', Save.data.shards > shardsBefore);
     ok('secret char Void unlockable', getCharacter('void').secret && Save.hasAchievement('eternal'));
   });
+  sectionTry('boss log: per-type kills tracked + boss achievements', () => {
+    Save.data.bossLog = {}; Save.data.achievements = {};
+    ok('apex + nemesis achievements defined', !!getAchievement('apex') && !!getAchievement('nemesis'));
+    ok('fresh log: nothing slain', Save.bossTypesSlain() === 0 && Save.bossKillsOf('warden') === 0);
+    Save.recordBossKill('warden'); Save.recordBossKill('warden');
+    ok('recordBossKill tallies per type', Save.bossKillsOf('warden') === 2 && Save.bossTypesSlain() === 1);
+    // Killing a boss in-game logs it.
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 41 });
+    g.director.spawnBoss('colossus');
+    const boss = g.enemies.find(e => e.boss);
+    g.dealDamage(boss, 1e9, g.player.x, g.player.y, 0);
+    for (let i = 0; i < 20 && g.enemies.some(e => e.boss); i++) g.update(1 / 60);
+    ok('a slain boss is logged by type', Save.bossKillsOf('colossus') >= 1);
+    // Apex: slay one of every boss type => unlocked.
+    for (const id of Object.keys(BOSSES)) Save.recordBossKill(id);
+    ok('all boss types slain', Save.bossTypesSlain() === Object.keys(BOSSES).length);
+    const ctx = Achievements.context(null);
+    ok('Apex Predator met with all types', getAchievement('apex').check(ctx) === true);
+    // Nemesis: 25 lifetime boss kills.
+    Save.data.bossKills = 25;
+    ok('Nemesis met at 25 lifetime bosses', getAchievement('nemesis').check(Achievements.context(null)) === true);
+    Save.data.bossLog = {}; Save.data.achievements = {}; Save.data.bossKills = 0;
+  });
 
   // 12) Difficulty scaling applies to spawned enemies.
   sectionTry('difficulty scaling', () => {
