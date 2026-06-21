@@ -35,6 +35,8 @@ const PASSIVES = {
                desc: l => `+6% luck (lvl ${l})` },
   bloodstone:{ id: 'bloodstone', name: 'Bloodstone', icon: '🩸', color: '#e0405a', max: 4, rarity: 0.55,
                desc: l => `Heal on kill (lvl ${l})` },
+  bramble:   { id: 'bramble', name: 'Bramble Thorns', icon: '🌵', color: '#9fd86a', max: 4, rarity: 0.5,
+               desc: l => `Reflect +10% contact damage (lvl ${l})` },
 };
 const PASSIVE_LIST = Object.values(PASSIVES);
 

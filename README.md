@@ -92,8 +92,9 @@ deployable, stationary ally that auto-fires at nearby foes — reward good
 positioning), the **Meteor** (delayed AoE strikes that rain down on distant
 foes), and the **Void Rift** (a rift that drags foes inward, then implodes —
 bunch the horde and annihilate it together) — each with 8 levels.
-**15 passives** — damage, attack speed, move speed, area, projectiles, pierce,
-projectile speed, pickup range, max health, regen, XP gain, crit, armor, luck, lifesteal.
+**16 passives** — damage, attack speed, move speed, area, projectiles, pierce,
+projectile speed, pickup range, max health, regen, XP gain, crit, armor, luck,
+lifesteal, and thorns (Bramble — reflect contact damage).
 
 You carry up to **6 weapons** and **6 passives** per run, so every game becomes
 a different build. The upgrade pool is weighted and nudged by your **Luck**, and

@@ -294,6 +294,16 @@ globalThis.__run = function(report) {
     g.killEnemy(e);
     ok('a kill heals a Bloodstone build', g.player.hp > hp0);
   });
+  sectionTry('passives: Bramble Thorns reflects contact damage on any hero', () => {
+    ok('Bramble passive registered', !!PASSIVES.bramble);
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 94, noRelics: true });
+    ok('no thorns without the passive', g.player.thorns === 0);
+    g.player.passives.bramble = 4; g.player.recalc();
+    ok('thorns derived from the passive', g.player.thorns >= 0.40 - 1e-9);
+    const f = g.spawnEnemy('brute', g.player.x, g.player.y, 1, 1); f.hp = 1e6; f.maxHp = 1e6; f.damage = 20; f.x = g.player.x; f.y = g.player.y; g.player.invuln = 0; g.buildGrid();
+    const hp0 = f.hp; g.updateEnemies(1 / 60);
+    ok('a Bramble build reflects contact damage', f.hp < hp0);
+  });
   sectionTry('pickups: Overdrive grants a timed all-offense surge', () => {
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 91 });
     const m0 = g.player.might, h0 = g.player.haste;

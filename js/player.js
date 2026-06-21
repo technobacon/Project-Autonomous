@@ -92,7 +92,7 @@ class Player {
     this.dashCdMax = 3.5 * (1 - Math.min(0.6, m('blink')));
     this.dashMaxCharges = 1 + m('echo');
     // Per-hero Blink perk (e.g. Flux): extra charge + faster recharge.
-    this.thorns = 0;   // reflect fraction of contact damage (Sentinel perk + relics)
+    this.thorns = pv('bramble') * 0.10;   // reflect contact damage (passive + perk + relics)
     const perk = this.char.perk;
     if (perk) {
       if (perk.dashCdMul) this.dashCdMax *= perk.dashCdMul;
