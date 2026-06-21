@@ -75,6 +75,22 @@ const SHRINE_TYPES = [
       g.spawnShrinePack(2, false);
       g.toast('💰 Fortune favors the bold!');
     } },
+  { id: 'swiftness', name: 'Shrine of Swiftness', icon: '👟', color: '#8affc1',
+    desc: '+25% move & +30% attack speed for 16s — but a ring of foes closes in.',
+    invoke(g) {
+      g.player.addBuff('shrine_swift', { speedMul: 1.25, hasteMul: 1.30 }, 16);
+      g.director.spawnRing(g.time / 60);
+      g.toast('👟 Swiftness quickens your light!');
+    } },
+  { id: 'wrath', name: 'Shrine of Wrath', icon: '⚔', color: '#ff5d6c',
+    desc: 'A devastating blast scours nearby foes — but an elite pack retaliates.',
+    invoke(g) {
+      const r = 270, dmg = 90 * g.player.might;
+      for (const e of g.enemiesInRadius(g.player.x, g.player.y, r)) g.dealDamage(e, dmg, g.player.x, g.player.y, 280);
+      g.nova(g.player.x, g.player.y, r, 0, 0, '#ff5d6c');
+      g.spawnShrinePack(3, true);
+      g.toast('⚔ Wrath erupts outward!');
+    } },
 ];
 function getShrineType(id) { return SHRINE_TYPES.find(s => s.id === id) || null; }
 
@@ -1499,14 +1515,17 @@ class Game {
     for (const e of this.enemiesInRadius(h.x, h.y, coreR)) this.dealDamage(e, h.dot * 0.25, h.x, h.y, 0, true);
   }
 
+  hasRelic(id) { return !!(this.relics && this.relics.indexOf(id) >= 0); }
+
   // ---- Shrines (risk/reward altars) -------------------------------------
   updateShrines(dt) {
     // Gauntlet is pure boss-rush, and Trials are fixed challenges — no shrines.
     const allowed = this.mode !== 'gauntlet' && !this.trial;
+    const pilgrim = this.hasRelic('pilgrim');   // Pilgrim's Charm: more shrines + a heal
     if (allowed) {
       this._shrineTimer -= dt;
       if (this._shrineTimer <= 0 && this.shrines.length === 0) {
-        this._shrineTimer = rand(34, 52);
+        this._shrineTimer = rand(34, 52) * (pilgrim ? 0.55 : 1);
         this.spawnShrine();
       }
     }
@@ -1519,6 +1538,7 @@ class Game {
       if (p.alive && dist2(s.x, s.y, p.x, p.y) <= rr * rr) {
         const def = getShrineType(s.type);
         if (def) def.invoke(this);
+        if (pilgrim) p.heal(p.maxHp * 0.12);   // the Charm softens every shrine's bite
         this.particles.ring(s.x, s.y, 30, { color: s.color, speed: 240, life: 0.7, size: 4 });
         if (Audio2.shrine) Audio2.shrine();
         this.shrines.splice(i, 1);

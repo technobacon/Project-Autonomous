@@ -61,6 +61,9 @@ const RELICS = [
   { id: 'confluence', name: 'Confluence', icon: '🌐', color: '#9ad8ff', cost: 340,
     desc: 'With 3+ active synergies: +20% damage and +2 armor.',
     apply() {}, synergyMods(n) { return n >= 3 ? { dmgMul: 1.20, armorBonus: 2 } : {}; } },
+  { id: 'pilgrim', name: "Pilgrim's Charm", icon: '🔯', color: '#cba6ff', cost: 300,
+    desc: 'Shrines appear far more often, and each one also restores health.',
+    apply() {} },   // effect read by the Shrine system (game.hasRelic)
   // --- Achievement-gated relics: the long unlock arc -----------------------
   { id: 'vampiric_charm', name: 'Vampiric Charm', icon: '🩸', color: '#e0405a', cost: 250,
     achievement: 'slayer', desc: 'Heal 0.8% of max health on each kill.',

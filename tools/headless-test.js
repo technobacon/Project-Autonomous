@@ -900,6 +900,30 @@ globalThis.__run = function(report) {
     ok('shrine consumed once used', g.shrines.length === 0);
     ok('consequence summoned foes', g.enemies.length > foes0);
   });
+  sectionTry('shrines: new types (Swiftness buff, Wrath blast) + Pilgrim relic', () => {
+    ok('five shrine types incl. swiftness + wrath', SHRINE_TYPES.length >= 5 && !!getShrineType('swiftness') && !!getShrineType('wrath'));
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 53 });
+    // Swiftness grants a move/haste buff on touch.
+    g.shrines.push({ type: 'swiftness', color: '#8affc1', icon: '👟', x: g.player.x, y: g.player.y, radius: 24, t: 0, life: 26 });
+    g.updateShrines(1 / 60);
+    ok('Swiftness shrine buffs speed', g.player.hasBuff('shrine_swift'));
+    // Wrath blasts nearby foes.
+    const g2 = new Game(document.getElementById('game')); g2.start('spark', 0, { seed: 54 });
+    const e = g2.spawnEnemy('brute', g2.player.x + 40, g2.player.y, 1, 1); const ehp = e.hp;
+    g2.buildGrid();
+    g2.shrines.push({ type: 'wrath', color: '#ff5d6c', icon: '⚔', x: g2.player.x, y: g2.player.y, radius: 24, t: 0, life: 26 });
+    g2.updateShrines(1 / 60);
+    ok('Wrath shrine blasts nearby foes', e.hp < ehp);
+    // Pilgrim's Charm: heals on shrine use.
+    const g3 = new Game(document.getElementById('game')); g3.start('spark', 0, { seed: 55, noRelics: true });
+    g3.relics = ['pilgrim']; g3.player.hp = g3.player.maxHp * 0.5; const hp0 = g3.player.hp;
+    g3.shrines.push({ type: 'fortune', color: '#ffe14d', icon: '💰', x: g3.player.x, y: g3.player.y, radius: 24, t: 0, life: 26 });
+    g3._shrineTimer = 999; g3.updateShrines(1 / 60);
+    ok('Pilgrim heals on a shrine touch', g3.player.hp > hp0);
+    // Pilgrim shortens the cadence when the next shrine arms.
+    g3.shrines = []; g3._shrineTimer = -1; g3.updateShrines(1 / 60);
+    ok('Pilgrim re-arms a shorter shrine timer', g3.shrines.length === 1 && g3._shrineTimer < 34);
+  });
   sectionTry('shrines: Power grants a timed damage buff that expires', () => {
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 52 });
     const m0 = g.player.might;

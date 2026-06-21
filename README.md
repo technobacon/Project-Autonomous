@@ -146,7 +146,7 @@ opens differently.
 Where Omens are random and per-run, **Relics are permanent and chosen**. Spend
 shards to **unlock** relics — several are gated behind achievements for a long
 unlock arc — then **equip** a few into a limited loadout that carries into every
-run. There are **20**, e.g. *Titan Heart* (+30% max HP), *Glass Lens* (+25%
+run. There are **21**, e.g. *Titan Heart* (+30% max HP), *Glass Lens* (+25%
 damage, −15% HP), *Chrono Core* (+18% attack speed), *Keenstone* (crit chance &
 damage), *Vampiric Charm* (heal on kill), *Phoenix Feather* (an extra revive),
 and the master-tier *Void Shard*. You start with **2 equip slots and earn more
@@ -226,6 +226,14 @@ breath, so claiming one means choosing to detour *toward* trouble:
   foes closes in around you.
 - **💰 Shrine of Fortune** — a **shower of light shards**, but elites are drawn
   to the gleam.
+- **👟 Shrine of Swiftness** — **+25% move & +30% attack speed for 16s**, but a
+  ring of foes closes in.
+- **⚔ Shrine of Wrath** — a **devastating blast** scours nearby foes, but an
+  elite pack retaliates.
+
+The **Pilgrim's Charm** relic leans into this layer — shrines appear far more
+often and each one also restores health, so a shrine-hunting build becomes
+viable.
 
 Shrines bring a moment-to-moment *decision* to a genre that's usually pure
 reaction — is the buff worth fighting through what it spawns? (The temporary
