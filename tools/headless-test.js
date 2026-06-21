@@ -1448,6 +1448,16 @@ globalThis.__run = function(report) {
     g.bossKills = 3; ok('objective unmet at 3 bosses', !trialGoalMet(t, g));
     g.bossKills = 4; ok('objective met at 4 bosses', trialGoalMet(t, g) && trialCurrent(t, g) === 4);
   });
+  sectionTry('trials: Eventide — the Pyre capstone beyond Wardens End', () => {
+    const t = getTrial('eventide');
+    ok('Eventide registered as a Pyre Abyss score trial', !!t && t.win.type === 'score' && t.char === 'pyre' && t.diff === 3);
+    ok('it carries the berserk/frail twist', t.mods.berserk === true && Math.abs(t.mods.hpMul - 0.6) < 1e-9);
+    ok('locked until Wardens End is cleared', !trialUnlocked(t, () => false));
+    ok('opens once Wardens End is done', trialUnlocked(t, id => id === 'wardens_end'));
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 5 }); g.trial = t;
+    g.score = 179999; ok('objective unmet below target', !trialGoalMet(t, g));
+    g.score = 180000; ok('objective met at target', trialGoalMet(t, g));
+  });
   sectionTry('trials: start forces config, ignores omens & relics', () => {
     Save.data.relics = { volatile: true }; Save.data.equipped = ['volatile'];
     Save.data.trials = { kindling: true };   // unlock Glass (req: kindling)

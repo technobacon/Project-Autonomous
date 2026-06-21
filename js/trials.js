@@ -63,6 +63,10 @@ const TRIALS = [
     desc: 'Endure the boss onslaught as the Sentinel on Nightmare — fell 4 bosses.',
     req: ['annihilation'],
     mods: {}, win: { type: 'bosses', value: 4 }, reward: 300 },
+  { id: 'eventide', name: 'Eventide', icon: '🌘', color: '#b58bff', char: 'pyre', diff: 3,
+    desc: 'The last light, as the Pyre: berserk and frail in the Abyss. Amass 180,000.',
+    req: ['wardens_end'],
+    mods: { berserk: true, hpMul: 0.6 }, win: { type: 'score', value: 180000 }, reward: 380 },
 ];
 
 function getTrial(id) { return TRIALS.find(t => t.id === id) || null; }

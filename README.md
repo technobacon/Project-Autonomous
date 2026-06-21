@@ -403,6 +403,7 @@ into structured goals you can actually *complete*:
 | 🌑 **Ascendant Trial** | Nightmare + 50% more foes | Score 80,000 | Tortoise **&** Bloodlust |
 | ☄ **Annihilation** | The Abyss + extra foes | Score 130,000 | Ascendant Trial |
 | 🛡 **Warden's End** | Nightmare, played as the **Sentinel** | Fell 4 bosses | Annihilation |
+| 🌘 **Eventide** | the Abyss, played as the **Pyre** — berserk & frail | Score 180,000 | Warden's End |
 
 The Trials form an **unlock chain** — a diamond that branches after the opener
 and rejoins at a capstone, so clearing one opens the next on its path and the

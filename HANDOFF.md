@@ -127,7 +127,7 @@ in `recalc`/spawn/combat.
   Bombardier=lobber), **10 affixes**, **7 bosses** (Warden/Colossus/Maelstrom/Devourer/
   Eclipse/Herald/Ravager, endless rotation cycles the toughest), **9 biomes** with **6 hazard kinds**
   (strike / field / vortex / beam / hunter / gale; verge has none), **6 shrine types**.
-- **Modes:** Survival, Gauntlet (boss rush), Daily (date-seeded), Trials (9-node
+- **Modes:** Survival, Gauntlet (boss rush), Daily (date-seeded), Trials (10-node
   unlock chain), Custom Run (stack mutators, scaled payout).
 - **Systems:** Blink dash (charge-based, meta upgrades Quickstep/Echo Step, per-hero
   perks), timed buffs, deployable turrets, shrines (risk/reward + buffs), Overdrive
