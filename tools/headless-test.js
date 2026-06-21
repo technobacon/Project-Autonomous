@@ -1271,7 +1271,10 @@ globalThis.__run = function(report) {
     const wi = id => ({ def: getWeapon(id), level: 1, timer: 0 });
     ok('Garrison = Sentry + Caltrops', activeSynergies([wi('sentry'), wi('caltrops')]).some(s => s.id === 'garrison'));
     ok('Fusillade = Sentry + Bolt', activeSynergies([wi('sentry'), wi('bolt')]).some(s => s.id === 'fusillade'));
-    ok('at least 9 synergies now', SYNERGIES.length >= 9);
+    ok('Bladestorm = Whip + Glaive', activeSynergies([wi('whip'), wi('glaive')]).some(s => s.id === 'bladestorm'));
+    ok('Permafrost = Frost Shard + Caltrops', activeSynergies([wi('shard'), wi('caltrops')]).some(s => s.id === 'permafrost'));
+    ok('Bladestorm counts evolved forms too', activeSynergies([wi('eclipse'), wi('ouroboros')]).some(s => s.id === 'bladestorm'));
+    ok('at least 12 synergies now', SYNERGIES.length >= 12);
   });
   sectionTry('synergies: evolved forms count as their base', () => {
     const a = activeSynergies([wi('inferno'), wi('toxin')]); // inferno = evolved flame

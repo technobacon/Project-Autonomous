@@ -64,6 +64,14 @@ const SYNERGIES = [
     members: ['rift', 'nova', 'meteor'], need: 2,
     desc: 'Rift + bombardment: space folds, then shatters. +12% area, +12% damage.',
     mods: { areaMul: 1.12, dmgMul: 1.12 } },
+  { id: 'bladestorm', name: 'Bladestorm', icon: '🌀', color: '#9affe0',
+    members: ['whip', 'glaive'], need: 2,
+    desc: 'Whip + Glaive: whirling steel feeds a storm. +12% attack speed, +1 projectile.',
+    mods: { hasteMul: 1.12, addProj: 1 } },
+  { id: 'permafrost', name: 'Permafrost', icon: '❄', color: '#9fe8ff',
+    members: ['shard', 'caltrops'], need: 2,
+    desc: 'Frost + barbs lock the field down. +12% area, +2 armor.',
+    mods: { areaMul: 1.12, armorBonus: 2 } },
 ];
 
 function getSynergy(id) { return SYNERGIES.find(s => s.id === id) || null; }

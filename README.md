@@ -142,6 +142,8 @@ building around a theme, so every level-up choice carries a little extra weight:
 | 🏰 **Garrison** | any 2 of Sentry / Caltrops / Orbit | +3 armor, +12% area |
 | 🎯 **Fusillade** | any 2 of Sentry / Bolt / Spirit Seekers | +1 projectile, +14% projectile speed |
 | 🕳 **Collapse** | any 2 of Void Rift / Nova / Meteor | +12% area, +12% damage |
+| 🌀 **Bladestorm** | Light Whip + Whirling Glaive | +12% attack speed, +1 projectile |
+| ❄ **Permafrost** | Frost Shard + Caltrops | +12% area, +2 armor |
 
 Evolved weapons still count as their base, active synergies show under your
 weapon row (and on the pause screen), and the full set lives in the **Codex**.
