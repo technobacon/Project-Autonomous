@@ -1509,6 +1509,22 @@ globalThis.__run = function(report) {
     base.dealDamage(e2, 1, base.player.x, base.player.y, 0);
     ok('a non-Reaper hero does not execute', !e2.dead);
   });
+  sectionTry('expansion: Sentinel hero reflects contact damage (thorns)', () => {
+    const bw = getCharacter('sentinel');
+    ok('Sentinel exists, buyable, has a thorns perk', bw && bw.id === 'sentinel' && bw.cost > 0 && !bw.secret && bw.perk && bw.perk.thorns > 0);
+    Save.data.relics = {}; Save.data.equipped = [];
+    const base = new Game(document.getElementById('game')); base.start('spark', 0, { seed: 41, noRelics: true });
+    const g = new Game(document.getElementById('game')); g.start('sentinel', 0, { seed: 41, noRelics: true });
+    ok('Sentinel is tankier than a baseline hero', g.player.maxHp > base.player.maxHp && g.player.armor > base.player.armor);
+    // A foe touching the Sentinel takes reflected damage; touching a plain hero does not.
+    const place = (gm) => { const e = gm.spawnEnemy('brute', gm.player.x, gm.player.y, 1, 1); e.hp = 1e6; e.maxHp = 1e6; e.damage = 20; e.x = gm.player.x; e.y = gm.player.y; gm.player.invuln = 0; gm.buildGrid(); return e; };
+    const eb = place(g); const hp0 = eb.hp;
+    g.updateEnemies(1 / 60);
+    ok('a foe striking the Sentinel is wounded by thorns', eb.hp < hp0);
+    const ep = place(base); const php0 = ep.hp;
+    base.updateEnemies(1 / 60);
+    ok('a foe striking a plain hero takes no thorns', ep.hp === php0);
+  });
   sectionTry('expansion: Flux hero is built around the Blink', () => {
     const f = getCharacter('flux');
     ok('Flux exists, spirit start, buyable, has a perk', f && f.id === 'flux' && f.startWeapon === 'spirit' && f.cost > 0 && !f.secret && !!f.perk);

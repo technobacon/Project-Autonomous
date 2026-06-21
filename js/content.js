@@ -100,6 +100,18 @@ const CHARACTERS = [
     perkDesc: '+12% crit & +0.6× crit damage; instantly slay non-boss foes below 12% health.',
   },
   {
+    id: 'sentinel', name: 'Sentinel', color: '#86c5ff',
+    desc: 'Stands where others flee — the dark shatters against the shield.',
+    startWeapon: 'flame',
+    cost: 1300,
+    stats: { maxHp: 165, speed: 165, might: 0.95, haste: 0.95, armor: 4, pickup: 150 },
+    blurb: 'An immovable wall. Wade into the horde and let it break on you.',
+    // Per-hero perk: a flat stat patch (folded in recalc) + a thorns ratio read
+    // in the contact-damage path — a connecting hit reflects damage at the foe.
+    perk: { thorns: 0.6, mods: { armorBonus: 2, regenBonus: 2 } },
+    perkDesc: 'Reflects 60% of contact damage back at attackers; +2 armor, +2 regen.',
+  },
+  {
     // Secret character — not purchasable; unlocked by the "Into the Void"
     // achievement (survive 15:00). Powerful but high-risk.
     id: 'void', name: 'Void', color: '#ff4dff',

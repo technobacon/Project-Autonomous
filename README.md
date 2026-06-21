@@ -68,11 +68,14 @@ each with a distinct starting weapon and playstyle:
 | **Flux** | Hyper-mobile, blink-empowered glass | Spirit Seekers |
 | **Forge** | Turret specialist, holds ground | Sentry Turret |
 | **Reaper** | Crit-hungry executioner | Whirling Glaive |
+| **Sentinel** | Immovable tank, reflects contact damage | Flame Aura |
 
 …plus a secret hero, **Void**, unlocked by surviving 15:00. Each hero also has a
 distinct feel, and some carry a **signature perk** — Flux, for instance, is built
-around the Blink: an extra charge, a faster recharge, and a damage surge on every
-dash. Progress is saved
+around the Blink (an extra charge, a faster recharge, and a damage surge on every
+dash), the **Reaper** executes low-health foes outright, and the **Sentinel**
+reflects a chunk of contact damage straight back, so the horde breaks itself on
+your shield. Progress is saved
 automatically in your browser (`localStorage`).
 
 ## ⚒ Build variety

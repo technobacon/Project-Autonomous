@@ -118,8 +118,9 @@ in `recalc`/spawn/combat.
 
 ## 5. Current feature state (as of v47)
 
-- **16 weapons / 16 evolutions**, **15 passives**, **11 heroes** (Flux = blink perks,
-  Forge = turret perks, Reaper = crit/execute perks; Void secret), **10 synergies**,
+- **16 weapons / 16 evolutions**, **15 passives**, **12 heroes** (Flux = blink perks,
+  Forge = turret perks, Reaper = crit/execute perks, Sentinel = thorns/tank perks;
+  Void secret), **10 synergies**,
   **17 omens**, **21 relics** (3 synergy-aware + Pilgrim's Charm), **19 mutators**,
   **37 achievements**.
 - **13 enemy archetypes** (incl. Conjurer=summoner, Acolyte=warder/aura,
@@ -163,8 +164,8 @@ in `recalc`/spawn/combat.
   mutator that makes shrines constant, or boss frequency; would need new channels +
   wiring into those systems).
 - **Another perk hero** — e.g. a shrine/risk specialist, reusing the `perk` hook
-  (perks currently cover dash + turret + stat + execute; add new perk keys read where
-  relevant).
+  (perks currently cover dash + turret + stat + execute + thorns; add new perk keys
+  read where relevant).
 - **More biomes / a new hazard kind** (e.g. a damaging trail, a tracking pillar) —
   the hazard framework (`updateHazards` + `kind` switch + `_drawHazards`) takes new
   kinds cleanly; remember a determinism warp-check for late biomes. *(Done so far:

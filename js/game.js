@@ -1049,6 +1049,12 @@ class Game {
           p.hurt(e.damage);
           // Leeching affix: a connecting hit heals the attacker.
           if (lands && e.leech && !e.dead) e.hp = Math.min(e.maxHp, e.hp + e.damage * 1.5);
+          // Bulwark thorns: a connecting hit is punished, reflecting damage back
+          // at the attacker (silent — contact resolves many times per second).
+          if (lands && !e.dead) {
+            const thorns = p.char.perk && p.char.perk.thorns;
+            if (thorns) this.dealDamage(e, e.damage * thorns, p.x, p.y, 40, true);
+          }
         }
       }
     }
