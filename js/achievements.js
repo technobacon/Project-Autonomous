@@ -39,6 +39,9 @@ const ACHIEVEMENTS = [
   { id: 'trialmaster',  icon: '🎓', name: 'Trial Master',         desc: 'Complete every Trial of Light.',         reward: 200, check: c => c.trialsTotal > 0 && c.trialsDone >= c.trialsTotal },
   { id: 'apex',         icon: '🐲', name: 'Apex Predator',         desc: 'Defeat every kind of boss at least once.', reward: 120, check: c => c.bossTypesTotal > 0 && c.bossTypesSlain >= c.bossTypesTotal },
   { id: 'nemesis',      icon: '☄', name: 'Nemesis',               desc: 'Defeat 25 bosses in total.',             reward: 100, check: c => c.save.bossKills >= 25 },
+  { id: 'marathon',     icon: '🌌', name: 'Endless Light',         desc: 'Survive 20 minutes in a run.',           reward: 150, check: c => c.time >= 1200 },
+  { id: 'legend',       icon: '🏆', name: 'Legend',                desc: 'Score 250,000 in a single run.',         reward: 80,  check: c => c.score >= 250000 },
+  { id: 'ace',          icon: '🌠', name: 'Ascended Power',        desc: 'Reach level 40 in a run.',               reward: 60,  check: c => c.level >= 40 },
 ];
 
 function getAchievement(id) { return ACHIEVEMENTS.find(a => a.id === id); }

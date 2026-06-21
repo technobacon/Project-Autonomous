@@ -371,6 +371,11 @@ globalThis.__run = function(report) {
     ok('power unlocked', Save.hasAchievement('power'));
     ok('achievement shards rewarded', Save.data.shards > shardsBefore);
     ok('secret char Void unlockable', getCharacter('void').secret && Save.hasAchievement('eternal'));
+    // Long-haul milestone achievements use the run context directly.
+    const g2 = new Game(document.getElementById('game')); g2.start('spark', 0);
+    g2.time = 1201; g2.score = 260000; g2.player.level = 41;
+    const ctx = Achievements.context(g2);
+    ok('marathon/legend/ace fire on a huge run', getAchievement('marathon').check(ctx) && getAchievement('legend').check(ctx) && getAchievement('ace').check(ctx));
   });
   sectionTry('boss log: per-type kills tracked + boss achievements', () => {
     Save.data.bossLog = {}; Save.data.achievements = {};

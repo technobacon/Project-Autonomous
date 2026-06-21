@@ -273,7 +273,7 @@ stack on these foes too, so a *Shielded Bomber*, a *Swift Stalker*, or a
 
 ## 🏆 Achievements, difficulty & the Codex
 
-- **34 achievements** with shard rewards and long-term goals — survive 15:00 to
+- **37 achievements** with shard rewards and long-term goals — survive 15:00 to
   unlock the secret character **Void**; hunt elites, slay a Champion, collect
   relics, climb the mastery ranks, clear the Trials, defeat **every kind of
   boss** (*Apex Predator*) and **25 bosses** in total (*Nemesis*).
