@@ -159,6 +159,7 @@ class Game {
     this.riftsOpened = 0;      // Void Rift / Event Horizon casts (any pull-rift)
     this.reflectedDamage = 0;  // damage bounced back by a thorns perk (Sentinel)
     this.score = 0;
+    this._timeWarpT = 0;          // global enemy-slow from a Time Warp pickup (sim)
     this.shake_ = { mag: 0, t: 0 };
     this.toasts = [];
     this.biomeIndex = 0;          // which biome stage we're in (time-driven)
@@ -666,6 +667,7 @@ class Game {
       if (chance(0.012)) this.spawnPickup(e.x, e.y, 'health');
       if (chance(0.006)) this.spawnPickup(e.x, e.y, 'magnet');
       if (chance(0.004)) this.spawnPickup(e.x, e.y, 'bomb');
+      if (chance(0.004)) this.spawnPickup(e.x, e.y, 'warp');
     }
 
     // Splitter spawns children (inheriting the current difficulty scale).
@@ -1022,6 +1024,8 @@ class Game {
   updateEnemies(dt) {
     const p = this.player;
     const cs = this._cs || 90;
+    if (this._timeWarpT > 0) this._timeWarpT -= dt;     // Time Warp pickup: global slow
+    const warp = this._timeWarpT > 0 ? 0.4 : 1;
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const e = this.enemies[i];
       if (e.dead) { this.enemies.splice(i, 1); continue; }
@@ -1050,7 +1054,7 @@ class Game {
       // Frenzied affix: the more wounded it is, the faster it moves.
       const frenzy = e.frenzied ? 1 + (1 - e.hp / e.maxHp) * 0.6 : 1;
       const slow = 1 - e.slowAmount;
-      const spd = e.speed * slow * ward * frenzy;
+      const spd = e.speed * slow * ward * frenzy * warp;
 
       // AI movement.
       this._enemyAI(e, dt, spd);
@@ -1880,6 +1884,16 @@ class Game {
         this.openLevelUp();
         break;
       }
+      case 'warp': {
+        // A panic button: briefly slow every foe to a crawl (movement only) so
+        // you can reposition out of a swarm. Sim state (deterministic).
+        this._timeWarpT = 4.0;
+        this.particles.ring(p.x, p.y, 40, { color: '#7fe9ff', speed: 240, life: 0.8, size: 4 });
+        Audio2.pickupBig(); this.shake(6, 0.25);
+        this.particles.text(p.x, p.y - 24, 'TIME WARP!', { color: '#7fe9ff', size: 20 });
+        this.toast('⏳ Time Warp — foes crawl!');
+        break;
+      }
       case 'overdrive': {
         // A rare burst of power: a short, sweeping all-offense surge.
         p.addBuff('overdrive', { dmgMul: 1.4, hasteMul: 1.4, speedMul: 1.15 }, 8);
@@ -2376,8 +2390,8 @@ class Game {
 
   _drawPickups(ctx, cam) {
     ctx.save();
-    const icons = { health: '✚', magnet: '🧲', bomb: '💣', chest: '🎁', overdrive: '⚡' };
-    const cols = { health: '#7affc4', magnet: '#ffb3e6', bomb: '#ffd84d', chest: '#ffe14d', overdrive: '#ff4dff' };
+    const icons = { health: '✚', magnet: '🧲', bomb: '💣', chest: '🎁', overdrive: '⚡', warp: '⏳' };
+    const cols = { health: '#7affc4', magnet: '#ffb3e6', bomb: '#ffd84d', chest: '#ffe14d', overdrive: '#ff4dff', warp: '#7fe9ff' };
     for (const k of this.pickups) {
       const x = k.x - cam.x, y = k.y - cam.y;
       const bob = Math.sin(k.t * 4) * 3;

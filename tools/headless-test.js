@@ -282,7 +282,23 @@ globalThis.__run = function(report) {
 
   // 6) Pickups.
   sectionTry('apply all pickups', () => {
-    ['health', 'magnet', 'bomb', 'chest'].forEach(k => game.applyPickup(k));
+    ['health', 'magnet', 'bomb', 'chest', 'warp'].forEach(k => game.applyPickup(k));
+  });
+  sectionTry('pickups: Time Warp slows every foe, then wears off', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 88 });
+    const e = g.spawnEnemy('runner', g.player.x + 400, g.player.y, 1, 1); e.speed = 200;
+    g.buildGrid();
+    // Baseline: how far a runner advances in 30 frames with no warp.
+    const bx = e.x; for (let i = 0; i < 30; i++) { g.updateEnemies(1 / 60); g.buildGrid(); }
+    const moved0 = Math.abs(e.x - bx);
+    // Reset position; apply Time Warp and measure again — it should crawl.
+    e.x = g.player.x + 400; e.y = g.player.y; g.applyPickup('warp');
+    ok('time-warp timer armed', g._timeWarpT > 0);
+    const wx = e.x; for (let i = 0; i < 30; i++) { g.updateEnemies(1 / 60); g.buildGrid(); }
+    ok('foes move far less under Time Warp', Math.abs(e.x - wx) < moved0 * 0.6);
+    // Run it out; speed returns to normal.
+    for (let i = 0; i < 60 * 5; i++) g.updateEnemies(1 / 60);
+    ok('Time Warp expires', g._timeWarpT <= 0);
   });
   sectionTry('passives: Bloodstone heals on kill', () => {
     ok('Bloodstone passive registered', !!PASSIVES.bloodstone);
