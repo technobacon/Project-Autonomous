@@ -675,7 +675,31 @@ globalThis.__run = function(report) {
       ENEMY_TYPES.conjurer.summonCount > 0 && ENEMY_TYPES.conjurer.summonType === 'swarm');
     ok('acolyte archetype', !!ENEMY_TYPES.acolyte && ENEMY_TYPES.acolyte.ai === 'warder' && ENEMY_TYPES.acolyte.auraR > 0);
     ok('bombardier archetype', !!ENEMY_TYPES.bombardier && ENEMY_TYPES.bombardier.ai === 'lobber' && ENEMY_TYPES.bombardier.blastR > 0);
-    ok('AFFIXES table has 10', Object.keys(AFFIXES).length === 10 && !!getAffix('cloven'));
+    ok('AFFIXES table has 11', Object.keys(AFFIXES).length === 11 && !!getAffix('cloven') && !!getAffix('searing'));
+  });
+  sectionTry('elites: Searing lays a damaging ground trail', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 64 });
+    const e = g.spawnEnemy('brute', g.player.x + 300, g.player.y, 1, 1);
+    g._applyAffix(e, 'searing'); ok('searing flag set', e.searing === true);
+    // Run the enemy update enough for the drop timer to elapse; it should leave a field hazard.
+    g.player.invuln = 1e9; const origMove = Input.moveVector; Input.moveVector = () => ({ x: 0, y: 0 });
+    let sawField = false;
+    for (let i = 0; i < 60 * 3; i++) { g.update(1 / 60); if (g.hazards.some(h => h.kind === 'field')) sawField = true; }
+    ok('searing dropped a field hazard', sawField);
+    Input.moveVector = origMove;
+    // The trail hurts the player standing in it (hazard path, not the weapon-zone path).
+    // Use a fresh, durable foe with weapons cleared so it survives to drop a patch.
+    g.player.weapons = []; g.hazards.length = 0;
+    const e2 = g.spawnEnemy('brute', g.player.x, g.player.y, 1, 1); e2.hp = 1e6; e2.maxHp = 1e6;
+    g._applyAffix(e2, 'searing'); e2.searTimer = 0; e2.x = g.player.x; e2.y = g.player.y;
+    g.buildGrid();
+    g.updateEnemies(1 / 60);
+    const h = g.hazards.find(z => z.kind === 'field');
+    ok('a fresh scorch patch exists on the player', !!h);
+    if (h) { h.phase = 'active'; h.t = 0; }
+    const hp0 = g.player.hp;
+    for (let i = 0; i < 30; i++) { g.player.invuln = 0; g.updateHazards(1 / 60); }
+    ok('standing on the scorch costs health', g.player.hp < hp0);
   });
   sectionTry('elites: Cloven bursts into lesser foes on death', () => {
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 96 });

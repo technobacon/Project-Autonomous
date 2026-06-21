@@ -90,6 +90,7 @@ const AFFIXES = {
   frenzied: { id: 'frenzied', name: 'Frenzied',     color: '#ff8a3c', desc: 'Grows faster the more it is hurt.' },
   phaser:   { id: 'phaser',   name: 'Phasing',      color: '#b6f0ff', desc: 'Blinks toward you in sudden lunges.' },
   cloven:   { id: 'cloven',   name: 'Cloven',       color: '#9d6bff', desc: 'Bursts into lesser foes when slain.' },
+  searing:  { id: 'searing',  name: 'Searing',      color: '#ff7a3c', desc: 'Leaves a trail of scorching ground.' },
 };
 const AFFIX_LIST = Object.values(AFFIXES);
 function getAffix(id) { return AFFIXES[id]; }

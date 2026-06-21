@@ -124,7 +124,7 @@ in `recalc`/spawn/combat.
   **20 omens**, **25 relics** (3 synergy-aware + Pilgrim's Charm), **22 mutators**,
   **42 achievements**.
 - **13 enemy archetypes** (incl. Conjurer=summoner, Acolyte=warder/aura,
-  Bombardier=lobber), **10 affixes**, **7 bosses** (Warden/Colossus/Maelstrom/Devourer/
+  Bombardier=lobber), **11 affixes**, **7 bosses** (Warden/Colossus/Maelstrom/Devourer/
   Eclipse/Herald/Ravager, endless rotation cycles the toughest), **9 biomes** with **6 hazard kinds**
   (strike / field / vortex / beam / hunter / gale; verge has none), **7 shrine types**.
 - **Modes:** Survival, Gauntlet (boss rush), Daily (date-seeded), Trials (10-node

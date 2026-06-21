@@ -449,6 +449,7 @@ class Game {
       dmgResist: 0, regen: 0, shield: 0, shieldMax: 0,
       arcane: false, affixShootTimer: 0, volatile: !!def.explodes, fuse: 0,
       leech: false, frenzied: false, phaser: false, phaseT: 0, cloven: false,
+      searing: false, searTimer: 0,   // Searing affix: drops a scorching trail
       castFx: 0,   // render-only conjure telegraph (summoner archetype)
       spin: 0, novaT: 0,   // boss spiral angle + nova cadence (Maelstrom)
       shieldPhase: false, phaseT: 0,   // Eclipse boss: shielded/open rhythm
@@ -504,6 +505,7 @@ class Game {
       case 'frenzied': e.frenzied = true; break;
       case 'phaser':   e.phaser = true; e.phaseT = rand(1.6, 2.8); break;
       case 'cloven':   e.cloven = true; break;
+      case 'searing':  e.searing = true; e.searTimer = rand(0.8, 1.5); break;
     }
   }
 
@@ -1148,6 +1150,21 @@ class Game {
       if (e.affixShootTimer <= 0) {
         e.affixShootTimer = 2.2;
         this.spawnEnemyProjectile(e.x, e.y, ang, 240, Math.max(6, e.damage * 0.6), '#c98bff');
+      }
+    }
+    // Searing affix: periodically scorch the ground it stands on, laying a short
+    // trail of damaging field patches via the hazard pipeline (which — unlike the
+    // weapon zone system — hurts the player too). Deterministic: timer-driven,
+    // position from the foe, no RNG. Denies space behind a chaser.
+    if (e.searing) {
+      e.searTimer -= dt;
+      if (e.searTimer <= 0) {
+        e.searTimer = 1.5;
+        this.hazards.push({
+          kind: 'field', x: e.x, y: e.y, r: 30, color: '#ff7a3c',
+          dmg: 0, dot: Math.max(8, e.damage * 1.4), slow: 0,
+          warn: 0.3, dur: 1.8, fade: 0.4, phase: 'warn', t: 0, tick: 0,
+        });
       }
     }
     // Phasing affix: periodic sudden lunges toward the player (seeded cadence;
