@@ -1099,6 +1099,18 @@ globalThis.__run = function(report) {
     ok('shrine consumed once used', g.shrines.length === 0);
     ok('consequence summoned foes', g.enemies.length > foes0);
   });
+  sectionTry('shrines: Thorns shrine grants a timed reflect buff', () => {
+    ok('thorns shrine registered', !!getShrineType('thorns') && SHRINE_TYPES.length >= 6);
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 57 });
+    ok('no thorns before invoking', g.player.thorns === 0);
+    g.shrines.push({ type: 'thorns', color: '#9fd86a', icon: '🌵', x: g.player.x, y: g.player.y, radius: 24, t: 0, life: 26 });
+    g.updateShrines(1 / 60);
+    ok('Thorns shrine grants the reflect buff', g.player.hasBuff('shrine_thorns') && g.player.thorns >= 0.80 - 1e-9);
+    // It reflects in contact while the buff is up.
+    const f = g.spawnEnemy('brute', g.player.x, g.player.y, 1, 1); f.hp = 1e6; f.maxHp = 1e6; f.damage = 20; f.x = g.player.x; f.y = g.player.y; g.player.invuln = 0; g.buildGrid();
+    const hp0 = f.hp; g.updateEnemies(1 / 60);
+    ok('the shrine thorns reflect at attackers', f.hp < hp0);
+  });
   sectionTry('shrines: new types (Swiftness buff, Wrath blast) + Pilgrim relic', () => {
     ok('five shrine types incl. swiftness + wrath', SHRINE_TYPES.length >= 5 && !!getShrineType('swiftness') && !!getShrineType('wrath'));
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 53 });

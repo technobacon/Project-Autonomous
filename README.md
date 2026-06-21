@@ -256,6 +256,8 @@ breath, so claiming one means choosing to detour *toward* trouble:
   ring of foes closes in.
 - **⚔ Shrine of Wrath** — a **devastating blast** scours nearby foes, but an
   elite pack retaliates.
+- **🌵 Shrine of Thorns** — **reflect 80% of contact damage & +2 armor for 16s**,
+  but a ring of foes closes in — exactly when thorns pays off.
 
 The **Pilgrim's Charm** relic leans into this layer — shrines appear far more
 often and each one also restores health, so a shrine-hunting build becomes

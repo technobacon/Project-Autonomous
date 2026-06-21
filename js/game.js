@@ -95,6 +95,13 @@ const SHRINE_TYPES = [
       g.spawnShrinePack(3, true);
       g.toast('⚔ Wrath erupts outward!');
     } },
+  { id: 'thorns', name: 'Shrine of Thorns', icon: '🌵', color: '#9fd86a',
+    desc: 'Reflect 80% of contact damage & +2 armor for 16s — but a ring of foes closes in.',
+    invoke(g) {
+      g.player.addBuff('shrine_thorns', { thornsBonus: 0.80, armorBonus: 2 }, 16);
+      g.director.spawnRing(g.time / 60);
+      g.toast('🌵 Thorns sheathe your light!');
+    } },
 ];
 function getShrineType(id) { return SHRINE_TYPES.find(s => s.id === id) || null; }
 
