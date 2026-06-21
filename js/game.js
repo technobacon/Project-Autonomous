@@ -579,8 +579,9 @@ class Game {
     e.dead = true;
     this.kills++;
     this.score += Math.round(10 + e.xp * 5 + (e.boss ? 500 : 0));
-    // Vampiric omen: heal a little on each kill.
-    if (this.mods.lifesteal && this.player.alive) this.player.heal(1 + this.player.maxHp * this.mods.lifesteal);
+    // Lifesteal on kill (Bloodstone passive + Vampiric omen/relic, folded into
+    // player.lifesteal during recalc).
+    if (this.player.lifesteal && this.player.alive) this.player.heal(1 + this.player.maxHp * this.player.lifesteal);
 
     // Volatile (affix / Bomber type): erupt a ring of projectiles. Only touches
     // enemyProjectiles, so it is safe to call from inside the updateEnemies loop.

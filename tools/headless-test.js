@@ -219,6 +219,16 @@ globalThis.__run = function(report) {
   sectionTry('apply all pickups', () => {
     ['health', 'magnet', 'bomb', 'chest'].forEach(k => game.applyPickup(k));
   });
+  sectionTry('passives: Bloodstone heals on kill', () => {
+    ok('Bloodstone passive registered', !!PASSIVES.bloodstone);
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 93, noRelics: true });
+    g.player.passives.bloodstone = 4; g.player.recalc();
+    ok('lifesteal derived from the passive', g.player.lifesteal > 0);
+    g.player.hp = g.player.maxHp * 0.5; const hp0 = g.player.hp;
+    const e = g.spawnEnemy('drifter', g.player.x + 300, g.player.y, 1, 1);
+    g.killEnemy(e);
+    ok('a kill heals a Bloodstone build', g.player.hp > hp0);
+  });
   sectionTry('pickups: Overdrive grants a timed all-offense surge', () => {
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 91 });
     const m0 = g.player.might, h0 = g.player.haste;

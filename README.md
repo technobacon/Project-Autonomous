@@ -81,8 +81,8 @@ beams), **Light Lance** (a fast spear that skewers a whole line), **Caltrops**
 (scattered ground spikes for zone control), and the **Sentry Turret** (a
 deployable, stationary ally that auto-fires at nearby foes — reward good
 positioning) — each with 8 levels.
-**14 passives** — damage, attack speed, move speed, area, projectiles, pierce,
-projectile speed, pickup range, max health, regen, XP gain, crit, armor, luck.
+**15 passives** — damage, attack speed, move speed, area, projectiles, pierce,
+projectile speed, pickup range, max health, regen, XP gain, crit, armor, luck, lifesteal.
 
 You carry up to **6 weapons** and **6 passives** per run, so every game becomes
 a different build. The upgrade pool is weighted and nudged by your **Luck**, and

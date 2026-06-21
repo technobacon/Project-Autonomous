@@ -33,6 +33,8 @@ const PASSIVES = {
                desc: l => `-1 damage taken (lvl ${l})` },
   luck:      { id: 'luck', name: 'Clover', icon: '🍀', color: '#7affc4', max: 4, rarity: 0.5,
                desc: l => `+6% luck (lvl ${l})` },
+  bloodstone:{ id: 'bloodstone', name: 'Bloodstone', icon: '🩸', color: '#e0405a', max: 4, rarity: 0.55,
+               desc: l => `Heal on kill (lvl ${l})` },
 };
 const PASSIVE_LIST = Object.values(PASSIVES);
 

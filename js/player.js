@@ -83,6 +83,9 @@ class Player {
     this.armor = base.armor + m('armor') + pv('guard');
     this.luck = m('luck') + pv('luck') * 0.06;
     this.regen = m('regen') + pv('regen') * 0.5;
+    // Lifesteal: heal a fraction of max HP per kill. The Bloodstone passive adds
+    // 0.3% per level on top of any omen/relic lifesteal (folded in below).
+    this.lifesteal = pv('bloodstone') * 0.003;
 
     // Blink tuning from the Sanctuary: Quickstep trims the recharge time,
     // Echo Step grants an extra charge. (Capped reduction keeps it sane.)
@@ -112,6 +115,7 @@ class Player {
     this.armor += mod.armorBonus;
     this.luck += mod.luckBonus;
     this.regen += (mod.regenBonus || 0);
+    this.lifesteal += (mod.lifesteal || 0);   // omen/relic lifesteal joins the passive
     newMax = Math.round(newMax * mod.hpMul);
 
     // Weapon synergies (set bonuses). A pure function of the current arsenal —
