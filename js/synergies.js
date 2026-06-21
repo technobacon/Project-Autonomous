@@ -60,6 +60,10 @@ const SYNERGIES = [
     members: ['sentry', 'bolt', 'spirit'], need: 2,
     desc: 'Massed ranged fire from every angle. +1 projectile, +14% projectile speed.',
     mods: { addProj: 1, projSpeedMul: 1.14 } },
+  { id: 'collapse', name: 'Collapse', icon: '🕳', color: '#b98bff',
+    members: ['rift', 'nova', 'meteor'], need: 2,
+    desc: 'Rift + bombardment: space folds, then shatters. +12% area, +12% damage.',
+    mods: { areaMul: 1.12, dmgMul: 1.12 } },
 ];
 
 function getSynergy(id) { return SYNERGIES.find(s => s.id === id) || null; }

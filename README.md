@@ -77,14 +77,15 @@ automatically in your browser (`localStorage`).
 
 ## ⚒ Build variety
 
-**15 weapons** — Light Bolt, Frost Shard, Flame Aura, Orbit Wisps, Nova Burst,
+**16 weapons** — Light Bolt, Frost Shard, Flame Aura, Orbit Wisps, Nova Burst,
 Arc Lightning, Spirit Seekers, Light Whip, **Whirling Glaive** (a returning
 boomerang), **Toxic Flask** (lingering poison pools), **Prism Cross** (rotating
 beams), **Light Lance** (a fast spear that skewers a whole line), **Caltrops**
 (scattered ground spikes for zone control), the **Sentry Turret** (a
 deployable, stationary ally that auto-fires at nearby foes — reward good
-positioning), and the **Meteor** (delayed AoE strikes that rain down on distant
-foes) — each with 8 levels.
+positioning), the **Meteor** (delayed AoE strikes that rain down on distant
+foes), and the **Void Rift** (a rift that drags foes inward, then implodes —
+bunch the horde and annihilate it together) — each with 8 levels.
 **15 passives** — damage, attack speed, move speed, area, projectiles, pierce,
 projectile speed, pickup range, max health, regen, XP gain, crit, armor, luck, lifesteal.
 
@@ -114,6 +115,7 @@ a golden **EVOLUTION** — transforming it into a devastating new form:
 | Caltrops + Wide Lens | **Thornfield** — a sprawling ring of barbs that grips the horde |
 | Sentry Turret + Swift Sigil | **Arsenal** — deploys paired, long-lived turrets firing fast piercing volleys |
 | Meteor + Wide Lens | **Cataclysm** — a relentless rain of wide, overlapping strikes |
+| Void Rift + Lodestone | **Event Horizon** — a vast rift that swallows the horde, then annihilates it |
 
 ## ✷ Weapon synergies
 
@@ -132,6 +134,7 @@ building around a theme, so every level-up choice carries a little extra weight:
 | 🛡 **Entrench** | any 2 of Lance / Caltrops / Whip | +2 armor, lances/whips pierce +1 |
 | 🏰 **Garrison** | any 2 of Sentry / Caltrops / Orbit | +3 armor, +12% area |
 | 🎯 **Fusillade** | any 2 of Sentry / Bolt / Spirit Seekers | +1 projectile, +14% projectile speed |
+| 🕳 **Collapse** | any 2 of Void Rift / Nova / Meteor | +12% area, +12% damage |
 
 Evolved weapons still count as their base, active synergies show under your
 weapon row (and on the pause screen), and the full set lives in the **Codex**.
@@ -418,8 +421,8 @@ js/
   particles.js      # particle + floating-text system
   save.js           # localStorage meta-progression
   content.js        # characters, difficulty tiers + meta-upgrade shop
-  weapons.js        # 13 base weapons (periodic, continuous, boomerang, zones, lances)
-  evolutions.js     # 13 weapon evolutions + evolution rules
+  weapons.js        # 16 base weapons (periodic, continuous, boomerang, zones, lances, rifts)
+  evolutions.js     # 16 weapon evolutions + evolution rules
   synergies.js      # weapon set bonuses (pure function of the arsenal)
   enemies.js        # enemy archetypes + affixes + the spawn Director + bosses/champions
   upgrades.js       # passives + level-up choice generator
@@ -440,7 +443,7 @@ tools/
 ## ✅ Tests
 
 A headless harness stubs the DOM/Canvas/WebAudio APIs and actually runs the
-game — a full simulated run, every weapon, all bosses, all 13 evolutions, the
+game — a full simulated run, every weapon, all bosses, all 16 evolutions, the
 weapon-synergy set bonuses, all 32 achievements, every omen, the relic loadout
 system, the run-history Chronicle, the lifetime-mastery system (ranks +
 per-hero/weapon accrual), the Trials of Light (rule twists + win/fail paths),

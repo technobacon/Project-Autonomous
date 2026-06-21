@@ -22,6 +22,7 @@ const EVOLUTIONS = [
   { base: 'caltrops', passive: 'area',    passiveLvl: 2, into: 'thornfield' },
   { base: 'sentry', passive: 'haste',     passiveLvl: 2, into: 'arsenal' },
   { base: 'meteor', passive: 'area',      passiveLvl: 2, into: 'cataclysm' },
+  { base: 'rift',   passive: 'magnet',    passiveLvl: 2, into: 'horizon' },
 ];
 
 // Evolved weapon definitions (maxLevel 1; power scales with player stats).
@@ -323,6 +324,20 @@ const EVOLVED_WEAPONS = {
         });
       }
       if (Audio2.hazardHit) Audio2.hazardHit();
+    },
+  },
+  horizon: {
+    id: 'horizon', name: 'Event Horizon', icon: '⊚', color: '#caa6ff', maxLevel: 1, evolved: true,
+    desc() { return 'EVOLVED: a vast rift that swallows the horde, then annihilates it.'; },
+    cooldown(l, p) { return cd(2.6, p); },
+    fire(game, inst) {
+      const p = game.player;
+      const r = 200 * p.area;
+      const t = game.nearestEnemy(p.x, p.y, 460);
+      const tx = t ? t.x : p.x, ty = t ? t.y : p.y;
+      game.spawnZone(tx, ty, r, 16 * p.might, 1.7, '#b98bff', 0.3,
+        { pull: 280, burst: 120 * p.might, burstR: r, burstColor: '#e2c8ff' });
+      Audio2.blip(80, 0.22, 'sine', 0.16, -70);
     },
   },
 };

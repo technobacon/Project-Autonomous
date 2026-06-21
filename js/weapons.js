@@ -467,6 +467,41 @@ const WEAPONS = {
       }
     },
   },
+
+  // -- Void Rift: cast a rift that drags foes inward, then implodes. A
+  //    control+burst weapon — it bunches the horde and detonates them together.
+  //    Pairs beautifully with anything AoE (and with the Riftvortex biome).
+  rift: {
+    id: 'rift', name: 'Void Rift', icon: '🕳', color: '#b98bff', maxLevel: 8,
+    desc(l) {
+      return [
+        'Open a rift that drags foes in, then implodes.',
+        '+25% implosion damage.', 'Stronger pull.', '+1 rift.',
+        '+30% damage.', 'Wider event horizon.', 'Longer collapse.',
+        '+1 rift, catastrophic collapse.',
+      ][l - 1] || 'Maxed.';
+    },
+    cooldown(l, p) { return cd(3.4 - l * 0.1, p); },
+    fire(game, inst) {
+      const p = game.player, l = inst.level;
+      const count = 1 + (l >= 4 ? 1 : 0) + (l >= 8 ? 1 : 0) + (p.bonusProj > 0 ? 1 : 0);
+      const burst = (34 * (1 + (l >= 2 ? 0.25 : 0) + (l >= 5 ? 0.30 : 0)) + (l >= 8 ? 30 : 0)) * p.might;
+      const r = (120 + l * 8) * p.area * (l >= 6 ? 1.2 : 1);
+      const life = 1.1 + (l >= 7 ? 0.6 : 0);
+      const pull = 150 + (l >= 3 ? 70 : 0);
+      const dps = 8 * p.might; // light churn while the rift is open
+      const targets = game.nearestEnemies(p.x, p.y, count * 2);
+      const aim = game.aimAngle();
+      for (let i = 0; i < count; i++) {
+        const t = targets[i];
+        let tx, ty;
+        if (t) { tx = t.x + rand(-24, 24); ty = t.y + rand(-24, 24); }
+        else { const a = aim + rand(-0.4, 0.4), d = rand(120, 260); tx = clamp(p.x + Math.cos(a) * d, 40, game.world.w - 40); ty = clamp(p.y + Math.sin(a) * d, 40, game.world.h - 40); }
+        game.spawnZone(tx, ty, r, dps, life, '#b98bff', 0, { pull, burst, burstR: r * 0.9, burstColor: '#caa6ff' });
+      }
+      Audio2.blip(90, 0.16, 'sine', 0.12, -50);
+    },
+  },
 };
 
 const WEAPON_LIST = Object.values(WEAPONS);

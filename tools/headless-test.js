@@ -174,6 +174,29 @@ globalThis.__run = function(report) {
   });
   ok('weapons all present', game.player.weapons.length === Object.keys(WEAPONS).length);
 
+  sectionTry('weapon: Void Rift pulls foes in, then implodes', () => {
+    ok('Void Rift in the normal pool', !!WEAPONS.rift && WEAPON_LIST.some(w => w.id === 'rift'));
+    ok('Event Horizon is an evolved (pool-excluded) form', !!WEAPONS.horizon && WEAPONS.horizon.evolved && !WEAPON_LIST.some(w => w.id === 'horizon'));
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 31 });
+    const cx = g.player.x + 300, cy = g.player.y;
+    const z = g.spawnZone(cx, cy, 160, 8, 0.4, '#b98bff', 0, { pull: 200, burst: 999, burstR: 160, burstColor: '#caa6ff' });
+    const e = g.spawnEnemy('drifter', cx + 150, cy, 1, 1); e.speed = 0; e.hp = 1e6; e.maxHp = 1e6;
+    const d0 = dist(e.x, e.y, cx, cy);
+    g.buildGrid();
+    for (let i = 0; i < 12; i++) { g.updateZones(1 / 60); g.buildGrid(); }
+    ok('rift reels foes toward the core', dist(e.x, e.y, cx, cy) < d0 - 1e-6);
+    const hp0 = e.hp;
+    for (let i = 0; i < 40; i++) { g.updateZones(1 / 60); g.buildGrid(); }
+    ok('the implosion detonated for damage', e.hp < hp0);
+    ok('the rift is gone after collapse', !g.zones.includes(z));
+    ok('plain zones still carry no pull/burst', (() => { const g2 = new Game(document.getElementById('game')); g2.start('spark', 0); const zz = g2.spawnZone(0, 0, 50, 5, 1, '#fff'); return !zz.pull && !zz.burst; })());
+  });
+  sectionTry('weapon: Void Rift powers the Collapse synergy + evolves to Event Horizon', () => {
+    const set = SYNERGIES.find(s => s.id === 'collapse');
+    ok('Collapse synergy registered with rift', !!set && set.members.includes('rift'));
+    ok('rift + magnet -> horizon evolution registered', EVOLUTIONS.some(e => e.base === 'rift' && e.into === 'horizon'));
+  });
+
   // 5) Bosses: spawn each and kill it.
   sectionTry('spawn + kill every boss', () => {
     for (const bid of Object.keys(BOSSES)) {

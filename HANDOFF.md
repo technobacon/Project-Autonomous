@@ -118,8 +118,8 @@ in `recalc`/spawn/combat.
 
 ## 5. Current feature state (as of v47)
 
-- **15 weapons / 15 evolutions**, **15 passives**, **11 heroes** (Flux = blink perks,
-  Forge = turret perks, Reaper = crit/execute perks; Void secret), **9 synergies**,
+- **16 weapons / 16 evolutions**, **15 passives**, **11 heroes** (Flux = blink perks,
+  Forge = turret perks, Reaper = crit/execute perks; Void secret), **10 synergies**,
   **17 omens**, **21 relics** (3 synergy-aware + Pilgrim's Charm), **19 mutators**,
   **37 achievements**.
 - **13 enemy archetypes** (incl. Conjurer=summoner, Acolyte=warder/aura,

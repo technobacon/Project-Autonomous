@@ -497,8 +497,17 @@ class Game {
   spawnNova(x, y, maxR, dmg, kb, color) { this.nova(x, y, maxR, dmg, kb, color); }
 
   // Lingering ground effect (poison pool). Ticks damage to all foes inside.
-  spawnZone(x, y, r, dps, life, color = '#a6e22e', slow = 0) {
-    this.zones.push({ x, y, r, dps, life, maxLife: life, color, slow, t: 0, tick: 0 });
+  spawnZone(x, y, r, dps, life, color = '#a6e22e', slow = 0, opts = null) {
+    const z = { x, y, r, dps, life, maxLife: life, color, slow, t: 0, tick: 0 };
+    // Optional Singularity behaviour: pull foes inward each frame and detonate an
+    // implosion when the rift collapses (both pure/deterministic — geometry + a
+    // life<=0 trigger; no RNG in the update path).
+    if (opts) {
+      if (opts.pull) z.pull = opts.pull;
+      if (opts.burst) { z.burst = opts.burst; z.burstR = opts.burstR || r; z.burstColor = opts.burstColor || color; }
+    }
+    this.zones.push(z);
+    return z;
   }
 
   castChain(x, y, jumps, dmg, range) {
@@ -1390,6 +1399,7 @@ class Game {
     for (let i = this.zones.length - 1; i >= 0; i--) {
       const z = this.zones[i];
       z.life -= dt; z.t += dt; z.tick -= dt;
+      if (z.pull) this._zonePull(z, dt);
       if (z.tick <= 0) {
         z.tick = 0.25;
         const foes = this.enemiesInRadius(z.x, z.y, z.r);
@@ -1398,8 +1408,31 @@ class Game {
           if (z.slow > 0 && !e.dead) { e.slowAmount = Math.max(e.slowAmount, z.slow); e.slowTimer = Math.max(e.slowTimer, 0.5); }
         }
       }
-      if (z.life <= 0) this.zones.splice(i, 1);
+      if (z.life <= 0) {
+        if (z.burst) this._zoneBurst(z);   // Singularity implosion on collapse
+        this.zones.splice(i, 1);
+      }
     }
+  }
+
+  // Singularity rift: reel non-boss foes toward the core each frame (escapable by
+  // moving outward, and it bunches the horde for the implosion / your AoE).
+  _zonePull(z, dt) {
+    for (const e of this.enemiesInRadius(z.x, z.y, z.r)) {
+      if (e.boss) continue;
+      const d = dist(e.x, e.y, z.x, z.y) || 1;
+      const a = angleTo(e.x, e.y, z.x, z.y);
+      const f = 1 - d / z.r;
+      const pull = z.pull * f * dt;
+      e.x += Math.cos(a) * pull; e.y += Math.sin(a) * pull;
+    }
+  }
+
+  _zoneBurst(z) {
+    for (const e of this.enemiesInRadius(z.x, z.y, z.burstR)) this.dealDamage(e, z.burst, z.x, z.y, 240);
+    this.nova(z.x, z.y, z.burstR, 0, 0, z.burstColor);
+    if (Audio2.hazardHit) Audio2.hazardHit();
+    this.particles.burst(z.x, z.y, 18, { color: z.burstColor, speed: vrand(140, 320), life: 0.5 });
   }
 
   // ---- Sentry turrets (deployed auto-firing allies) ---------------------
@@ -2185,6 +2218,24 @@ class Game {
       for (let k = 0; k < 3; k++) {
         const ang = z.t * 1.5 + k * 2.1, rr = r * 0.55;
         ctx.beginPath(); ctx.arc(x + Math.cos(ang) * rr, y + Math.sin(ang) * rr, 2.5, 0, TAU); ctx.fill();
+      }
+      // Singularity: a contracting ring + inward spiral arms convey the collapse.
+      if (z.pull) {
+        const collapse = clamp(z.life / z.maxLife, 0, 1);
+        ctx.globalAlpha = 0.7 * a;
+        ctx.strokeStyle = z.burstColor || z.color; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(x, y, r * collapse, 0, TAU); ctx.stroke();
+        ctx.globalAlpha = 0.5 * a;
+        for (let k = 0; k < 3; k++) {
+          const base = -z.t * 3 + k * (TAU / 3);
+          ctx.beginPath();
+          for (let s = 0; s <= 1.001; s += 0.12) {
+            const rad = r * s, ang = base + s * 5;
+            const px = x + Math.cos(ang) * rad, py = y + Math.sin(ang) * rad;
+            if (s === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        }
       }
     }
     ctx.restore();
