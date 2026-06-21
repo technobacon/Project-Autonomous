@@ -112,6 +112,18 @@ const CHARACTERS = [
     perkDesc: 'Reflects 60% of contact damage back at attackers; +2 armor, +2 regen.',
   },
   {
+    id: 'pyre', name: 'Pyre', color: '#ff7a3c',
+    desc: 'Every death is a spark — the dark consumes its own.',
+    startWeapon: 'nova',
+    cost: 1350,
+    stats: { maxHp: 95, speed: 185, might: 1.05, haste: 1.0, armor: 0, pickup: 160 },
+    blurb: 'Chain-reaction pyromaniac. Slain foes erupt, igniting the horde.',
+    // Per-hero perk: read in game.killEnemy — a slain non-boss foe detonates an
+    // AoE that can cascade through a packed crowd (guarded against runaway chains).
+    perk: { deathBlast: { dmg: 0.6, radius: 95, color: '#ff7a3c' } },
+    perkDesc: 'Slain non-boss foes erupt for area damage — kills can cascade through the horde.',
+  },
+  {
     // Secret character — not purchasable; unlocked by the "Into the Void"
     // achievement (survive 15:00). Powerful but high-risk.
     id: 'void', name: 'Void', color: '#ff4dff',

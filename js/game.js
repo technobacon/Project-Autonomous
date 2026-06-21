@@ -164,6 +164,7 @@ class Game {
     this.reflectedDamage = 0;  // damage bounced back by a thorns perk (Sentinel)
     this.score = 0;
     this._timeWarpT = 0;          // global enemy-slow from a Time Warp pickup (sim)
+    this._inDeathBlast = false;   // reentrancy guard for Pyre's chain explosions
     this.shake_ = { mag: 0, t: 0 };
     this.toasts = [];
     this.biomeIndex = 0;          // which biome stage we're in (time-driven)
@@ -620,6 +621,19 @@ class Game {
     // Lifesteal on kill (Bloodstone passive + Vampiric omen/relic, folded into
     // player.lifesteal during recalc).
     if (this.player.lifesteal && this.player.alive) this.player.heal(1 + this.player.maxHp * this.player.lifesteal);
+
+    // Pyre's Death Blast perk: a slain non-boss foe erupts, damaging neighbours.
+    // Kills can cascade — but a reentrancy guard stops the chain's own kills from
+    // re-detonating, keeping it bounded and deterministic.
+    const _perk = this.player.char.perk;
+    if (_perk && _perk.deathBlast && !e.boss && !e.champion && !this._inDeathBlast) {
+      this._inDeathBlast = true;
+      const db = _perk.deathBlast;
+      const dmg = db.dmg * (12 + this.time / 60 * 5) * this.player.might;
+      for (const o of this.enemiesInRadius(e.x, e.y, db.radius)) { if (o !== e && !o.dead) this.dealDamage(o, dmg, e.x, e.y, 120); }
+      this.nova(e.x, e.y, db.radius, 0, 0, db.color || '#ff7a3c');
+      this._inDeathBlast = false;
+    }
 
     // Volatile (affix / Bomber type): erupt a ring of projectiles. Only touches
     // enemyProjectiles, so it is safe to call from inside the updateEnemies loop.

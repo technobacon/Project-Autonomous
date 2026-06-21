@@ -1699,6 +1699,28 @@ globalThis.__run = function(report) {
     base.updateEnemies(1 / 60);
     ok('a foe striking a plain hero takes no thorns', ep.hp === php0);
   });
+  sectionTry('expansion: Pyre hero detonates slain foes (death blast)', () => {
+    const py = getCharacter('pyre');
+    ok('Pyre exists, buyable, has a deathBlast perk', py && py.id === 'pyre' && py.cost > 0 && !py.secret && py.perk && py.perk.deathBlast);
+    const g = new Game(document.getElementById('game')); g.start('pyre', 0, { seed: 44, noRelics: true });
+    g.time = 120; // let the blast scale up a little
+    // A victim with a neighbour just inside the blast radius.
+    const victim = g.spawnEnemy('brute', g.player.x + 400, g.player.y, 1, 1);
+    const near = g.spawnEnemy('drifter', victim.x + 40, victim.y, 1, 1); near.hp = 1e6; near.maxHp = 1e6;
+    const far = g.spawnEnemy('drifter', victim.x + 600, victim.y, 1, 1); far.hp = 1e6; far.maxHp = 1e6;
+    g.buildGrid();
+    const nh0 = near.hp, fh0 = far.hp;
+    g.killEnemy(victim);
+    ok('a foe in the blast is hurt', near.hp < nh0);
+    ok('a foe out of range is untouched', far.hp === fh0);
+    // A plain hero produces no death blast.
+    const g2 = new Game(document.getElementById('game')); g2.start('spark', 0, { seed: 44, noRelics: true });
+    const v2 = g2.spawnEnemy('brute', g2.player.x + 400, g2.player.y, 1, 1);
+    const n2 = g2.spawnEnemy('drifter', v2.x + 40, v2.y, 1, 1); n2.hp = 1e6; n2.maxHp = 1e6;
+    g2.buildGrid(); const n2h0 = n2.hp;
+    g2.killEnemy(v2);
+    ok('a plain hero does not detonate foes', n2.hp === n2h0);
+  });
   sectionTry('expansion: Flux hero is built around the Blink', () => {
     const f = getCharacter('flux');
     ok('Flux exists, spirit start, buyable, has a perk', f && f.id === 'flux' && f.startWeapon === 'spirit' && f.cost > 0 && !f.secret && !!f.perk);

@@ -72,6 +72,7 @@ each with a distinct starting weapon and playstyle:
 | **Forge** | Turret specialist, holds ground | Sentry Turret |
 | **Reaper** | Crit-hungry executioner | Whirling Glaive |
 | **Sentinel** | Immovable tank, reflects contact damage | Flame Aura |
+| **Pyre** | Chain-reaction — slain foes erupt | Nova Burst |
 
 …plus a secret hero, **Void**, unlocked by surviving 15:00. Each hero also has a
 distinct feel, and some carry a **signature perk** — Flux, for instance, is built
