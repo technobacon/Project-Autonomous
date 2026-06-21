@@ -423,6 +423,17 @@ globalThis.__run = function(report) {
     Save.buyMeta('might');
     ok('meta upgrade leveled', Save.metaLevel('might') === before + 1);
   });
+  sectionTry('meta: Expanse (area) + Precision (crit) apply at run start', () => {
+    ok('new metas defined', !!getMeta('expanse') && !!getMeta('precision'));
+    Save.data.meta.expanse = 0; Save.data.meta.precision = 0;
+    const base = new Game(document.getElementById('game')); base.start('spark', 0, { noRelics: true });
+    const a0 = base.player.area, c0 = base.player.crit;
+    Save.data.meta.expanse = 5; Save.data.meta.precision = 5;
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { noRelics: true });
+    ok('Expanse raises area', g.player.area > a0 + 1e-9);
+    ok('Precision raises crit', g.player.crit > c0 + 1e-9);
+    Save.data.meta.expanse = 0; Save.data.meta.precision = 0;
+  });
 
   // 10) Weapon evolution: every evolution pair must resolve and apply.
   sectionTry('all evolutions resolve + apply', () => {

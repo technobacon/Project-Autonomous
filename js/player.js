@@ -70,7 +70,7 @@ class Player {
     this.haste = base.haste * (1 + m('haste') + pv('haste') * 0.08);
     this.speed = base.speed * (1 + m('swift') + pv('boots') * 0.08);
 
-    this.area = 1 + pv('area') * 0.12;
+    this.area = 1 + pv('area') * 0.12 + m('expanse');
     this.projSpeed = 1 + pv('velocity') * 0.15;
     this.bonusProj = pv('multishot');
     this.bonusPierce = pv('pierce');
@@ -78,7 +78,7 @@ class Player {
     this.pickupRange = base.pickup * (1 + m('magnet') + pv('magnet') * 0.25);
     this.xpMult = 1 + m('greed') + pv('greed') * 0.12;
     this.shardMult = 1 + m('greed');
-    this.crit = pv('crit') * 0.08;
+    this.crit = pv('crit') * 0.08 + m('precision');
     this.critMult = 2.0;
     this.armor = base.armor + m('armor') + pv('guard');
     this.luck = m('luck') + pv('luck') * 0.06;

@@ -173,6 +173,10 @@ const META_UPGRADES = [
     desc: l => `+${l*6}% better upgrades`, value: l => l * 0.06 },
   { id: 'regen',   name: 'Mending',     icon: '✚', max: 5, baseCost: 45,
     desc: l => `+${(l*0.2).toFixed(1)} hp/s regen`, value: l => l * 0.2 },
+  { id: 'expanse', name: 'Expanse',     icon: '⊙', max: 5, baseCost: 45,
+    desc: l => `+${l*4}% area of effect`, value: l => l * 0.04 },
+  { id: 'precision', name: 'Precision', icon: '✶', max: 5, baseCost: 50,
+    desc: l => `+${l*3}% crit chance`, value: l => l * 0.03 },
   { id: 'revival', name: 'Second Wind', icon: '♻', max: 1, baseCost: 300,
     desc: l => l ? 'Revive once per run' : 'Revive once per run', value: l => l },
 ];
