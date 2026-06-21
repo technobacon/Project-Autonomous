@@ -89,6 +89,7 @@ const AFFIXES = {
   leech:    { id: 'leech',    name: 'Leeching',     color: '#e0405a', desc: 'Heals itself whenever it wounds you.' },
   frenzied: { id: 'frenzied', name: 'Frenzied',     color: '#ff8a3c', desc: 'Grows faster the more it is hurt.' },
   phaser:   { id: 'phaser',   name: 'Phasing',      color: '#b6f0ff', desc: 'Blinks toward you in sudden lunges.' },
+  cloven:   { id: 'cloven',   name: 'Cloven',       color: '#9d6bff', desc: 'Bursts into lesser foes when slain.' },
 };
 const AFFIX_LIST = Object.values(AFFIXES);
 function getAffix(id) { return AFFIXES[id]; }

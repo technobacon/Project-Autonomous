@@ -413,7 +413,7 @@ class Game {
       elite: false, champion: false, affixes: [], eliteName: null, auraColor: null,
       dmgResist: 0, regen: 0, shield: 0, shieldMax: 0,
       arcane: false, affixShootTimer: 0, volatile: !!def.explodes, fuse: 0,
-      leech: false, frenzied: false, phaser: false, phaseT: 0,
+      leech: false, frenzied: false, phaser: false, phaseT: 0, cloven: false,
       castFx: 0,   // render-only conjure telegraph (summoner archetype)
       spin: 0, novaT: 0,   // boss spiral angle + nova cadence (Maelstrom)
       shieldPhase: false, phaseT: 0,   // Eclipse boss: shielded/open rhythm
@@ -467,6 +467,7 @@ class Game {
       case 'leech':    e.leech = true; break;
       case 'frenzied': e.frenzied = true; break;
       case 'phaser':   e.phaser = true; e.phaseT = rand(1.6, 2.8); break;
+      case 'cloven':   e.cloven = true; break;
     }
   }
 
@@ -673,6 +674,16 @@ class Game {
       for (let i = 0; i < (e.type.splitCount || 3); i++) {
         const child = this.spawnEnemy(e.type.splitInto, e.x + rand(-15, 15), e.y + rand(-15, 15), scale, 1);
         if (child) { child.vx = rand(-120, 120); child.vy = rand(-120, 120); }
+      }
+    }
+    // Cloven affix: a slain elite bursts into a couple of lesser foes (motes),
+    // so killing it creates a fresh problem. Guarded against the split type so it
+    // never compounds, and capped by the live enemy budget.
+    if (e.cloven && !e.type.splitInto) {
+      const scale = this.director ? this.director.hpScale(this.time / 60) * 0.5 : 1;
+      for (let i = 0; i < 2 && this.enemies.length < this.maxEnemies; i++) {
+        const child = this.spawnEnemy('swarm', e.x + rand(-16, 16), e.y + rand(-16, 16), scale, 1);
+        if (child) { child.vx = rand(-130, 130); child.vy = rand(-130, 130); }
       }
     }
   }

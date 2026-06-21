@@ -273,15 +273,16 @@ comparable challenges — leave them out.
 ## ⭐ Elites & Champions
 
 The dark isn't just fodder. Any foe can spawn as a glowing **elite** — scaled
-up, wreathed in an aura, carrying one of six **affixes**, and dropping extra
+up, wreathed in an aura, carrying one of ten **affixes**, and dropping extra
 loot:
 
 - **Swift** (much faster), **Hardened** (resists damage, extra health),
   **Regenerating** (heals — burst it down), **Volatile** (bursts projectiles on
   death), **Arcane** (fires bolts at you), **Shielded** (a shield soaks a
   burst before its health is touched), **Leeching** (heals itself when it
-  wounds you), **Frenzied** (grows faster the more it's hurt), and **Phasing**
-  (blinks toward you in sudden lunges) — **9** in all.
+  wounds you), **Frenzied** (grows faster the more it's hurt), **Phasing**
+  (blinks toward you in sudden lunges), and **Cloven** (bursts into lesser foes
+  when slain) — **10** in all.
 
 Periodically a named **Champion** rises — a two-affix mini-boss with its own
 health bar that drops a chest **and a rare ⚡ Overdrive orb** (a short, sweeping

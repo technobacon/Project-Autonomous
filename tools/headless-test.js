@@ -584,7 +584,21 @@ globalThis.__run = function(report) {
       ENEMY_TYPES.conjurer.summonCount > 0 && ENEMY_TYPES.conjurer.summonType === 'swarm');
     ok('acolyte archetype', !!ENEMY_TYPES.acolyte && ENEMY_TYPES.acolyte.ai === 'warder' && ENEMY_TYPES.acolyte.auraR > 0);
     ok('bombardier archetype', !!ENEMY_TYPES.bombardier && ENEMY_TYPES.bombardier.ai === 'lobber' && ENEMY_TYPES.bombardier.blastR > 0);
-    ok('AFFIXES table has 9', Object.keys(AFFIXES).length === 9);
+    ok('AFFIXES table has 10', Object.keys(AFFIXES).length === 10 && !!getAffix('cloven'));
+  });
+  sectionTry('elites: Cloven bursts into lesser foes on death', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 96 });
+    const e = g.spawnEnemy('brute', g.player.x + 300, g.player.y, 1, 1);
+    g._applyAffix(e, 'cloven'); ok('cloven flag set', e.cloven === true);
+    const motes0 = g.enemies.filter(o => o.type.id === 'swarm').length;
+    g.killEnemy(e);
+    ok('slaying a Cloven elite spawns motes', g.enemies.filter(o => o.type.id === 'swarm').length >= motes0 + 2);
+    // A plain foe spawns nothing on death (killEnemy doesn't splice — the loop does).
+    const g2 = new Game(document.getElementById('game')); g2.start('spark', 0, { seed: 97 });
+    const p = g2.spawnEnemy('brute', g2.player.x + 300, g2.player.y, 1, 1);
+    const m0 = g2.enemies.length;
+    g2.killEnemy(p);
+    ok('a plain foe does not split', g2.enemies.length === m0 && !g2.enemies.some(o => o.type.id === 'swarm'));
   });
   sectionTry('enemies: bombardier lobs telegraphed ground strikes', () => {
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 63 });
