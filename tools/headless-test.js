@@ -1390,6 +1390,26 @@ globalThis.__run = function(report) {
     ok('toggle persists across load', Save.data.trailFx === false);
     Save.data.trailFx = prev === false ? false : true; Save.save();
   });
+  sectionTry('accessibility: reduced-flash damps shake + full-screen FX', () => {
+    ok('reduced flash off by default', Save.defaults().reducedFlash === false);
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 71 });
+    // Off: shake registers and the flash multiplier is full.
+    Save.data.shakeOff = false; Save.data.reducedFlash = false;
+    g.shake_.mag = 0; g.shake(12, 0.3);
+    ok('shake registers when flash is normal', g.shake_.mag > 0);
+    ok('flash multiplier is full when off', g._flashMul() === 1);
+    // On: shake is fully suppressed and the multiplier drops below 1.
+    Save.data.reducedFlash = true; g.shake_.mag = 0; g.shake(12, 0.3);
+    ok('reduced-flash suppresses shake', g.shake_.mag === 0);
+    ok('reduced-flash lowers the flash multiplier', g._flashMul() < 1);
+    // It is render-only — the world still advances + renders finite either way.
+    for (let i = 0; i < 60; i++) { g.update(1 / 60); g.render(); }
+    ok('render stays finite with reduced flash on', Number.isFinite(g.player.x) && Number.isFinite(g.player.y));
+    // Persists across a save/load round-trip.
+    Save.save(); Save.load();
+    ok('reduced-flash toggle persists', Save.data.reducedFlash === true);
+    Save.data.reducedFlash = false; Save.save();
+  });
 
   // 11.3) New content (v7): glaive (boomerang), toxin (zones), prism, Comet.
   sectionTry('content: new weapons + evolutions registered', () => {

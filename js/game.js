@@ -893,9 +893,15 @@ class Game {
   }
 
   shake(mag, t) {
-    if (Save.data && Save.data.shakeOff) return;
+    // Reduced-flash mode suppresses camera shake entirely (motion + strobe).
+    if (Save.data && (Save.data.shakeOff || Save.data.reducedFlash)) return;
     if (mag > this.shake_.mag) { this.shake_.mag = mag; this.shake_.t = t; this.shake_.max = t; }
   }
+
+  // Accessibility: a single multiplier the render path applies to full-screen
+  // washes and bloom so the reduced-flash setting damps them in one place. It's
+  // render-only (never touches the sim), so determinism is unaffected.
+  _flashMul() { return (Save.data && Save.data.reducedFlash) ? 0.3 : 1; }
 
   // Run a function after `delay` seconds of SIMULATION time (deterministic,
   // pauses with the game — unlike setTimeout).
@@ -1901,7 +1907,7 @@ class Game {
     // A brief full-screen wash when crossing into a new biome.
     if (this._biomeFlash > 0 && this.biome) {
       const [r, g, b] = this.biome.nebula[0];
-      ctx.fillStyle = `rgba(${r},${g},${b},${0.18 * this._biomeFlash})`;
+      ctx.fillStyle = `rgba(${r},${g},${b},${0.18 * this._biomeFlash * this._flashMul()})`;
       ctx.fillRect(0, 0, this.view.w, this.view.h);
     }
   }
@@ -2105,7 +2111,7 @@ class Game {
     ctx.save();
     for (const n of this.novas) {
       const a = clamp(1 - n.r / n.maxR, 0, 1);
-      ctx.globalAlpha = a * 0.8;
+      ctx.globalAlpha = a * 0.8 * (0.4 + 0.6 * this._flashMul());
       ctx.strokeStyle = n.color;
       ctx.lineWidth = 6 * a + 2;
       ctx.shadowBlur = 20; ctx.shadowColor = n.color;
@@ -2343,7 +2349,9 @@ class Game {
     const g = ctx.createRadialGradient(this.view.w / 2, this.view.h / 2, this.view.h * 0.25,
       this.view.w / 2, this.view.h / 2, this.view.h * 0.72);
     g.addColorStop(0, 'rgba(255,40,70,0)');
-    g.addColorStop(1, `rgba(255,40,70,${0.5 * a})`);
+    // Keep a readable floor of feedback even in reduced-flash mode (hits must
+    // still register), but damp the peak intensity.
+    g.addColorStop(1, `rgba(255,40,70,${0.5 * a * (0.5 + 0.5 * this._flashMul())})`);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, this.view.w, this.view.h);
   }

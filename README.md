@@ -180,7 +180,10 @@ bright **impact flashes**, a **look-ahead camera** that eases toward where
 you're heading, and a red **edge-flash** the instant you take a hit. All of it
 is cosmetic and isolated from the seeded simulation, so the Daily Challenge
 stays bit-for-bit fair. Prefer it cleaner? Toggle **screen shake** and
-**damage numbers** off in the menu.
+**damage numbers** off in the menu — or flip on **Low Flash**, an accessibility
+mode that suppresses camera shake and damps the full-screen washes, biome
+flashes and nova bloom for photosensitive players (still render-only, so the
+seed plays out identically).
 
 The **audio** is fully synthesized and reactive: a master limiter keeps dense
 fights clean, critical hits *ping*, elites pop richer than fodder, and a
@@ -294,8 +297,9 @@ stack on these foes too, so a *Shielded Bomber*, a *Swift Stalker*, or a
   tier below.
 - **Codex** — a bestiary + arsenal that fills in as you discover foes, weapons,
   and evolutions, and now tracks your **lifetime kill count for each boss**.
-- **Options** — toggle SFX, music, screen shake, floating damage numbers, and
-  the mastery trail FX (accessibility / clarity).
+- **Options** — toggle SFX, music, screen shake, floating damage numbers,
+  the mastery trail FX, and a **Low Flash** accessibility mode (accessibility /
+  clarity).
 
 ## 📜 Chronicle (run history & records)
 

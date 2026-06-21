@@ -69,6 +69,7 @@ const UI = {
           <button class="mini" id="btn-shake">${d.shakeOff ? '⬚' : '⬛'} Shake</button>
           <button class="mini" id="btn-dmg">${d.dmgNumbers ? '🔢' : '⬚'} Damage #</button>
           <button class="mini" id="btn-trail">${d.trailFx !== false ? '✦' : '⬚'} Trail</button>
+          <button class="mini" id="btn-flash">${d.reducedFlash ? '🌙' : '☀'} ${d.reducedFlash ? 'Low Flash' : 'Flash'}</button>
         </div>
         <p class="hint">Move: WASD / Arrows • Pause: Esc/P • Weapons fire automatically</p>
       </div>`;
@@ -89,6 +90,7 @@ const UI = {
     document.getElementById('btn-shake').onclick = (e) => { Save.data.shakeOff = !Save.data.shakeOff; Save.save(); e.target.textContent = (Save.data.shakeOff ? '⬚' : '⬛') + ' Shake'; Audio2.uiMove(); };
     document.getElementById('btn-dmg').onclick = (e) => { Save.data.dmgNumbers = !Save.data.dmgNumbers; Save.save(); e.target.textContent = (Save.data.dmgNumbers ? '🔢' : '⬚') + ' Damage #'; Audio2.uiMove(); };
     document.getElementById('btn-trail').onclick = (e) => { Save.data.trailFx = Save.data.trailFx === false; Save.save(); e.target.textContent = (Save.data.trailFx !== false ? '✦' : '⬚') + ' Trail'; Audio2.uiMove(); };
+    document.getElementById('btn-flash').onclick = (e) => { Save.data.reducedFlash = !Save.data.reducedFlash; Save.save(); e.target.textContent = (Save.data.reducedFlash ? '🌙 Low Flash' : '☀ Flash'); Audio2.uiMove(); };
   },
 
   showHelp() {

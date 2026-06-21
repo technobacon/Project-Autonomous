@@ -47,9 +47,10 @@ globalThis.__det = function(report) {
 
   // A run that is identical given (seed, inputs), regardless of cosmetic config.
   function runSim(opts) {
-    const o = Object.assign({ render: false, renderEvery: 1, mute: false, shakeOff: false, steps: 2400, daily: false }, opts);
+    const o = Object.assign({ render: false, renderEvery: 1, mute: false, shakeOff: false, reducedFlash: false, steps: 2400, daily: false }, opts);
     Audio2.muted = o.mute; Audio2.musicMuted = o.mute;
     Save.data.shakeOff = o.shakeOff;
+    Save.data.reducedFlash = o.reducedFlash;
     const game = new Game(document.getElementById('game'));
     UI.init(document.getElementById('overlay'), game);
     UI.showLevelUp = (g, choices) => { g.chooseUpgrade(choices[0]); };
@@ -104,6 +105,8 @@ globalThis.__det = function(report) {
   eq('audio unmuted -> identical gameplay', base, runSim({ seed: SEED, mute: false }));
   eq('shake off -> identical gameplay', base, runSim({ seed: SEED, shakeOff: true }));
   eq('shake on -> identical gameplay', base, runSim({ seed: SEED, shakeOff: false }));
+  eq('reduced-flash on -> identical gameplay', base, runSim({ seed: SEED, reducedFlash: true, render: true }));
+  eq('reduced-flash off -> identical gameplay', base, runSim({ seed: SEED, reducedFlash: false, render: true }));
   eq('worst-case mix -> identical gameplay', base, runSim({ seed: SEED, render: true, renderEvery: 5, mute: true, shakeOff: true }));
   ne('different seed -> different run', base, runSim({ seed: SEED + 1 }));
 

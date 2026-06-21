@@ -73,6 +73,7 @@ const Save = {
       shakeOff: false,
       dmgNumbers: true,          // floating damage numbers (game-feel)
       trailFx: true,             // cosmetic mastery trail (prestige FX)
+      reducedFlash: false,       // accessibility: damp screen shake + full-screen flashes
     };
   },
 
