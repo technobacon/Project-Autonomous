@@ -406,9 +406,10 @@ you've cleared — no extra randomness, so the chain is fully deterministic.
 
 Where Trials are *authored*, a **Custom Run** is *yours*. Toggle any combination
 of **mutators** — **boons** that ease the run (+damage, +health, lifesteal, more
-XP…) or **banes** that brutalise it (more foes, tougher/faster/angrier enemies,
-Glass Cannon, Berserker, Onslaught…) — then pick a hero and play. There are
-**15** to mix freely, for effectively endless make-your-own variety.
+XP, +projectiles, +pierce, thorns…) or **banes** that brutalise it (more foes,
+tougher/faster/angrier enemies, Glass Cannon, Berserker, Onslaught…) — then pick
+a hero and play. There are **22** to mix freely, for effectively endless
+make-your-own variety.
 
 Your self-imposed difficulty **scales the shard payout**: every mutator carries a
 weight, and the net total moves a reward multiplier (shown live) from **×0.25**

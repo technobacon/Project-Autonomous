@@ -1387,6 +1387,11 @@ globalThis.__run = function(report) {
     const m2 = buildMutatorMods(['overpower', 'glass']);
     ok('same channel stacks multiplicatively', Math.abs(m2.dmgMul - 1.45 * 1.6) < 1e-9 && Math.abs(m2.hpMul - 0.55) < 1e-9);
     ok('empty selection = neutral mods', buildMutatorMods([]).dmgMul === 1 && buildMutatorMods([]).enemyCountMul === 1);
+    // Channel-driven boons fold their new channels in.
+    const m3 = buildMutatorMods(['volley', 'piercer', 'thornplate']);
+    ok('volley/piercer/thornplate fold in', m3.addProj >= 1 && m3.addPierce >= 2 && m3.thornsBonus >= 0.40 - 1e-9);
+    const gc = new Game(document.getElementById('game')); gc.start('spark', 0, { mode: 'custom', mutators: ['volley', 'thornplate'], seed: 5 });
+    ok('custom run applies the channel boons', gc.player.bonusProj >= 1 && gc.player.thorns >= 0.40 - 1e-9);
   });
   sectionTry('mutators: reward scales with self-imposed difficulty', () => {
     ok('empty run pays normal', mutatorRewardMul([]) === 1);

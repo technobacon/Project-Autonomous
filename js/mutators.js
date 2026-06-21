@@ -32,6 +32,12 @@ const MUTATORS = [
     desc: '+4 armor.', apply(m) { m.armorBonus += 4; } },
   { id: 'sharpshooter', name: 'Sharpshooter', icon: '✶', color: '#ff9d3c', weight: -1,
     desc: '+15% crit chance & +0.8× crit damage.', apply(m) { m.critChanceBonus += 0.15; m.critDmgBonus += 0.8; } },
+  { id: 'volley', name: 'Volley', icon: '🎏', color: '#ffd1f5', weight: -2,
+    desc: '+1 projectile to every weapon.', apply(m) { m.addProj += 1; } },
+  { id: 'piercer', name: 'Piercer', icon: '🔱', color: '#cfe3ff', weight: -1,
+    desc: '+2 pierce to every weapon.', apply(m) { m.addPierce += 2; } },
+  { id: 'thornplate', name: 'Thornplate', icon: '🌵', color: '#9fd86a', weight: -1,
+    desc: 'Reflect 40% of contact damage at attackers.', apply(m) { m.thornsBonus += 0.40; } },
   // ---- Banes (make the run harder → bigger reward) ----
   { id: 'glass', name: 'Glass Cannon', icon: '💔', color: '#ff5d6c', weight: 1,
     desc: '+60% damage, but −45% max health.', apply(m) { m.dmgMul *= 1.6; m.hpMul *= 0.55; } },
