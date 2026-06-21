@@ -1388,6 +1388,20 @@ globalThis.__run = function(report) {
     base.player.moveDir = { x: 1, y: 0 }; const bm0 = base.player.might; base.player.dash();
     ok('a plain hero gets no surge', !base.player.hasBuff('flux_surge') && Math.abs(base.player.might - bm0) < 1e-9);
   });
+  sectionTry('expansion: Meteor lobs delayed AoE strikes', () => {
+    ok('meteor in pool, cataclysm evolved + wired', !!getWeapon('meteor') && WEAPON_LIST.some(w => w.id === 'meteor') &&
+      !!getWeapon('cataclysm') && getWeapon('cataclysm').evolved && EVOLUTIONS.some(e => e.base === 'meteor' && e.into === 'cataclysm'));
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 73 });
+    g.player.weapons = [{ def: getWeapon('meteor'), level: 5, timer: 0 }];
+    g.player.x = 1300; g.player.y = 1300; g.player.invuln = 1e9;
+    const e = g.spawnEnemy('brute', 1300 + 120, 1300, 8, 1); const ehp = e.hp;
+    const origMove = Input.moveVector; Input.moveVector = () => ({ x: 0, y: 0 });
+    let scheduledSeen = false;
+    for (let i = 0; i < 180; i++) { g.update(1 / 60); if (g.scheduled.length) scheduledSeen = true; }
+    Input.moveVector = origMove;
+    ok('meteor schedules delayed strikes', scheduledSeen);
+    ok('a meteor strike damages a nearby foe', e.dead || e.hp < ehp);
+  });
   sectionTry('expansion: Forge hero is the turret specialist', () => {
     const f = getCharacter('forge');
     ok('Forge exists, sentry start, buyable, has turret perk', f && f.id === 'forge' && f.startWeapon === 'sentry' && f.cost > 0 && !f.secret && f.perk && f.perk.turret);

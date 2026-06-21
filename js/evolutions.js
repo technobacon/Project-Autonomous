@@ -21,6 +21,7 @@ const EVOLUTIONS = [
   { base: 'lance',  passive: 'pierce',    passiveLvl: 2, into: 'sunpiercer' },
   { base: 'caltrops', passive: 'area',    passiveLvl: 2, into: 'thornfield' },
   { base: 'sentry', passive: 'haste',     passiveLvl: 2, into: 'arsenal' },
+  { base: 'meteor', passive: 'area',      passiveLvl: 2, into: 'cataclysm' },
 ];
 
 // Evolved weapon definitions (maxLevel 1; power scales with player stats).
@@ -298,6 +299,30 @@ const EVOLVED_WEAPONS = {
         });
       }
       Audio2.blip(360, 0.12, 'square', 0.09, 160);
+    },
+  },
+  cataclysm: {
+    id: 'cataclysm', name: 'Cataclysm', icon: '🌠', color: '#ffb14d', maxLevel: 1, evolved: true,
+    desc() { return 'EVOLVED: a relentless rain of wide, overlapping meteor strikes.'; },
+    cooldown(l, p) { return cd(1.6, p); },
+    fire(game, inst) {
+      const p = game.player;
+      const count = 6;
+      const dmg = 46 * p.might;
+      const radius = 110 * p.area;
+      const targets = game.nearestEnemies(p.x, p.y, count * 2);
+      for (let i = 0; i < count; i++) {
+        const t = targets[i];
+        const a = rand(0, TAU), d = rand(60, 320);
+        const tx = clamp(t ? t.x + rand(-30, 30) : p.x + Math.cos(a) * d, 40, game.world.w - 40);
+        const ty = clamp(t ? t.y + rand(-30, 30) : p.y + Math.sin(a) * d, 40, game.world.h - 40);
+        game.particles.ring(tx, ty, 10, { color: '#ffb14d', speed: 80, life: 0.5, size: 3 });
+        game.schedule(0.5, () => {
+          for (const e of game.enemiesInRadius(tx, ty, radius)) game.dealDamage(e, dmg, tx, ty, 240);
+          game.nova(tx, ty, radius, 0, 0, '#ffb14d');
+        });
+      }
+      if (Audio2.hazardHit) Audio2.hazardHit();
     },
   },
 };

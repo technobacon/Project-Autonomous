@@ -74,13 +74,14 @@ automatically in your browser (`localStorage`).
 
 ## ⚒ Build variety
 
-**14 weapons** — Light Bolt, Frost Shard, Flame Aura, Orbit Wisps, Nova Burst,
+**15 weapons** — Light Bolt, Frost Shard, Flame Aura, Orbit Wisps, Nova Burst,
 Arc Lightning, Spirit Seekers, Light Whip, **Whirling Glaive** (a returning
 boomerang), **Toxic Flask** (lingering poison pools), **Prism Cross** (rotating
 beams), **Light Lance** (a fast spear that skewers a whole line), **Caltrops**
-(scattered ground spikes for zone control), and the **Sentry Turret** (a
+(scattered ground spikes for zone control), the **Sentry Turret** (a
 deployable, stationary ally that auto-fires at nearby foes — reward good
-positioning) — each with 8 levels.
+positioning), and the **Meteor** (delayed AoE strikes that rain down on distant
+foes) — each with 8 levels.
 **15 passives** — damage, attack speed, move speed, area, projectiles, pierce,
 projectile speed, pickup range, max health, regen, XP gain, crit, armor, luck, lifesteal.
 
@@ -109,6 +110,7 @@ a golden **EVOLUTION** — transforming it into a devastating new form:
 | Light Lance + Piercer | **Sunpiercer** — a volley of lances that run through everything |
 | Caltrops + Wide Lens | **Thornfield** — a sprawling ring of barbs that grips the horde |
 | Sentry Turret + Swift Sigil | **Arsenal** — deploys paired, long-lived turrets firing fast piercing volleys |
+| Meteor + Wide Lens | **Cataclysm** — a relentless rain of wide, overlapping strikes |
 
 ## ✷ Weapon synergies
 

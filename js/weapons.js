@@ -433,6 +433,40 @@ const WEAPONS = {
       Audio2.blip(300, 0.1, 'square', 0.08, 120);
     },
   },
+
+  // -- Meteor: lob delayed AoE strikes onto distant foes. A bombardment weapon
+  //    that rewards reading the field — shells land where foes ARE, not at you.
+  meteor: {
+    id: 'meteor', name: 'Meteor', icon: '☄', color: '#ff9d3c', maxLevel: 8,
+    desc(l) {
+      return [
+        'Call a meteor down on a distant foe.',
+        '+1 meteor.', '+30% damage.', '+1 meteor, wider blast.',
+        '+30% damage.', '+1 meteor.', 'Bigger blasts.',
+        '+1 meteor & huge damage.',
+      ][l - 1] || 'Maxed.';
+    },
+    cooldown(l, p) { return cd(2.6 - l * 0.08, p); },
+    fire(game, inst) {
+      const p = game.player, l = inst.level;
+      const count = 1 + (l >= 2 ? 1 : 0) + (l >= 4 ? 1 : 0) + (l >= 6 ? 1 : 0) + (l >= 8 ? 1 : 0);
+      const dmg = (30 * (1 + (l >= 3 ? 0.30 : 0) + (l >= 5 ? 0.30 : 0)) + (l >= 8 ? 40 : 0)) * p.might;
+      const radius = (70 + l * 5) * p.area * (l >= 7 ? 1.25 : 1);
+      const targets = game.nearestEnemies(p.x, p.y, count * 2);
+      for (let i = 0; i < count; i++) {
+        const t = targets[i];
+        let tx, ty;
+        if (t) { tx = t.x + rand(-20, 20); ty = t.y + rand(-20, 20); }
+        else { const a = rand(0, TAU), d = rand(90, 320); tx = clamp(p.x + Math.cos(a) * d, 40, game.world.w - 40); ty = clamp(p.y + Math.sin(a) * d, 40, game.world.h - 40); }
+        game.particles.ring(tx, ty, 10, { color: '#ff9d3c', speed: 70, life: 0.6, size: 3 }); // telegraph (cosmetic)
+        game.schedule(0.6, () => {
+          for (const e of game.enemiesInRadius(tx, ty, radius)) game.dealDamage(e, dmg, tx, ty, 220);
+          game.nova(tx, ty, radius, 0, 0, '#ff9d3c');
+          if (Audio2.hazardHit) Audio2.hazardHit();
+        });
+      }
+    },
+  },
 };
 
 const WEAPON_LIST = Object.values(WEAPONS);
