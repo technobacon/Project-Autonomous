@@ -73,7 +73,7 @@ globalThis.__det = function(report) {
     let ehp = 0, ex = 0, ey = 0, ew = 0;
     for (const e of g.enemies) { ehp += e.hp; ex += e.x; ey += e.y; ew += e.warded; }
     let hx = 0, hy = 0, hp = '';
-    for (const h of g.hazards) { hx += h.x; hy += h.y; hp += h.phase[0]; }
+    for (const h of g.hazards) { hx += h.x + (h.ang || 0) * 7; hy += h.y; hp += h.phase[0]; }
     let sx = 0, sy = 0, sl = 0; const stypes = [];
     for (const s of g.shrines) { sx += s.x; sy += s.y; sl += s.life; stypes.push(s.type); }
     let bt = 0; for (const b of g.player.buffs) bt += b.t;
@@ -122,6 +122,12 @@ globalThis.__det = function(report) {
   const vor = runSim({ seed: SEED, warp: 760, steps: 1200 });
   eq('vortex hazard deterministic (warped to The Sundering)', vor, runSim({ seed: SEED, warp: 760, steps: 1200 }));
   ne('vortex hazard differs by seed', vor, runSim({ seed: SEED + 7, warp: 760, steps: 1200 }));
+
+  // The Sunfire Sweep (The Corona, ~905s) rotates a damaging beam — its live
+  // angle is folded into the hash, so the rake must reproduce exactly per seed.
+  const beam = runSim({ seed: SEED, warp: 905, steps: 1200 });
+  eq('beam hazard deterministic (warped to The Corona)', beam, runSim({ seed: SEED, warp: 905, steps: 1200 }));
+  ne('beam hazard differs by seed', beam, runSim({ seed: SEED + 7, warp: 905, steps: 1200 }));
 
   report(results);
 };

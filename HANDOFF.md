@@ -116,15 +116,16 @@ extraChoice, enemy{Hp,Dmg,Speed,Count}Mul, plus addProj/addPierce (synergies/mut
 → player.bonusProj/bonusPierce). To add a stat lever, add a channel here and apply it
 in `recalc`/spawn/combat.
 
-## 5. Current feature state (as of v44)
+## 5. Current feature state (as of v47)
 
-- **15 weapons / 15 evolutions**, **15 passives**, **9 heroes** (Flux = blink perks,
-  Forge = turret perks; Void secret), **9 synergies**, **17 omens**, **21 relics**
-  (3 synergy-aware + Pilgrim's Charm), **19 mutators**, **37 achievements**.
+- **15 weapons / 15 evolutions**, **15 passives**, **11 heroes** (Flux = blink perks,
+  Forge = turret perks, Reaper = crit/execute perks; Void secret), **9 synergies**,
+  **17 omens**, **21 relics** (3 synergy-aware + Pilgrim's Charm), **19 mutators**,
+  **37 achievements**.
 - **13 enemy archetypes** (incl. Conjurer=summoner, Acolyte=warder/aura,
-  Bombardier=lobber), **9 affixes**, **4 bosses** (Warden/Colossus/Maelstrom/Devourer,
-  endless rotation alternates the two toughest), **6 biomes** with **4 hazard kinds**
-  (strike / field / vortex / [verge has none]), **5 shrine types**.
+  Bombardier=lobber), **9 affixes**, **5 bosses** (Warden/Colossus/Maelstrom/Devourer/Eclipse,
+  endless rotation alternates the toughest), **7 biomes** with **4 hazard kinds**
+  (strike / field / vortex / beam; verge has none), **5 shrine types**.
 - **Modes:** Survival, Gauntlet (boss rush), Daily (date-seeded), Trials (8-node
   unlock chain), Custom Run (stack mutators, scaled payout).
 - **Systems:** Blink dash (charge-based, meta upgrades Quickstep/Echo Step, per-hero
@@ -161,12 +162,13 @@ in `recalc`/spawn/combat.
 - **Mutator-aware content** — Custom Run has no cross-system interactions yet (e.g. a
   mutator that makes shrines constant, or boss frequency; would need new channels +
   wiring into those systems).
-- **A third perk hero** — e.g. a shrine/risk specialist, or a crit/glass archetype,
-  reusing the `perk` hook (perks currently cover dash + turret; add new perk keys read
-  where relevant).
-- **More biomes / a new hazard kind** (e.g. a moving "sweep" beam, or a damaging
-  trail) — the hazard framework (`updateHazards` + `kind` switch + `_drawHazards`)
-  takes new kinds cleanly; remember a determinism warp-check for late biomes.
+- **Another perk hero** — e.g. a shrine/risk specialist, reusing the `perk` hook
+  (perks currently cover dash + turret + stat + execute; add new perk keys read where
+  relevant).
+- **More biomes / a new hazard kind** (e.g. a damaging trail, a tracking pillar) —
+  the hazard framework (`updateHazards` + `kind` switch + `_drawHazards`) takes new
+  kinds cleanly; remember a determinism warp-check for late biomes. *(Done so far:
+  strike / field / vortex / beam.)*
 - **A new boss** with a distinct mechanic (add to `BOSSES`, a `boss_*` AI case,
   schedule/rotation/gauntlet keys).
 - **Weapon/synergy/relic/omen drops** — always-welcome build variety; cheapest are

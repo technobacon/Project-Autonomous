@@ -866,13 +866,48 @@ globalThis.__run = function(report) {
     ok('the opening Verge has no hazard', !verge.hazard);
     for (const b of BIOMES.filter(x => x.hazard)) {
       const h = b.hazard;
-      ok(b.id + ' hazard well-formed', (h.kind === 'strike' || h.kind === 'field' || h.kind === 'vortex') &&
-        Array.isArray(h.every) && Array.isArray(h.radius) && typeof h.warn === 'number' &&
+      const sized = h.kind === 'beam' ? (typeof h.len === 'number' && typeof h.width === 'number') : Array.isArray(h.radius);
+      ok(b.id + ' hazard well-formed', (h.kind === 'strike' || h.kind === 'field' || h.kind === 'vortex' || h.kind === 'beam') &&
+        Array.isArray(h.every) && sized && typeof h.warn === 'number' &&
         typeof h.name === 'string' && typeof h.icon === 'string');
     }
     ok('a sixth biome (The Sundering) with a vortex exists', (() => {
       const s = BIOMES.find(b => b.id === 'sundering'); return s && s.hazard && s.hazard.kind === 'vortex' && BIOMES.length >= 6;
     })());
+    ok('a seventh biome (The Corona) with a sweeping beam exists', (() => {
+      const c = BIOMES.find(b => b.id === 'corona');
+      return c && c.hazard && c.hazard.kind === 'beam' && Array.isArray(c.hazard.spin) && BIOMES.length >= 7;
+    })());
+  });
+  sectionTry('hazards: the Sunfire Sweep rakes a rotating beam', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 23 });
+    const hz = BIOMES.find(b => b.id === 'corona').hazard;
+    g.spawnHazard(hz);
+    const h = g.hazards[0];
+    ok('beam spawns with a pivot, length, width + spin', h.kind === 'beam' && h.len > 0 && h.width > 0 && h.spin !== 0);
+    const ang0 = h.ang;
+    h.phase = 'active'; h.t = 0;
+    // A point planted directly under the beam takes damage; one well off the ray does not.
+    const onx = h.x + Math.cos(h.ang) * h.len * 0.5, ony = h.y + Math.sin(h.ang) * h.len * 0.5;
+    ok('a point on the beam reads as a hit', g._beamHit(h, onx, ony));
+    ok('a point off the beam reads as a miss', !g._beamHit(h, h.x + Math.cos(h.ang + 1.2) * h.len * 0.5, h.y + Math.sin(h.ang + 1.2) * h.len * 0.5));
+    ok('behind the pivot is never hit', !g._beamHit(h, h.x - Math.cos(h.ang) * 50, h.y - Math.sin(h.ang) * 50));
+    ok('beyond the reach is never hit', !g._beamHit(h, h.x + Math.cos(h.ang) * (h.len + 80), h.y + Math.sin(h.ang) * (h.len + 80)));
+    // Standing in the swath drains health; the beam rotates as it advances.
+    g.player.x = onx; g.player.y = ony; const hp0 = g.player.hp;
+    for (let i = 0; i < 30; i++) g.updateHazards(1 / 60);
+    ok('the beam sweep rotated', Math.abs(g.hazards.length ? g.hazards[0].ang - ang0 : h.ang - ang0) > 1e-3 || h.ang !== ang0);
+    ok('standing in the beam costs health', g.player.hp < hp0);
+  });
+  sectionTry('hazards: stepping off the beam path avoids it', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 24 });
+    const hz = BIOMES.find(b => b.id === 'corona').hazard;
+    g.spawnHazard(hz);
+    const h = g.hazards[0]; h.phase = 'active'; h.t = 0; h.spin = 0;  // freeze the sweep to test pure avoidance
+    g.player.x = h.x - Math.cos(h.ang) * 60; g.player.y = h.y - Math.sin(h.ang) * 60; // behind the pivot, off the ray
+    const hp0 = g.player.hp;
+    for (let i = 0; i < 30; i++) g.updateHazards(1 / 60);
+    ok('out of the beam path takes no damage', g.player.hp === hp0);
   });
   sectionTry('hazards: the Riftvortex drags player + foes inward', () => {
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 17 });

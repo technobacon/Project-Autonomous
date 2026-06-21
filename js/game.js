@@ -42,6 +42,10 @@ const BIOMES = [
     nebula: [[150, 110, 255], [110, 70, 210], [190, 140, 255]], bias: { stalker: 1.5, wraith: 1.4, charger: 1.3 },
     hazard: { kind: 'vortex', name: 'Riftvortex', icon: '🌀', warnTip: 'vortices drag you inward — fight outward',
       every: [3.4, 5.0], count: [1, 1], radius: [150, 200], warn: 0.9, dur: 4.5, dot: 11, color: '#b07cff' } },
+  { id: 'corona', name: 'The Corona', base: '#0d0a02', grid: 'rgba(235,185,55,0.08)', accent: '#ffe08a',
+    nebula: [[255, 200, 70], [255, 150, 50], [230, 120, 40]], bias: { runner: 1.6, charger: 1.4, swarm: 1.3 },
+    hazard: { kind: 'beam', name: 'Sunfire Sweep', icon: '☼', warnTip: 'searing beams rake across — move with the sweep or duck under',
+      every: [3.6, 5.4], count: [1, 1], len: 580, width: 42, warn: 1.1, dur: 2.7, spin: [0.85, 1.25], dot: 46, color: '#ffd24d' } },
 ];
 function biomeForTime(t) { return BIOMES[Math.floor(Math.max(0, t) / BIOME_SECONDS) % BIOMES.length]; }
 function biomeIndexForTime(t) { return Math.floor(Math.max(0, t) / BIOME_SECONDS); }
@@ -1490,6 +1494,10 @@ class Game {
           this._vortexPull(h, dt);
           h.tick -= dt;
           if (h.tick <= 0) { h.tick = 0.25; this._vortexTick(h); }
+        } else if (h.kind === 'beam') {
+          h.ang += h.spin * dt;          // sweep rotates at a fixed rate (dt-driven)
+          h.tick -= dt;
+          if (h.tick <= 0) { h.tick = 0.12; this._beamTick(h); }
         } else {
           h.tick -= dt;
           if (h.tick <= 0) { h.tick = 0.25; this._fieldTick(h); }
@@ -1502,6 +1510,26 @@ class Game {
   }
 
   spawnHazard(hz) {
+    // Sunfire Sweep: a rotating beam pivoting from a point off to the player's
+    // side, long enough to rake the whole neighbourhood. The start angle sits to
+    // one side of the player and the spin carries it across them — so standing
+    // still gets you raked; you escape by moving perpendicular (ahead of, or
+    // behind, the sweep). All params are seeded, so the rake is replay-fair.
+    if (hz.kind === 'beam') {
+      const ang0 = rand(0, TAU), pd = rand(120, 260);
+      const px = clamp(this.player.x + Math.cos(ang0) * pd, 40, this.world.w - 40);
+      const py = clamp(this.player.y + Math.sin(ang0) * pd, 40, this.world.h - 40);
+      const toP = angleTo(px, py, this.player.x, this.player.y);
+      const dir = chance(0.5) ? 1 : -1;
+      const spin = rand(hz.spin[0], hz.spin[1]) * dir;
+      const start = toP - dir * rand(0.55, 0.95);
+      this.hazards.push({
+        kind: 'beam', x: px, y: py, r: hz.len, color: hz.color,
+        dot: hz.dot || 0, len: hz.len, width: hz.width, ang: start, spin,
+        warn: hz.warn, dur: hz.dur || 0, fade: 0.4, phase: 'warn', t: 0, tick: 0,
+      });
+      return;
+    }
     // Aim near the player (a band around them) so hazards are relevant but
     // always dodgeable. Strikes can land where the player stands — that's the
     // point: keep moving. Clamped to the world.
@@ -1571,6 +1599,27 @@ class Game {
     const p = this.player, coreR = h.r * 0.45;
     if (p.alive && dist2(h.x, h.y, p.x, p.y) <= coreR * coreR) p.hurt(h.dot * 0.25);
     for (const e of this.enemiesInRadius(h.x, h.y, coreR)) this.dealDamage(e, h.dot * 0.25, h.x, h.y, 0, true);
+  }
+
+  // Sunfire Sweep tick: the beam is a ray from the pivot at angle h.ang, reaching
+  // h.len with half-width h.width. A point is hit if it projects forward onto the
+  // ray within [0, len] and lies within width of it (pure geometry — no RNG).
+  _beamHit(h, px, py) {
+    const dx = px - h.x, dy = py - h.y;
+    const dirx = Math.cos(h.ang), diry = Math.sin(h.ang);
+    const proj = dx * dirx + dy * diry;
+    if (proj < 0 || proj > h.len) return false;
+    return Math.abs(dx * diry - dy * dirx) <= h.width;
+  }
+
+  _beamTick(h) {
+    const dmg = h.dot * 0.12;
+    const p = this.player;
+    if (p.alive && this._beamHit(h, p.x, p.y)) p.hurt(dmg);
+    // Foes caught in the swath take it too (the beam doesn't pick sides).
+    for (const e of this.enemiesInRadius(h.x, h.y, h.len)) {
+      if (this._beamHit(h, e.x, e.y)) this.dealDamage(e, dmg * 1.5, h.x, h.y, 0, true);
+    }
   }
 
   hasRelic(id) { return !!(this.relics && this.relics.indexOf(id) >= 0); }
@@ -2037,6 +2086,7 @@ class Game {
     for (const h of this.hazards) {
       const x = h.x - cam.x, y = h.y - cam.y;
       if (x < -h.r - 20 || y < -h.r - 20 || x > this.view.w + h.r + 20 || y > this.view.h + h.r + 20) continue;
+      if (h.kind === 'beam') { this._drawBeam(ctx, x, y, h); continue; }
       if (h.phase === 'warn') {
         // Telegraph: a brightening boundary ring plus a closing "incoming" ring
         // that converges on the impact point as the warning runs out.
@@ -2083,6 +2133,35 @@ class Game {
           }
         }
       }
+    }
+    ctx.restore();
+  }
+
+  // Sunfire Sweep: a dashed telegraph line during warn, then a glowing swath with
+  // a white-hot core during the active sweep. Rotated to the beam's live angle.
+  _drawBeam(ctx, x, y, h) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(h.ang);
+    if (h.phase === 'warn') {
+      const prog = clamp(h.t / h.warn, 0, 1);
+      ctx.globalAlpha = 0.25 + 0.45 * prog;
+      ctx.strokeStyle = h.color; ctx.lineWidth = 2 + 2 * prog;
+      ctx.setLineDash([12, 10]);
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(h.len, 0); ctx.stroke();
+      ctx.setLineDash([]);
+    } else {
+      const a = h.phase === 'fade' ? clamp(1 - h.t / h.fade, 0, 1) : 1;
+      const grad = ctx.createLinearGradient(0, 0, h.len, 0);
+      grad.addColorStop(0, h.color + 'cc'); grad.addColorStop(1, h.color + '10');
+      ctx.globalAlpha = 0.8 * a;
+      ctx.fillStyle = grad;
+      ctx.shadowBlur = 18; ctx.shadowColor = h.color;
+      ctx.fillRect(0, -h.width, h.len, h.width * 2);
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = a;
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(h.len, 0); ctx.stroke();
     }
     ctx.restore();
   }
