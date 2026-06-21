@@ -1327,6 +1327,20 @@ globalThis.__run = function(report) {
     base.player.moveDir = { x: 1, y: 0 }; const bm0 = base.player.might; base.player.dash();
     ok('a plain hero gets no surge', !base.player.hasBuff('flux_surge') && Math.abs(base.player.might - bm0) < 1e-9);
   });
+  sectionTry('expansion: Forge hero is the turret specialist', () => {
+    const f = getCharacter('forge');
+    ok('Forge exists, sentry start, buyable, has turret perk', f && f.id === 'forge' && f.startWeapon === 'sentry' && f.cost > 0 && !f.secret && f.perk && f.perk.turret);
+    const base = new Game(document.getElementById('game')); base.start('spark', 0, { seed: 37 });
+    const g = new Game(document.getElementById('game')); g.start('forge', 0, { seed: 37 });
+    ok('Forge starts with the Sentry', g.player.hasWeapon('sentry'));
+    const opts = { x: 100, y: 100, dmg: 10, life: 5, fireCd: 0.6, cap: 1, range: 200, projSpeed: 400 };
+    base.deployTurret({ ...opts }); g.deployTurret({ ...opts });
+    const bt = base.turrets[0], ft = g.turrets[0];
+    ok('Forge turrets hit harder + last longer', ft.dmg > bt.dmg + 1e-9 && ft.maxLife > bt.maxLife + 1e-9);
+    // Cap bonus: deploy several; Forge keeps one more than the base cap.
+    for (let i = 0; i < 4; i++) { base.deployTurret({ ...opts }); g.deployTurret({ ...opts }); }
+    ok('Forge keeps one extra turret', g.turrets.length === base.turrets.length + 1);
+  });
   sectionTry('expansion: Entrench synergy ties the new weapons in', () => {
     const wi = id => ({ def: getWeapon(id), level: 1, timer: 0 });
     ok('Lance + Caltrops = Entrench', activeSynergies([wi('lance'), wi('caltrops')]).some(s => s.id === 'entrench'));

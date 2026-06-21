@@ -1326,15 +1326,21 @@ class Game {
 
   // ---- Sentry turrets (deployed auto-firing allies) ---------------------
   deployTurret(opts) {
+    // Per-hero turret perk (Forge): more turrets, tougher, harder-hitting.
+    const tp = (this.player && this.player.char.perk && this.player.char.perk.turret) || null;
+    const dmgMul = tp && tp.dmgMul ? tp.dmgMul : 1;
+    const lifeMul = tp && tp.lifeMul ? tp.lifeMul : 1;
+    const fireMul = tp && tp.fireCdMul ? tp.fireCdMul : 1;
+    const capBonus = tp && tp.capBonus ? tp.capBonus : 0;
     const t = {
-      x: opts.x, y: opts.y, life: opts.life, maxLife: opts.life,
-      dmg: opts.dmg, fireCd: Math.max(0.12, opts.fireCd), fireT: 0.15,
+      x: opts.x, y: opts.y, life: opts.life * lifeMul, maxLife: opts.life * lifeMul,
+      dmg: opts.dmg * dmgMul, fireCd: Math.max(0.12, opts.fireCd * fireMul), fireT: 0.15,
       range: opts.range, range2: opts.range * opts.range, projSpeed: opts.projSpeed,
       pierce: opts.pierce || 0, color: opts.color || '#7fe0b0', flash: 0, t: 0,
     };
     this.turrets.push(t);
     // Honour the per-weapon active-turret cap: retire the oldest beyond it.
-    const cap = Math.max(1, opts.cap || 1);
+    const cap = Math.max(1, (opts.cap || 1) + capBonus);
     while (this.turrets.length > cap) this.turrets.shift();
   }
 

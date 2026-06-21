@@ -76,6 +76,18 @@ const CHARACTERS = [
     perkDesc: '+1 Blink charge, faster recharge, and +30% damage for 2.5s after each Blink.',
   },
   {
+    id: 'forge', name: 'Forge', color: '#ffb14d',
+    desc: 'Builds a bulwark of turrets and holds the line.',
+    startWeapon: 'sentry',
+    cost: 1250,
+    stats: { maxHp: 130, speed: 150, might: 1.0, haste: 1.0, armor: 2, pickup: 150 },
+    blurb: 'Set up a turret nest and let the dark break upon it.',
+    // Per-hero perk: read in game.deployTurret. Forge is the deployable
+    // specialist — more turrets, tougher and harder-hitting.
+    perk: { turret: { capBonus: 1, dmgMul: 1.3, lifeMul: 1.4 } },
+    perkDesc: 'Turrets: +1 active, +30% damage, +40% lifetime.',
+  },
+  {
     // Secret character — not purchasable; unlocked by the "Into the Void"
     // achievement (survive 15:00). Powerful but high-risk.
     id: 'void', name: 'Void', color: '#ff4dff',
