@@ -65,6 +65,15 @@ const MODIFIERS = [
   { id: 'abundance', name: 'Abundance', icon: '🎴', color: '#c98bff',
     desc: 'Always get an extra upgrade choice, but +20% more foes.',
     mods: { extraChoice: true, enemyCountMul: 1.2 } },
+  { id: 'tinderbox', name: 'Tinderbox', icon: '🔥', color: '#ff7a3c',
+    desc: '+30% damage & +20% area, but foes hit harder.',
+    mods: { dmgMul: 1.3, areaMul: 1.2, enemyDmgMul: 1.2 } },
+  { id: 'phantom', name: 'Phantom', icon: '👻', color: '#b6f0ff',
+    desc: '+25% move & +10% attack speed and foes are slower, but you are fragile.',
+    mods: { speedMul: 1.25, hasteMul: 1.1, enemySpeedMul: 0.9, hpMul: 0.8 } },
+  { id: 'bloodpact', name: 'Blood Pact', icon: '🩸', color: '#e0405a',
+    desc: 'Heal on kills and hit harder as you bleed, but very thin skin.',
+    mods: { lifesteal: 0.005, berserk: true, hpMul: 0.75 } },
 ];
 
 const MODIFIER_LIST = MODIFIERS.slice();
