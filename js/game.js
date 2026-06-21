@@ -411,6 +411,7 @@ class Game {
       spin: 0, novaT: 0,   // boss spiral angle + nova cadence (Maelstrom)
       shieldPhase: false, phaseT: 0,   // Eclipse boss: shielded/open rhythm
       warded: 0,   // remaining "empowered by an Acolyte" buff time (sim state)
+      heraldMinion: false, heraldOpen: false,   // Herald boss: add-gated ward
     };
     this.enemies.push(e);
     Save.markSeen('enemies', def.id);
@@ -741,6 +742,9 @@ class Game {
     e.spin = 0; e.novaT = (e.type.novaCd || 5) * 0.7;
     // The Eclipse starts in its open (vulnerable) phase.
     e.shieldPhase = false; e.phaseT = e.type.openDur || 6.0;
+    // The Herald raises its first ward immediately (heraldOpen + a 0 window, so
+    // the first AI tick summons at once and teaches the add-priority mechanic).
+    e.heraldOpen = false; if (e.type.ai === 'boss_herald') { e.heraldOpen = true; e.phaseT = 0; }
     Audio2.bossWarn();
     this.shake(10, 0.5);
     this.toast('☠ ' + e.type.name + ' approaches!');
@@ -1165,6 +1169,42 @@ class Game {
             for (let k = -1; k <= 1; k++) this.spawnEnemyProjectile(e.x, e.y, ang + k * 0.22, e.type.projSpeed || 210, e.type.projDmg || 15, '#6c7bff');
           }
           if (e.phaseT <= 0) { e.shieldPhase = true; e.phaseT = e.type.shieldDur || 4.0; this.shake(8, 0.3); this.toast('🌑 The Eclipse shields!'); }
+        }
+        break;
+      }
+      case 'boss_herald': {
+        // The Herald is invulnerable while its summoned acolytes live (it raises
+        // a ward — dealDamage deflects while shieldPhase). Clear every acolyte to
+        // drop the ward and earn a fixed open window; then it re-summons. A
+        // kill-PRIORITY fight rather than a timed one. Deterministic: minion
+        // presence + dt-driven timers, summon placement on fixed angles.
+        const aliveMinions = this.enemies.some(o => o.heraldMinion && o.hp > 0 && !o.dead);
+        e.shieldPhase = aliveMinions;
+        const d = dist(e.x, e.y, p.x, p.y), keep = 300;
+        if (d < keep * 0.85) { e.x -= Math.cos(ang) * spd * dt; e.y -= Math.sin(ang) * spd * dt; }
+        else if (d > keep * 1.2) { e.x += Math.cos(ang) * spd * dt; e.y += Math.sin(ang) * spd * dt; }
+        if (e.castFx > 0) e.castFx -= dt;
+        e.shootTimer -= dt;
+        if (e.shootTimer <= 0) {
+          e.shootTimer = e.type.shootCd || 1.6;   // pressure shots whether warded or open
+          for (let k = -1; k <= 1; k++) this.spawnEnemyProjectile(e.x, e.y, ang + k * 0.2, e.type.projSpeed || 200, e.type.projDmg || 16, '#7affd0');
+        }
+        if (aliveMinions) {
+          e.heraldOpen = false;   // the open-window clock doesn't run while warded
+        } else {
+          if (!e.heraldOpen) { e.heraldOpen = true; e.phaseT = e.type.openDur || 4.0; this.toast('☀ The Herald is exposed — strike now!'); }
+          e.phaseT -= dt;
+          if (e.phaseT <= 0) {
+            const n = e.type.summonCount || 4, st = e.type.summonType || 'stalker', sc = 1 + this.time / 120;
+            for (let k = 0; k < n && this.enemies.length < this.maxEnemies; k++) {
+              const a = (k / n) * TAU + e.spin;
+              const m = this.spawnEnemy(st, e.x + Math.cos(a) * 60, e.y + Math.sin(a) * 60, sc, 1);
+              if (m) m.heraldMinion = true;
+            }
+            e.spin += 0.7; e.castFx = 0.5; e.heraldOpen = false;
+            Audio2.conjure(); this.shake(7, 0.3);
+            this.toast('🜂 The Herald raises a ward — slay its acolytes!');
+          }
         }
         break;
       }

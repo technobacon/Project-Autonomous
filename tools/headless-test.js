@@ -230,6 +230,28 @@ globalThis.__run = function(report) {
     Input.moveVector = origMove;
     ok('eclipse fires while shielded then reopens', sawShots && boss.shieldPhase === false);
   });
+  sectionTry('boss: Herald is warded while its acolytes live', () => {
+    ok('herald registered + endless + gauntlet', !!BOSSES.herald && BOSSES.herald.ai === 'boss_herald' && ENDLESS_BOSSES.includes('herald'));
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 61 });
+    g.player.invuln = 1e9; g.player.weapons = []; const origMove = Input.moveVector; Input.moveVector = () => ({ x: 0, y: 0 });
+    g.director.spawnBoss('herald');
+    const boss = g.enemies.find(e => e.boss);
+    ok('herald spawned', !!boss && boss.type.id === 'herald');
+    // Let it raise its first ward.
+    for (let i = 0; i < 90; i++) g.update(1 / 60);
+    const minions = g.enemies.filter(e => e.heraldMinion && e.hp > 0);
+    ok('the Herald summons acolytes', minions.length > 0);
+    ok('the Herald is warded (shielded) while acolytes live', boss.shieldPhase === true);
+    const hp0 = boss.hp; g.dealDamage(boss, 1e6, g.player.x, g.player.y, 0);
+    ok('a warded Herald takes no damage', boss.hp === hp0);
+    // Slay every acolyte; the ward drops and a damage window opens.
+    for (const m of g.enemies) if (m.heraldMinion) m.hp = 0;
+    for (let i = 0; i < 3; i++) g.update(1 / 60);
+    ok('the ward drops once the acolytes are gone', boss.shieldPhase === false);
+    const hp1 = boss.hp; g.dealDamage(boss, 500, g.player.x, g.player.y, 0);
+    Input.moveVector = origMove;
+    ok('the exposed Herald takes damage', boss.hp < hp1);
+  });
   sectionTry('boss: Maelstrom weaves a spiral + ring-nova', () => {
     ok('maelstrom registered + scheduled', !!BOSSES.maelstrom && BOSSES.maelstrom.ai === 'boss_maelstrom' &&
       BOSS_SCHEDULE.some(s => s.boss === 'maelstrom') && ENDLESS_BOSSES.includes('maelstrom'));

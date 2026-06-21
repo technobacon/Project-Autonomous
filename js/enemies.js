@@ -126,6 +126,14 @@ const BOSSES = {
     // vulnerable window — wait out the shield, then burst it down.
     shootCd: 1.0, projSpeed: 210, projDmg: 15, shieldDur: 4.0, openDur: 6.0,
   },
+  herald: {
+    id: 'herald', name: 'The Herald', color: '#7affd0', boss: true,
+    hp: 4000, speed: 44, radius: 56, damage: 38, xp: 215, ai: 'boss_herald', shape: 'hex',
+    // Invulnerable while its summoned acolytes live — clear the adds to drop the
+    // ward and open a fixed damage window. A kill-priority fight, not a timer.
+    shootCd: 1.6, projSpeed: 200, projDmg: 16,
+    summonCd: 5.0, summonCount: 4, summonType: 'stalker', openDur: 4.0,
+  },
 };
 
 const BOSS_SCHEDULE = [
@@ -137,7 +145,7 @@ const BOSS_SCHEDULE = [
 
 // Past the scheduled bosses, the endless rotation cycles the toughest so
 // late-game encounters keep varying their mechanics.
-const ENDLESS_BOSSES = ['devourer', 'maelstrom', 'eclipse'];
+const ENDLESS_BOSSES = ['devourer', 'maelstrom', 'eclipse', 'herald'];
 
 class Director {
   constructor(game) {
@@ -313,7 +321,7 @@ class Director {
   }
 
   _spawnGauntletRound(round) {
-    const keys = ['warden', 'colossus', 'maelstrom', 'devourer', 'eclipse'];
+    const keys = ['warden', 'colossus', 'maelstrom', 'devourer', 'eclipse', 'herald'];
     const count = round >= 6 ? 2 : 1;        // double bosses in later rounds
     const scale = 1 + (round - 1) * 0.5;     // escalating boss HP
     const dmg = 1 + (round - 1) * 0.12;

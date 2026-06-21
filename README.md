@@ -44,8 +44,10 @@ the **Help** screen.
   endlessly). Each fights differently — the **Warden** sprays radial volleys,
   the **Colossus** lobs aimed shots and summons adds, the **Maelstrom** weaves an
   ever-rotating *spiral of bolts* punctuated by a full ring-nova, the
-  **Devourer** does it all faster, and the **Eclipse** cycles between an
-  untouchable *shield phase* (spraying bolts) and an open window you must burst.
+  **Devourer** does it all faster, the **Eclipse** cycles between an
+  untouchable *shield phase* (spraying bolts) and an open window you must burst,
+  and the **Herald** raises a *ward* that makes it invulnerable while its
+  summoned acolytes live — clear the adds to drop the ward and open your window.
   They hit hard but drop a flood of XP and treasure, and the endless rotation
   keeps cycling their mechanics.
 
