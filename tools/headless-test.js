@@ -1268,6 +1268,16 @@ globalThis.__run = function(report) {
     const hp0 = f.hp; g.updateEnemies(1 / 60);
     ok('the shrine thorns reflect at attackers', f.hp < hp0);
   });
+  sectionTry('shrines: Barrage shrine grants a timed projectile buff', () => {
+    ok('barrage shrine registered', !!getShrineType('barrage') && SHRINE_TYPES.length >= 7);
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 61 });
+    const proj0 = g.player.bonusProj, pierce0 = g.player.bonusPierce;
+    g.shrines.push({ type: 'barrage', color: '#9ad8ff', icon: '🎆', x: g.player.x, y: g.player.y, radius: 24, t: 0, life: 26 });
+    g.updateShrines(1 / 60);
+    ok('Barrage shrine grants +projectiles & +pierce', g.player.hasBuff('shrine_barrage') &&
+      g.player.bonusProj >= proj0 + 2 && g.player.bonusPierce >= pierce0 + 1);
+    ok('the barrage summons its elite-pack consequence', g.enemies.length > 0);
+  });
   sectionTry('shrines: new types (Swiftness buff, Wrath blast) + Pilgrim relic', () => {
     ok('five shrine types incl. swiftness + wrath', SHRINE_TYPES.length >= 5 && !!getShrineType('swiftness') && !!getShrineType('wrath'));
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 53 });

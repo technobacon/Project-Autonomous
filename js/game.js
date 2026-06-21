@@ -113,6 +113,13 @@ const SHRINE_TYPES = [
       g.director.spawnRing(g.time / 60);
       g.toast('🌵 Thorns sheathe your light!');
     } },
+  { id: 'barrage', name: 'Shrine of Barrage', icon: '🎆', color: '#9ad8ff',
+    desc: '+2 projectiles & +1 pierce for 16s — but an elite pack answers the call.',
+    invoke(g) {
+      g.player.addBuff('shrine_barrage', { addProj: 2, addPierce: 1 }, 16);
+      g.spawnShrinePack(3, true);
+      g.toast('🎆 A barrage of light pours forth!');
+    } },
 ];
 function getShrineType(id) { return SHRINE_TYPES.find(s => s.id === id) || null; }
 

@@ -276,6 +276,8 @@ breath, so claiming one means choosing to detour *toward* trouble:
   elite pack retaliates.
 - **🌵 Shrine of Thorns** — **reflect 80% of contact damage & +2 armor for 16s**,
   but a ring of foes closes in — exactly when thorns pays off.
+- **🎆 Shrine of Barrage** — **+2 projectiles & +1 pierce for 16s**, a firepower
+  surge that amplifies every weapon — but an elite pack answers the call.
 
 The **Pilgrim's Charm** relic leans into this layer — shrines appear far more
 often and each one also restores health, so a shrine-hunting build becomes
