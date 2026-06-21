@@ -52,6 +52,14 @@ const SYNERGIES = [
     members: ['lance', 'caltrops', 'whip'], need: 2,
     desc: 'Hold the line with reach and barbs. +2 armor, lances/whips pierce +1.',
     mods: { armorBonus: 2, addPierce: 1 } },
+  { id: 'garrison', name: 'Garrison', icon: '🏰', color: '#9fd8a0',
+    members: ['sentry', 'caltrops', 'orbit'], need: 2,
+    desc: 'Fortify your ground with turrets, barbs and wardens. +3 armor, +12% area.',
+    mods: { armorBonus: 3, areaMul: 1.12 } },
+  { id: 'fusillade', name: 'Fusillade', icon: '🎯', color: '#9ad8ff',
+    members: ['sentry', 'bolt', 'spirit'], need: 2,
+    desc: 'Massed ranged fire from every angle. +1 projectile, +14% projectile speed.',
+    mods: { addProj: 1, projSpeedMul: 1.14 } },
 ];
 
 function getSynergy(id) { return SYNERGIES.find(s => s.id === id) || null; }

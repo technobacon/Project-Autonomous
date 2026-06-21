@@ -1007,6 +1007,12 @@ globalThis.__run = function(report) {
     const r = activeSynergies([wi('nova'), wi('chain')]);
     ok('any-2-of-3 set activates (Refraction)', r.some(s => s.id === 'refraction'));
   });
+  sectionTry('synergies: new sets tie in the newer weapons', () => {
+    const wi = id => ({ def: getWeapon(id), level: 1, timer: 0 });
+    ok('Garrison = Sentry + Caltrops', activeSynergies([wi('sentry'), wi('caltrops')]).some(s => s.id === 'garrison'));
+    ok('Fusillade = Sentry + Bolt', activeSynergies([wi('sentry'), wi('bolt')]).some(s => s.id === 'fusillade'));
+    ok('at least 9 synergies now', SYNERGIES.length >= 9);
+  });
   sectionTry('synergies: evolved forms count as their base', () => {
     const a = activeSynergies([wi('inferno'), wi('toxin')]); // inferno = evolved flame
     ok('evolved Flame (Inferno) still triggers Wildfire', a.some(s => s.id === 'wildfire'));

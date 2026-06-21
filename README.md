@@ -125,6 +125,8 @@ building around a theme, so every level-up choice carries a little extra weight:
 | 👻 **Wild Hunt** | Spirit Seekers + Glaive | +1 projectile, +10% projectile speed |
 | 🌈 **Refraction** | any 2 of Prism / Nova / Arc | +10% crit, +0.5× crit damage |
 | 🛡 **Entrench** | any 2 of Lance / Caltrops / Whip | +2 armor, lances/whips pierce +1 |
+| 🏰 **Garrison** | any 2 of Sentry / Caltrops / Orbit | +3 armor, +12% area |
+| 🎯 **Fusillade** | any 2 of Sentry / Bolt / Spirit Seekers | +1 projectile, +14% projectile speed |
 
 Evolved weapons still count as their base, active synergies show under your
 weapon row (and on the pause screen), and the full set lives in the **Codex**.
