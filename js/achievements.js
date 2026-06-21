@@ -42,6 +42,9 @@ const ACHIEVEMENTS = [
   { id: 'marathon',     icon: '🌌', name: 'Endless Light',         desc: 'Survive 20 minutes in a run.',           reward: 150, check: c => c.time >= 1200 },
   { id: 'legend',       icon: '🏆', name: 'Legend',                desc: 'Score 250,000 in a single run.',         reward: 80,  check: c => c.score >= 250000 },
   { id: 'ace',          icon: '🌠', name: 'Ascended Power',        desc: 'Reach level 40 in a run.',               reward: 60,  check: c => c.level >= 40 },
+  { id: 'harvester',    icon: '🌾', name: 'Harvester',             desc: 'Execute 100 foes in a run (Reaper).',    reward: 70,  check: c => c.executes >= 100 },
+  { id: 'riftborn',     icon: '🕳', name: 'Riftborn',              desc: 'Open 60 rifts in a run (Void Rift).',    reward: 60,  check: c => c.riftsOpened >= 60 },
+  { id: 'unbroken',     icon: '🛡', name: 'Unbroken',              desc: 'Reflect 3000 damage in a run (Sentinel).', reward: 70, check: c => c.reflectedDamage >= 3000 },
 ];
 
 function getAchievement(id) { return ACHIEVEMENTS.find(a => a.id === id); }
@@ -65,6 +68,9 @@ const Achievements = {
       gauntletRound: game ? (game.gauntletCleared || 0) : 0,
       eliteKills: game ? (game.eliteKills || 0) : 0,
       championKills: game ? (game.championKills || 0) : 0,
+      executes: game ? (game.executes || 0) : 0,
+      riftsOpened: game ? (game.riftsOpened || 0) : 0,
+      reflectedDamage: game ? (game.reflectedDamage || 0) : 0,
       relicsUnlocked: Save.relicCount(),
       relicLoadoutFull: Save.equippedRelics().length >= Save.relicSlotCount(),
       save: s,

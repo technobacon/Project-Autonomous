@@ -148,6 +148,9 @@ class Game {
     this.bossKills = 0;
     this.eliteKills = 0;
     this.championKills = 0;
+    this.executes = 0;         // foes finished by a hero execute perk (Reaper)
+    this.riftsOpened = 0;      // Void Rift / Event Horizon casts (any pull-rift)
+    this.reflectedDamage = 0;  // damage bounced back by a thorns perk (Sentinel)
     this.score = 0;
     this.shake_ = { mag: 0, t: 0 };
     this.toasts = [];
@@ -505,6 +508,7 @@ class Game {
     if (opts) {
       if (opts.pull) z.pull = opts.pull;
       if (opts.burst) { z.burst = opts.burst; z.burstR = opts.burstR || r; z.burstColor = opts.burstColor || color; }
+      if (opts.pull || opts.burst) this.riftsOpened++;
     }
     this.zones.push(z);
     return z;
@@ -590,7 +594,7 @@ class Game {
     // Reaper's Execute perk: finish off low-health, non-boss foes (deterministic
     // HP-threshold check — read from the hero's perk).
     const perk = this.player.char.perk;
-    if (perk && perk.execute && !e.boss && !e.champion && e.hp > 0 && e.hp < e.maxHp * perk.execute) e.hp = 0;
+    if (perk && perk.execute && !e.boss && !e.champion && e.hp > 0 && e.hp < e.maxHp * perk.execute) { e.hp = 0; this.executes++; }
     if (e.hp <= 0) this.killEnemy(e);
   }
 
@@ -1053,7 +1057,7 @@ class Game {
           // at the attacker (silent — contact resolves many times per second).
           if (lands && !e.dead) {
             const thorns = p.char.perk && p.char.perk.thorns;
-            if (thorns) this.dealDamage(e, e.damage * thorns, p.x, p.y, 40, true);
+            if (thorns) { const refl = e.damage * thorns; this.reflectedDamage += refl; this.dealDamage(e, refl, p.x, p.y, 40, true); }
           }
         }
       }

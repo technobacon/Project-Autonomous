@@ -419,6 +419,33 @@ globalThis.__run = function(report) {
     g2.time = 1201; g2.score = 260000; g2.player.level = 41;
     const ctx = Achievements.context(g2);
     ok('marathon/legend/ace fire on a huge run', getAchievement('marathon').check(ctx) && getAchievement('legend').check(ctx) && getAchievement('ace').check(ctx));
+    // Content-mastery goals read the new run counters.
+    const g3 = new Game(document.getElementById('game')); g3.start('spark', 0);
+    g3.executes = 100; g3.riftsOpened = 60; g3.reflectedDamage = 3000;
+    const c3 = Achievements.context(g3);
+    ok('Harvester/Riftborn/Unbroken fire on their counters', getAchievement('harvester').check(c3) && getAchievement('riftborn').check(c3) && getAchievement('unbroken').check(c3));
+    const g4 = new Game(document.getElementById('game')); g4.start('spark', 0);
+    const c4 = Achievements.context(g4);
+    ok('content goals stay locked at zero', !getAchievement('harvester').check(c4) && !getAchievement('riftborn').check(c4) && !getAchievement('unbroken').check(c4));
+  });
+  sectionTry('counters: execute / rift / thorns increment in the sim', () => {
+    // Reaper execute increments the run counter.
+    const gr = new Game(document.getElementById('game')); gr.start('reaper', 0, { seed: 51, noRelics: true });
+    gr.player.crit = 0; gr.player.weapons = [];
+    const e = gr.spawnEnemy('brute', gr.player.x + 300, gr.player.y, 1, 1); e.hp = e.maxHp * 0.1;
+    gr.dealDamage(e, 1, gr.player.x, gr.player.y, 0);
+    ok('execute counter ticked', gr.executes >= 1);
+    // Opening a pull/burst rift increments riftsOpened; a plain zone does not.
+    const gz = new Game(document.getElementById('game')); gz.start('spark', 0, { seed: 52 });
+    gz.spawnZone(100, 100, 80, 5, 1, '#fff');
+    ok('plain zone does not count as a rift', gz.riftsOpened === 0);
+    gz.spawnZone(100, 100, 80, 5, 1, '#b98bff', 0, { pull: 100, burst: 50 });
+    ok('a rift cast counts', gz.riftsOpened === 1);
+    // Sentinel thorns accrues reflected damage on a connecting hit.
+    const gs = new Game(document.getElementById('game')); gs.start('sentinel', 0, { seed: 53, noRelics: true });
+    const f = gs.spawnEnemy('brute', gs.player.x, gs.player.y, 1, 1); f.hp = 1e6; f.maxHp = 1e6; f.damage = 20; f.x = gs.player.x; f.y = gs.player.y; gs.player.invuln = 0; gs.buildGrid();
+    gs.updateEnemies(1 / 60);
+    ok('reflected-damage counter accrues', gs.reflectedDamage > 0);
   });
   sectionTry('boss log: per-type kills tracked + boss achievements', () => {
     Save.data.bossLog = {}; Save.data.achievements = {};

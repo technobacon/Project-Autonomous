@@ -122,7 +122,7 @@ in `recalc`/spawn/combat.
   Forge = turret perks, Reaper = crit/execute perks, Sentinel = thorns/tank perks;
   Void secret), **10 synergies**,
   **17 omens**, **21 relics** (3 synergy-aware + Pilgrim's Charm), **19 mutators**,
-  **37 achievements**.
+  **40 achievements**.
 - **13 enemy archetypes** (incl. Conjurer=summoner, Acolyte=warder/aura,
   Bombardier=lobber), **9 affixes**, **5 bosses** (Warden/Colossus/Maelstrom/Devourer/Eclipse,
   endless rotation alternates the toughest), **7 biomes** with **4 hazard kinds**
