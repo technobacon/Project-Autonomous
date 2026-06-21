@@ -197,6 +197,37 @@ globalThis.__run = function(report) {
     ok('rift + magnet -> horizon evolution registered', EVOLUTIONS.some(e => e.base === 'rift' && e.into === 'horizon'));
   });
 
+  sectionTry('weapon: Glint ricochets between foes; evolves to Refraction', () => {
+    ok('Glint in the normal pool', !!WEAPONS.glint && WEAPON_LIST.some(w => w.id === 'glint'));
+    ok('Refraction is an evolved (pool-excluded) form', !!WEAPONS.refraction && WEAPONS.refraction.evolved && !WEAPON_LIST.some(w => w.id === 'refraction'));
+    ok('Glint + pierce -> Refraction evolution registered', EVOLUTIONS.some(e => e.base === 'glint' && e.into === 'refraction'));
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 7 });
+    const px = g.player.x, py = g.player.y;
+    // Three foes strung out to the right; a bouncer should carom A -> B -> C.
+    const a = g.spawnEnemy('drifter', px + 40, py, 1, 1);
+    const b = g.spawnEnemy('drifter', px + 120, py, 1, 1);
+    const c = g.spawnEnemy('drifter', px + 200, py, 1, 1);
+    for (const e of [a, b, c]) { e.speed = 0; e.hp = 1e6; e.maxHp = 1e6; }
+    const hp0 = [a.hp, b.hp, c.hp];
+    g.spawnProjectile({ x: px, y: py, angle: 0, speed: 540, damage: 50, radius: 6, pierce: 0, life: 2, color: '#fff', bounce: 3, bounceRange: 260 });
+    g.buildGrid();
+    for (let i = 0; i < 60; i++) { g.updateProjectiles(1 / 60); g.buildGrid(); }
+    ok('first foe was struck', a.hp < hp0[0]);
+    ok('ricochet carried to the second foe', b.hp < hp0[1]);
+    ok('ricochet carried to the third foe', c.hp < hp0[2]);
+    // A plain (bounce:0) shot must NOT chain to a second foe.
+    const g2 = new Game(document.getElementById('game')); g2.start('spark', 0, { seed: 7 });
+    const qx = g2.player.x, qy = g2.player.y;
+    const a2 = g2.spawnEnemy('drifter', qx + 40, qy, 1, 1);
+    const b2 = g2.spawnEnemy('drifter', qx + 120, qy, 1, 1);
+    for (const e of [a2, b2]) { e.speed = 0; e.hp = 1e6; e.maxHp = 1e6; }
+    const b2hp = b2.hp;
+    g2.spawnProjectile({ x: qx, y: qy, angle: 0, speed: 540, damage: 50, radius: 6, pierce: 0, life: 2, color: '#fff' });
+    g2.buildGrid();
+    for (let i = 0; i < 60; i++) { g2.updateProjectiles(1 / 60); g2.buildGrid(); }
+    ok('a non-ricochet shot does not chain to a second foe', a2.hp < 1e6 && b2.hp === b2hp);
+  });
+
   // 5) Bosses: spawn each and kill it.
   sectionTry('spawn + kill every boss', () => {
     for (const bid of Object.keys(BOSSES)) {

@@ -23,6 +23,7 @@ const EVOLUTIONS = [
   { base: 'sentry', passive: 'haste',     passiveLvl: 2, into: 'arsenal' },
   { base: 'meteor', passive: 'area',      passiveLvl: 2, into: 'cataclysm' },
   { base: 'rift',   passive: 'magnet',    passiveLvl: 2, into: 'horizon' },
+  { base: 'glint',  passive: 'pierce',    passiveLvl: 2, into: 'refraction' },
 ];
 
 // Evolved weapon definitions (maxLevel 1; power scales with player stats).
@@ -338,6 +339,28 @@ const EVOLVED_WEAPONS = {
       game.spawnZone(tx, ty, r, 16 * p.might, 1.7, '#b98bff', 0.3,
         { pull: 280, burst: 120 * p.might, burstR: r, burstColor: '#e2c8ff' });
       Audio2.blip(80, 0.22, 'sine', 0.16, -70);
+    },
+  },
+  refraction: {
+    id: 'refraction', name: 'Refraction', icon: '❖', color: '#bdf3ff', maxLevel: 1, evolved: true,
+    desc() { return 'EVOLVED: splinters of light that carom endlessly through the horde.'; },
+    cooldown(l, p) { return cd(0.55, p); },
+    fire(game, inst) {
+      const p = game.player;
+      const count = 3 + p.bonusProj;
+      const dmg = 26 * p.might;
+      const targets = game.nearestEnemies(p.x, p.y, count);
+      const aim = game.aimAngle();
+      for (let i = 0; i < count; i++) {
+        const t = targets[i % Math.max(1, targets.length)];
+        const ang = t ? angleTo(p.x, p.y, t.x, t.y) : aim + (i / count) * TAU;
+        game.spawnProjectile({
+          x: p.x, y: p.y, angle: ang, speed: 620 * p.projSpeed,
+          damage: dmg, radius: 7 * p.area, pierce: 0, life: 1.7,
+          color: '#e6fcff', glow: '#bdf3ff', kb: 80, bounce: 8 + p.bonusPierce, bounceRange: 340 * p.area,
+        });
+      }
+      Audio2.blip(680, 0.1, 'square', 0.1, 200);
     },
   },
 };

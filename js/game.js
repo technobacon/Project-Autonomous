@@ -373,6 +373,20 @@ class Game {
     return best;
   }
 
+  // Nearest live enemy whose id is NOT in the exclusion set. Deterministic
+  // (iterates this.enemies in order) — used by ricochet projectiles to pick
+  // their next target without re-striking a foe they already hit.
+  nearestEnemyExcluding(x, y, maxDist, excl) {
+    let best = null, bd = maxDist * maxDist;
+    for (const e of this.enemies) {
+      if (e.dead) continue;
+      if (excl && excl.has(e.id)) continue;
+      const d = dist2(x, y, e.x, e.y);
+      if (d < bd) { bd = d; best = e; }
+    }
+    return best;
+  }
+
   nearestEnemies(x, y, count) {
     // Small count — collect and partial-sort.
     const arr = [];
@@ -489,6 +503,7 @@ class Game {
       kb: o.kb || 60, chill: o.chill || 0, chillDur: o.chillDur || 0,
       burn: o.burn || 0, hit: null, trail: [],
       boomerang: !!o.boomerang, outT: o.outT || 0.5, bt: 0, returning: false,
+      bounce: o.bounce || 0, bounceRange: o.bounceRange || 260,
     });
   }
 
@@ -1453,7 +1468,22 @@ class Game {
           pr.hitsLeft--;
           if (pr.hitsLeft <= 0) break;
         }
-        if (pr.hitsLeft <= 0) { this.projectiles.splice(i, 1); continue; }
+        if (pr.hitsLeft <= 0) {
+          // Ricochet: redirect to the nearest foe not yet struck (pr.hit keeps
+          // the set, so it never re-hits) and re-arm. Deterministic target pick.
+          if (pr.bounce > 0) {
+            const nt = this.nearestEnemyExcluding(pr.x, pr.y, pr.bounceRange, pr.hit);
+            if (nt) {
+              pr.bounce--;
+              const a = angleTo(pr.x, pr.y, nt.x, nt.y);
+              pr.vx = Math.cos(a) * pr.speed; pr.vy = Math.sin(a) * pr.speed;
+              pr.hitsLeft = pr.maxHits;
+              pr.life = Math.max(pr.life, 0.5); // give it time to reach the target
+              continue;
+            }
+          }
+          this.projectiles.splice(i, 1); continue;
+        }
       }
     }
   }

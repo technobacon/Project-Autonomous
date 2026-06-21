@@ -84,15 +84,17 @@ automatically in your browser (`localStorage`).
 
 ## ⚒ Build variety
 
-**16 weapons** — Light Bolt, Frost Shard, Flame Aura, Orbit Wisps, Nova Burst,
+**17 weapons** — Light Bolt, Frost Shard, Flame Aura, Orbit Wisps, Nova Burst,
 Arc Lightning, Spirit Seekers, Light Whip, **Whirling Glaive** (a returning
 boomerang), **Toxic Flask** (lingering poison pools), **Prism Cross** (rotating
 beams), **Light Lance** (a fast spear that skewers a whole line), **Caltrops**
 (scattered ground spikes for zone control), the **Sentry Turret** (a
 deployable, stationary ally that auto-fires at nearby foes — reward good
 positioning), the **Meteor** (delayed AoE strikes that rain down on distant
-foes), and the **Void Rift** (a rift that drags foes inward, then implodes —
-bunch the horde and annihilate it together) — each with 8 levels.
+foes), the **Void Rift** (a rift that drags foes inward, then implodes —
+bunch the horde and annihilate it together), and **Glint** (a mote of light
+that physically ricochets from foe to foe — pierce feeds it extra bounces) —
+each with 8 levels.
 **16 passives** — damage, attack speed, move speed, area, projectiles, pierce,
 projectile speed, pickup range, max health, regen, XP gain, crit, armor, luck,
 lifesteal, and thorns (Bramble — reflect contact damage).
@@ -124,6 +126,7 @@ a golden **EVOLUTION** — transforming it into a devastating new form:
 | Sentry Turret + Swift Sigil | **Arsenal** — deploys paired, long-lived turrets firing fast piercing volleys |
 | Meteor + Wide Lens | **Cataclysm** — a relentless rain of wide, overlapping strikes |
 | Void Rift + Lodestone | **Event Horizon** — a vast rift that swallows the horde, then annihilates it |
+| Glint + Piercer | **Refraction** — splinters of light that carom endlessly through the horde |
 
 ## ✷ Weapon synergies
 
@@ -451,8 +454,8 @@ js/
   particles.js      # particle + floating-text system
   save.js           # localStorage meta-progression
   content.js        # characters, difficulty tiers + meta-upgrade shop
-  weapons.js        # 16 base weapons (periodic, continuous, boomerang, zones, lances, rifts)
-  evolutions.js     # 16 weapon evolutions + evolution rules
+  weapons.js        # 17 base weapons (periodic, continuous, boomerang, zones, lances, rifts, ricochet)
+  evolutions.js     # 17 weapon evolutions + evolution rules
   synergies.js      # weapon set bonuses (pure function of the arsenal)
   enemies.js        # enemy archetypes + affixes + the spawn Director + bosses/champions
   upgrades.js       # passives + level-up choice generator
@@ -473,7 +476,7 @@ tools/
 ## ✅ Tests
 
 A headless harness stubs the DOM/Canvas/WebAudio APIs and actually runs the
-game — a full simulated run, every weapon, all bosses, all 16 evolutions, the
+game — a full simulated run, every weapon, all bosses, all 17 evolutions, the
 weapon-synergy set bonuses, all 40 achievements, every omen, the relic loadout
 system, the run-history Chronicle, the lifetime-mastery system (ranks +
 per-hero/weapon accrual), the Trials of Light (rule twists + win/fail paths),

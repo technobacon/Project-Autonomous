@@ -502,6 +502,41 @@ const WEAPONS = {
       Audio2.blip(90, 0.16, 'sine', 0.12, -50);
     },
   },
+
+  // -- Glint: a mote of light that ricochets between foes. The only weapon that
+  //    physically caroms target-to-target (Arc Lightning jumps instantly), so it
+  //    excels at clearing scattered packs — and pierce feeds it extra bounces.
+  glint: {
+    id: 'glint', name: 'Glint', icon: '◈', color: '#a6f0ff', maxLevel: 8,
+    desc(l) {
+      return [
+        'Hurl a mote of light that ricochets between foes.',
+        '+1 ricochet.', '+25% damage.', '+1 projectile.',
+        '+1 ricochet.', '+30% damage.', 'Ricochets reach farther.',
+        '+2 ricochets & big damage.',
+      ][l - 1] || 'Maxed.';
+    },
+    cooldown(l, p) { return cd(1.0 - l * 0.04, p); },
+    fire(game, inst) {
+      const p = game.player, l = inst.level;
+      const count = 1 + (l >= 4 ? 1 : 0) + p.bonusProj;
+      const dmg = (15 * (1 + (l >= 3 ? 0.25 : 0) + (l >= 6 ? 0.30 : 0)) + (l >= 8 ? 14 : 0)) * p.might;
+      const bounce = 2 + (l >= 2 ? 1 : 0) + (l >= 5 ? 1 : 0) + (l >= 8 ? 2 : 0) + p.bonusPierce;
+      const range = (240 + (l >= 7 ? 120 : 0)) * p.area;
+      const targets = game.nearestEnemies(p.x, p.y, count);
+      const aim = game.aimAngle();
+      for (let i = 0; i < count; i++) {
+        const t = targets[i % Math.max(1, targets.length)];
+        const ang = t ? angleTo(p.x, p.y, t.x, t.y) : aim + (count > 1 ? (i / count) * TAU : 0);
+        game.spawnProjectile({
+          x: p.x, y: p.y, angle: ang, speed: 540 * p.projSpeed,
+          damage: dmg, radius: 6 * p.area, pierce: 0, life: 1.4,
+          color: '#dffaff', glow: '#a6f0ff', kb: 70, bounce, bounceRange: range,
+        });
+      }
+      Audio2.blip(760, 0.08, 'square', 0.1, 220);
+    },
+  },
 };
 
 const WEAPON_LIST = Object.values(WEAPONS);
