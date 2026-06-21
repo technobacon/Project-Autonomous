@@ -1904,6 +1904,7 @@ class Game {
       this.particles.drawText(ctx, cam);
       this._drawVignette(ctx);
       this._drawHurtFlash(ctx);
+      this._drawTargetIndicators(ctx, cam);
       this._drawHUD(ctx);
     }
   }
@@ -2404,6 +2405,47 @@ class Game {
     g.addColorStop(1, `rgba(255,40,70,${0.5 * a * (0.5 + 0.5 * this._flashMul())})`);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, this.view.w, this.view.h);
+  }
+
+  // Pure geometry: where to place an edge arrow pointing at an off-screen world
+  // target. Returns {x, y, angle} clamped inside the view (inset by `margin`), or
+  // null when the target is already on-screen. Render-only — no sim state.
+  edgeIndicator(tx, ty, cam, margin = 30) {
+    const sx = tx - cam.x, sy = ty - cam.y, W = this.view.w, H = this.view.h;
+    if (sx >= margin && sx <= W - margin && sy >= margin && sy <= H - margin) return null;
+    const cx = W / 2, cy = H / 2, ang = Math.atan2(sy - cy, sx - cx);
+    const dx = Math.cos(ang), dy = Math.sin(ang);
+    const halfW = W / 2 - margin, halfH = H / 2 - margin;
+    let t = Infinity;
+    if (dx > 1e-6) t = Math.min(t, halfW / dx); else if (dx < -1e-6) t = Math.min(t, -halfW / dx);
+    if (dy > 1e-6) t = Math.min(t, halfH / dy); else if (dy < -1e-6) t = Math.min(t, -halfH / dy);
+    if (!isFinite(t)) t = 0;
+    return { x: cx + dx * t, y: cy + dy * t, angle: ang };
+  }
+
+  // Edge arrows for the active boss + any champions while they're off-screen, so
+  // you can always find them in the big world. Pure render (uses edgeIndicator).
+  _drawTargetIndicators(ctx, cam) {
+    const targets = [];
+    if (this.activeBoss && this.activeBoss.hp > 0 && !this.activeBoss.dead) {
+      targets.push({ e: this.activeBoss, color: this.activeBoss.type.color || '#ff5d6c' });
+    }
+    for (const e of this.enemies) if (e.champion && e.hp > 0 && !e.dead) targets.push({ e, color: '#ffd84d' });
+    if (!targets.length) return;
+    ctx.save();
+    const pulse = 0.7 + 0.3 * Math.sin(this.time * 6);
+    for (const t of targets) {
+      const ind = this.edgeIndicator(t.e.x, t.e.y, cam);
+      if (!ind) continue;
+      ctx.save();
+      ctx.translate(ind.x, ind.y);
+      ctx.rotate(ind.angle);
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = t.color; ctx.shadowBlur = 12; ctx.shadowColor = t.color;
+      ctx.beginPath(); ctx.moveTo(13, 0); ctx.lineTo(-7, -8); ctx.lineTo(-7, 8); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
   }
 
   _drawHUD(ctx) {

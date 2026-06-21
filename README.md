@@ -49,7 +49,8 @@ the **Help** screen.
   and the **Herald** raises a *ward* that makes it invulnerable while its
   summoned acolytes live — clear the adds to drop the ward and open your window.
   They hit hard but drop a flood of XP and treasure, and the endless rotation
-  keeps cycling their mechanics.
+  keeps cycling their mechanics. If a boss (or a Champion) wanders off-screen, a
+  pulsing **edge arrow** points the way back to it.
 
 ## ✦ The Sanctuary (meta-progression)
 

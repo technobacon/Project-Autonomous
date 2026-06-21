@@ -1459,6 +1459,20 @@ globalThis.__run = function(report) {
     ok('reduced-flash toggle persists', Save.data.reducedFlash === true);
     Save.data.reducedFlash = false; Save.save();
   });
+  sectionTry('HUD: off-screen boss/champion edge indicator', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 81 });
+    const cam = { x: 0, y: 0 }, W = g.view.w, H = g.view.h;
+    ok('on-screen target needs no arrow', g.edgeIndicator(W / 2, H / 2, cam) === null);
+    const ind = g.edgeIndicator(W + 800, H / 2, cam);
+    ok('off-screen target yields an arrow', !!ind && Number.isFinite(ind.x) && Number.isFinite(ind.y));
+    ok('arrow clamps within the view', ind.x >= 0 && ind.x <= W && ind.y >= 0 && ind.y <= H);
+    ok('arrow points toward the target', Math.abs(ind.angle) < 0.5);
+    // The render path draws indicators for an off-screen boss without error.
+    g.director.spawnBoss('warden');
+    const boss = g.enemies.find(e => e.boss); boss.x = g.player.x + 5000; boss.y = g.player.y + 5000;
+    g.render();
+    ok('render survives with an off-screen boss', Number.isFinite(g.player.x));
+  });
 
   // 11.3) New content (v7): glaive (boomerang), toxin (zones), prism, Comet.
   sectionTry('content: new weapons + evolutions registered', () => {
