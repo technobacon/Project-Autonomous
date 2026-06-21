@@ -728,6 +728,21 @@ globalThis.__run = function(report) {
     ok('phoenix adds revive', m2.reviveBonus === 1);
     ok('mending adds regen', Math.abs(m2.regenBonus - 1.0) < 1e-9);
   });
+  sectionTry('relics: Bramble Mail (thorns) + Split Sigil (projectiles)', () => {
+    ok('both relics registered', !!getRelic('bramble_mail') && !!getRelic('split_sigil'));
+    const m = defaultMods(); applyRelics(m, ['bramble_mail', 'split_sigil']);
+    ok('thorns + projectile fold into mods', m.thornsBonus >= 0.30 - 1e-9 && m.addProj >= 1);
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 91, noRelics: true });
+    const bonus0 = g.player.bonusProj;
+    g.relics = ['bramble_mail', 'split_sigil']; g.mods = applyRelics(defaultMods(), g.relics);
+    g.player.recalc();
+    ok('Split Sigil adds a projectile', g.player.bonusProj === bonus0 + 1);
+    ok('Bramble Mail grants thorns to a plain hero', g.player.thorns >= 0.30 - 1e-9);
+    // Relic thorns reflects in the contact path (no hero perk needed).
+    const f = g.spawnEnemy('brute', g.player.x, g.player.y, 1, 1); f.hp = 1e6; f.maxHp = 1e6; f.damage = 20; f.x = g.player.x; f.y = g.player.y; g.player.invuln = 0; g.buildGrid();
+    const hp0 = f.hp; g.updateEnemies(1 / 60);
+    ok('relic thorns wounds an attacker', f.hp < hp0);
+  });
   sectionTry('relics: save unlock/equip + slot cap', () => {
     Save.data.relics = {}; Save.data.equipped = [];
     ['glass_lens', 'titan_heart', 'chrono_core', 'feathercharm', 'magnetar'].forEach(id => Save.unlockRelic(id));

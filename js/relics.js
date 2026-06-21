@@ -49,6 +49,12 @@ const RELICS = [
   { id: 'lucky_clover', name: 'Lucky Clover', icon: '🍀', color: '#7affc4', cost: 220,
     desc: '+12% luck (better upgrade rolls).',
     apply(m) { m.luckBonus += 0.12; } },
+  { id: 'bramble_mail', name: 'Bramble Mail', icon: '🌵', color: '#9fd86a', cost: 240,
+    desc: 'Reflect 30% of contact damage back at attackers (any hero).',
+    apply(m) { m.thornsBonus += 0.30; } },
+  { id: 'split_sigil', name: 'Split Sigil', icon: '🎏', color: '#ffd1f5', cost: 340,
+    desc: '+1 projectile to every weapon.',
+    apply(m) { m.addProj += 1; } },
   // --- Synergy-aware relics: reward a deep, themed arsenal -----------------
   // These grant nothing at run start (apply is a no-op); their power scales with
   // how many weapon synergies are active, evaluated live in player.recalc.

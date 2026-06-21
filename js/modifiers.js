@@ -19,6 +19,9 @@ function defaultMods() {
     extraChoice: false,
     reviveBonus: 0,   // extra revives (relics)
     regenBonus: 0,    // flat hp/sec regen added (relics)
+    addProj: 0,       // bonus projectiles (relics/omens)
+    addPierce: 0,     // bonus pierce (relics/omens)
+    thornsBonus: 0,   // reflect fraction of contact damage (relics)
   };
 }
 

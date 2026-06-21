@@ -92,10 +92,12 @@ class Player {
     this.dashCdMax = 3.5 * (1 - Math.min(0.6, m('blink')));
     this.dashMaxCharges = 1 + m('echo');
     // Per-hero Blink perk (e.g. Flux): extra charge + faster recharge.
+    this.thorns = 0;   // reflect fraction of contact damage (Sentinel perk + relics)
     const perk = this.char.perk;
     if (perk) {
       if (perk.dashCdMul) this.dashCdMax *= perk.dashCdMul;
       if (perk.dashBonusCharges) this.dashMaxCharges += perk.dashBonusCharges;
+      if (perk.thorns) this.thorns += perk.thorns;
       if (perk.mods) this._applyStatMods(perk.mods);   // flat stat perk (e.g. Reaper crit)
     }
 
@@ -117,6 +119,9 @@ class Player {
     this.luck += mod.luckBonus;
     this.regen += (mod.regenBonus || 0);
     this.lifesteal += (mod.lifesteal || 0);   // omen/relic lifesteal joins the passive
+    this.bonusProj += (mod.addProj || 0);     // relic/omen extra projectiles
+    this.bonusPierce += (mod.addPierce || 0); // relic/omen extra pierce
+    this.thorns += (mod.thornsBonus || 0);    // relic thorns join the perk's
     newMax = Math.round(newMax * mod.hpMul);
 
     // Weapon synergies (set bonuses). A pure function of the current arsenal —
@@ -178,6 +183,7 @@ class Player {
     if (sm.addProj) this.bonusProj += sm.addProj;
     if (sm.addPierce) this.bonusPierce += sm.addPierce;
     if (sm.regenBonus) this.regen += sm.regenBonus;
+    if (sm.thornsBonus) this.thorns += sm.thornsBonus;
   }
 
   hasWeapon(id) { return this.weapons.some(w => w.def.id === id); }

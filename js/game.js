@@ -1059,9 +1059,9 @@ class Game {
           if (lands && e.leech && !e.dead) e.hp = Math.min(e.maxHp, e.hp + e.damage * 1.5);
           // Bulwark thorns: a connecting hit is punished, reflecting damage back
           // at the attacker (silent — contact resolves many times per second).
-          if (lands && !e.dead) {
-            const thorns = p.char.perk && p.char.perk.thorns;
-            if (thorns) { const refl = e.damage * thorns; this.reflectedDamage += refl; this.dealDamage(e, refl, p.x, p.y, 40, true); }
+          if (lands && !e.dead && p.thorns > 0) {
+            const refl = e.damage * p.thorns; this.reflectedDamage += refl;
+            this.dealDamage(e, refl, p.x, p.y, 40, true);
           }
         }
       }
