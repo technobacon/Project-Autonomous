@@ -125,8 +125,8 @@ in `recalc`/spawn/combat.
   **42 achievements**.
 - **13 enemy archetypes** (incl. Conjurer=summoner, Acolyte=warder/aura,
   Bombardier=lobber), **10 affixes**, **7 bosses** (Warden/Colossus/Maelstrom/Devourer/
-  Eclipse/Herald/Ravager, endless rotation cycles the toughest), **8 biomes** with **5 hazard kinds**
-  (strike / field / vortex / beam / hunter; verge has none), **6 shrine types**.
+  Eclipse/Herald/Ravager, endless rotation cycles the toughest), **9 biomes** with **6 hazard kinds**
+  (strike / field / vortex / beam / hunter / gale; verge has none), **6 shrine types**.
 - **Modes:** Survival, Gauntlet (boss rush), Daily (date-seeded), Trials (9-node
   unlock chain), Custom Run (stack mutators, scaled payout).
 - **Systems:** Blink dash (charge-based, meta upgrades Quickstep/Echo Step, per-hero

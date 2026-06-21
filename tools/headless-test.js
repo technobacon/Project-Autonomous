@@ -1075,7 +1075,7 @@ globalThis.__run = function(report) {
     for (const b of BIOMES.filter(x => x.hazard)) {
       const h = b.hazard;
       const sized = h.kind === 'beam' ? (typeof h.len === 'number' && typeof h.width === 'number') : Array.isArray(h.radius);
-      ok(b.id + ' hazard well-formed', (h.kind === 'strike' || h.kind === 'field' || h.kind === 'vortex' || h.kind === 'beam' || h.kind === 'hunter') &&
+      ok(b.id + ' hazard well-formed', (h.kind === 'strike' || h.kind === 'field' || h.kind === 'vortex' || h.kind === 'beam' || h.kind === 'hunter' || h.kind === 'gale') &&
         Array.isArray(h.every) && sized && typeof h.warn === 'number' &&
         typeof h.name === 'string' && typeof h.icon === 'string');
     }
@@ -1090,6 +1090,39 @@ globalThis.__run = function(report) {
       const d = BIOMES.find(b => b.id === 'duskmoor');
       return d && d.hazard && d.hazard.kind === 'hunter' && typeof d.hazard.speed === 'number' && BIOMES.length >= 8;
     })());
+    ok('a ninth biome (Stormveil) with a gale current exists', (() => {
+      const s = BIOMES.find(b => b.id === 'stormveil');
+      return s && s.hazard && s.hazard.kind === 'gale' && typeof s.hazard.push === 'number' && BIOMES.length >= 9;
+    })());
+  });
+  sectionTry('hazards: Galewinds shove the player along a fixed current', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 33 });
+    const hz = BIOMES.find(b => b.id === 'stormveil').hazard;
+    g.spawnHazard(hz);
+    const h = g.hazards[0];
+    ok('gale spawns with a push + wind direction', h.kind === 'gale' && h.push > 0 && Number.isFinite(h.windAng));
+    h.phase = 'active'; h.t = 0;
+    // Pin the player at the centre; the current should displace them along windAng.
+    g.player.x = h.x; g.player.y = h.y; g.player.invuln = 1e9;
+    const cw = Math.cos(h.windAng), sw = Math.sin(h.windAng);
+    for (let i = 0; i < 30; i++) g.updateHazards(1 / 60);
+    const moved = (g.player.x - h.x) * cw + (g.player.y - h.y) * sw; // displacement along the wind
+    ok('the current pushed the player downwind', moved > 1);
+    // A foe inside the band is shoved the same way (deterministic, pure geometry).
+    const g2 = new Game(document.getElementById('game')); g2.start('spark', 0, { seed: 33 });
+    g2.spawnHazard(hz); const h2 = g2.hazards[0]; h2.phase = 'active'; h2.t = 0;
+    const e = g2.spawnEnemy('drifter', h2.x, h2.y, 1, 1); e.speed = 0; g2.buildGrid();
+    const ex0 = e.x, ey0 = e.y;
+    for (let i = 0; i < 30; i++) { g2.updateHazards(1 / 60); g2.buildGrid(); }
+    const eMoved = (e.x - ex0) * Math.cos(h2.windAng) + (e.y - ey0) * Math.sin(h2.windAng);
+    ok('foes are carried downwind too', eMoved > 1);
+    // Outside the band: no push (escapable by leaving the current).
+    const g3 = new Game(document.getElementById('game')); g3.start('spark', 0, { seed: 33 });
+    g3.spawnHazard(hz); const h3 = g3.hazards[0]; h3.phase = 'active'; h3.t = 0;
+    g3.player.x = h3.x + h3.r + 200; g3.player.y = h3.y; g3.player.invuln = 1e9;
+    const ox = g3.player.x, oy = g3.player.y;
+    for (let i = 0; i < 30; i++) g3.updateHazards(1 / 60);
+    ok('outside the current the player is not pushed', Math.abs(g3.player.x - ox) < 1e-9 && Math.abs(g3.player.y - oy) < 1e-9);
   });
   sectionTry('hazards: the Wisplight homes in on the player', () => {
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 26 });

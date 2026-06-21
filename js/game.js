@@ -50,6 +50,13 @@ const BIOMES = [
     nebula: [[60, 200, 150], [90, 150, 230], [120, 90, 200]], bias: { wraith: 1.5, stalker: 1.5, drifter: 1.3 },
     hazard: { kind: 'hunter', name: 'Wisplight', icon: '🟢', warnTip: 'wisps wake and hunt you — keep moving, never get cornered',
       every: [3.8, 5.6], count: [1, 2], radius: [52, 70], warn: 0.9, dur: 6.5, speed: 78, dot: 34, color: '#7affc4' } },
+  // Appended last so existing biome indices stay put (determinism warp-checks key
+  // off them). Stormveil's Galewinds shove the player along a fixed current — the
+  // inverse of the Riftvortex — forcing you to fight the wind to hold your line.
+  { id: 'stormveil', name: 'Stormveil', base: '#05080d', grid: 'rgba(120,165,215,0.08)', accent: '#bfe0ff',
+    nebula: [[120, 170, 235], [90, 130, 215], [160, 195, 255]], bias: { runner: 1.5, swarm: 1.4, drifter: 1.3 },
+    hazard: { kind: 'gale', name: 'Galewinds', icon: '🌬', warnTip: 'currents shove you off your line — fight the wind',
+      every: [3.4, 5.0], count: [1, 1], radius: [175, 235], warn: 0.85, dur: 5.0, dot: 8, push: 118, color: '#bcdcff' } },
 ];
 function biomeForTime(t) { return BIOMES[Math.floor(Math.max(0, t) / BIOME_SECONDS) % BIOMES.length]; }
 function biomeIndexForTime(t) { return Math.floor(Math.max(0, t) / BIOME_SECONDS); }
@@ -1697,6 +1704,10 @@ class Game {
           this._hunterChase(h, dt);      // a wisp that slowly homes on the player
           h.tick -= dt;
           if (h.tick <= 0) { h.tick = 0.2; this._fieldTick(h); }
+        } else if (h.kind === 'gale') {
+          this._galePush(h, dt);         // a current that shoves the player + foes
+          h.tick -= dt;
+          if (h.tick <= 0) { h.tick = 0.25; this._fieldTick(h); }
         } else {
           h.tick -= dt;
           if (h.tick <= 0) { h.tick = 0.25; this._fieldTick(h); }
@@ -1739,6 +1750,21 @@ class Game {
       this.hazards.push({
         kind: 'hunter', x, y, r: rand(hz.radius[0], hz.radius[1]), color: hz.color,
         dot: hz.dot || 0, speed: hz.speed || 70,
+        warn: hz.warn, dur: hz.dur || 0, fade: 0.5, phase: 'warn', t: 0, tick: 0,
+      });
+      return;
+    }
+    // Galewinds: a broad current centred near the player that shoves everything
+    // along a single seeded direction for its lifetime. No burst — the threat is
+    // positional (it pushes you off your kiting line and into the horde/hazards),
+    // backed by a light dust DoT. Pure-geometry push -> deterministic.
+    if (hz.kind === 'gale') {
+      const a = rand(0, TAU), d = rand(0, 150);
+      const x = clamp(this.player.x + Math.cos(a) * d, 40, this.world.w - 40);
+      const y = clamp(this.player.y + Math.sin(a) * d, 40, this.world.h - 40);
+      this.hazards.push({
+        kind: 'gale', x, y, r: rand(hz.radius[0], hz.radius[1]), color: hz.color,
+        dot: hz.dot || 0, push: hz.push || 110, windAng: rand(0, TAU),
         warn: hz.warn, dur: hz.dur || 0, fade: 0.5, phase: 'warn', t: 0, tick: 0,
       });
       return;
@@ -1803,6 +1829,24 @@ class Game {
       const f = 1 - d / h.r;
       const pull = 165 * f * dt;
       e.x += Math.cos(a) * pull; e.y += Math.sin(a) * pull;
+    }
+  }
+
+  // Galewinds push: shove the player (and foes) along a fixed seeded direction
+  // each frame while inside the current — a pure function of positions/windAng,
+  // so it's deterministic and replay-fair. Escapable by walking out of the band.
+  _galePush(h, dt) {
+    const p = this.player, pr2 = h.r * h.r;
+    const cw = Math.cos(h.windAng), sw = Math.sin(h.windAng);
+    if (p.alive && dist2(h.x, h.y, p.x, p.y) < pr2) {
+      const push = h.push * dt;
+      p.x = clamp(p.x + cw * push, p.radius, this.world.w - p.radius);
+      p.y = clamp(p.y + sw * push, p.radius, this.world.h - p.radius);
+    }
+    for (const e of this.enemiesInRadius(h.x, h.y, h.r)) {
+      if (e.boss) continue;
+      const push = h.push * 0.8 * dt;
+      e.x += cw * push; e.y += sw * push;
     }
   }
 
@@ -2366,6 +2410,18 @@ class Game {
               if (s === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
             }
             ctx.stroke();
+          }
+        }
+        // Galewinds: drifting streaks along the wind direction convey the current.
+        if (h.kind === 'gale') {
+          const cw = Math.cos(h.windAng), sw = Math.sin(h.windAng);
+          ctx.globalAlpha = 0.5 * a;
+          ctx.strokeStyle = h.color; ctx.lineWidth = 2;
+          for (let k = 0; k < 5; k++) {
+            const off = ((this.time * 110 + k * (r * 0.5)) % (r * 2)) - r;
+            const perp = ((k - 2) / 2) * r * 0.7;
+            const sx = x + cw * off - sw * perp, sy = y + sw * off + cw * perp;
+            ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + cw * 26, sy + sw * 26); ctx.stroke();
           }
         }
       }
