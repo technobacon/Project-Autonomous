@@ -1249,6 +1249,16 @@ globalThis.__run = function(report) {
     ok('goal text reads naturally', /Survive/.test(trialGoalText(k)));
     ok('getTrial resolves + misses cleanly', getTrial('kindling') === k && getTrial('nope') === null);
   });
+  sectionTry("trials: Warden's End — boss-count objective + chain tail", () => {
+    const t = getTrial('wardens_end');
+    ok("Warden's End registered as a Sentinel boss trial", !!t && t.win.type === 'bosses' && t.char === 'sentinel');
+    ok('goal + progress text use boss wording', /Fell/.test(trialGoalText(t)) && trialProgressText(t, { time: 0, kills: 0, score: 0, bossKills: 1 }).includes('/'));
+    ok('locked until annihilation is cleared', !trialUnlocked(t, () => false));
+    ok('opens once annihilation is done', trialUnlocked(t, id => id === 'annihilation'));
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 7 }); g.trial = t;
+    g.bossKills = 3; ok('objective unmet at 3 bosses', !trialGoalMet(t, g));
+    g.bossKills = 4; ok('objective met at 4 bosses', trialGoalMet(t, g) && trialCurrent(t, g) === 4);
+  });
   sectionTry('trials: start forces config, ignores omens & relics', () => {
     Save.data.relics = { volatile: true }; Save.data.equipped = ['volatile'];
     Save.data.trials = { kindling: true };   // unlock Glass (req: kindling)

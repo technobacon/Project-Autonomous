@@ -59,6 +59,10 @@ const TRIALS = [
     desc: 'The Abyss itself, with extra foes. Amass a score of 130,000.',
     req: ['ascendant'],
     mods: { enemyCountMul: 1.3 }, win: { type: 'score', value: 130000 }, reward: 320 },
+  { id: 'wardens_end', name: "Warden's End", icon: '🛡', color: '#86c5ff', char: 'sentinel', diff: 2,
+    desc: 'Endure the boss onslaught as the Sentinel on Nightmare — fell 4 bosses.',
+    req: ['annihilation'],
+    mods: {}, win: { type: 'bosses', value: 4 }, reward: 300 },
 ];
 
 function getTrial(id) { return TRIALS.find(t => t.id === id) || null; }
