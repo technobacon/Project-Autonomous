@@ -77,6 +77,15 @@ const MODIFIERS = [
   { id: 'bloodpact', name: 'Blood Pact', icon: '🩸', color: '#e0405a',
     desc: 'Heal on kills and hit harder as you bleed, but very thin skin.',
     mods: { lifesteal: 0.005, berserk: true, hpMul: 0.75 } },
+  { id: 'volley', name: 'Volley', icon: '🎏', color: '#ffd1f5',
+    desc: '+1 projectile to every weapon, but foes are tougher.',
+    mods: { addProj: 1, enemyHpMul: 1.2 } },
+  { id: 'lancet', name: 'Lancet', icon: '🔱', color: '#cfe3ff',
+    desc: '+2 pierce & +25% projectile speed, but you fire slower.',
+    mods: { addPierce: 2, projSpeedMul: 1.25, hasteMul: 0.85 } },
+  { id: 'thornward', name: 'Thornward', icon: '🌵', color: '#9fd86a',
+    desc: 'Reflect 40% of contact damage & +2 armor, but you hit softer.',
+    mods: { thornsBonus: 0.40, armorBonus: 2, dmgMul: 0.85 } },
 ];
 
 const MODIFIER_LIST = MODIFIERS.slice();

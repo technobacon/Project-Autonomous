@@ -548,6 +548,13 @@ globalThis.__run = function(report) {
     const before = gv.player.hp;
     gv.killEnemy(gv.enemies[0]);
     ok('vampiric heals on kill', gv.player.hp > before);
+    // Channel-driven omens (Volley / Lancet / Thornward) actually move the stats.
+    const gp = new Game(document.getElementById('game')); gp.start('spark', 0, { omen: 'volley' });
+    ok('Volley adds a projectile', gp.player.bonusProj === g0.player.bonusProj + 1);
+    const gl = new Game(document.getElementById('game')); gl.start('spark', 0, { omen: 'lancet' });
+    ok('Lancet adds pierce', gl.player.bonusPierce === g0.player.bonusPierce + 2);
+    const gt = new Game(document.getElementById('game')); gt.start('spark', 0, { omen: 'thornward' });
+    ok('Thornward grants thorns to any hero', gt.player.thorns >= 0.40 - 1e-9);
   });
   sectionTry('omen draft builds + omen achievement', () => {
     ok('draftOmens returns 3 distinct', new Set(draftOmens(3).map(o => o.id)).size === 3);

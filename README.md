@@ -151,11 +151,12 @@ deterministic and the Daily Challenge stays fair.
 
 Before each run you draft **1 of 3 random Omens** (or play with none) — global
 modifiers that reshape the whole run, usually a strong upside with a tradeoff.
-There are **17**, e.g. *Glass Cannon* (+60% damage, half HP), *Swarm Tide* (far
+There are **20**, e.g. *Glass Cannon* (+60% damage, half HP), *Swarm Tide* (far
 more foes, far more loot), *Berserker* (the lower your health, the harder you
-hit), *Vampiric* (heal on kill), *Greed* (+80% shards, tougher foes), *Colossal*,
-*Featherweight*, *Executioner*, *Bulwark*, *Abundance*, and more. Every run
-opens differently.
+hit), *Vampiric* (heal on kill), *Greed* (+80% shards, tougher foes), *Volley*
+(+1 projectile everywhere), *Lancet* (+2 pierce), *Thornward* (reflect contact
+damage), *Colossal*, *Featherweight*, *Executioner*, *Bulwark*, *Abundance*, and
+more. Every run opens differently.
 
 ## 🔮 Relics (permanent loadout)
 
