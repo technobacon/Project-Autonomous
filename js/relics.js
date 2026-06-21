@@ -55,6 +55,12 @@ const RELICS = [
   { id: 'split_sigil', name: 'Split Sigil', icon: '🎏', color: '#ffd1f5', cost: 340,
     desc: '+1 projectile to every weapon.',
     apply(m) { m.addProj += 1; } },
+  { id: 'piercer_eye', name: "Piercer's Eye", icon: '🏹', color: '#cfe3ff', cost: 320,
+    desc: '+1 pierce to every weapon — and +1 ricochet to bouncing shots.',
+    apply(m) { m.addPierce += 1; } },
+  { id: 'swift_quiver', name: 'Swift Quiver', icon: '🪁', color: '#8affc1', cost: 200,
+    desc: '+20% projectile speed.',
+    apply(m) { m.projSpeedMul *= 1.20; } },
   // --- Synergy-aware relics: reward a deep, themed arsenal -----------------
   // These grant nothing at run start (apply is a no-op); their power scales with
   // how many weapon synergies are active, evaluated live in player.recalc.

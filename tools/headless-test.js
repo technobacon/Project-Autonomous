@@ -865,6 +865,17 @@ globalThis.__run = function(report) {
     const hp0 = f.hp; g.updateEnemies(1 / 60);
     ok('relic thorns wounds an attacker', f.hp < hp0);
   });
+  sectionTry('relics: Piercers Eye (pierce/ricochet) + Swift Quiver (proj speed)', () => {
+    ok('both relics registered', !!getRelic('piercer_eye') && !!getRelic('swift_quiver'));
+    const m = defaultMods(); applyRelics(m, ['piercer_eye', 'swift_quiver']);
+    ok('pierce + projectile-speed fold into mods', m.addPierce >= 1 && Math.abs(m.projSpeedMul - 1.20) < 1e-9);
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 73, noRelics: true });
+    const pierce0 = g.player.bonusPierce, ps0 = g.player.projSpeed;
+    g.relics = ['piercer_eye', 'swift_quiver']; g.mods = applyRelics(defaultMods(), g.relics);
+    g.player.recalc();
+    ok('Piercers Eye adds pierce (which Glint spends as a ricochet)', g.player.bonusPierce === pierce0 + 1);
+    ok('Swift Quiver speeds projectiles', g.player.projSpeed > ps0 + 1e-9);
+  });
   sectionTry('relics: save unlock/equip + slot cap', () => {
     Save.data.relics = {}; Save.data.equipped = [];
     ['glass_lens', 'titan_heart', 'chrono_core', 'feathercharm', 'magnetar'].forEach(id => Save.unlockRelic(id));
