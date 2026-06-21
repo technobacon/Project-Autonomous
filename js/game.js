@@ -615,6 +615,7 @@ class Game {
       for (let i = 0; i < gc; i++) this.spawnGem(e.x + rand(-34, 34), e.y + rand(-34, 34), Math.ceil(e.xp / gc));
       this.spawnPickup(e.x, e.y, 'chest');
       this.spawnPickup(e.x + 26, e.y, 'health');
+      this.spawnPickup(e.x - 26, e.y, 'overdrive');   // champions always drop an Overdrive
       this.toast('✦ ' + (e.eliteName || 'Champion') + ' slain!');
     } else {
       if (e.elite) Audio2.eliteDie(); else Audio2.enemyDie();
@@ -625,6 +626,7 @@ class Game {
         this.eliteKills++;
         for (let i = 0; i < 3; i++) this.spawnGem(e.x + rand(-26, 26), e.y + rand(-26, 26), Math.max(1, Math.ceil(e.xp / 4)));
         if (chance(0.25)) this.spawnPickup(e.x, e.y, 'health');
+        if (chance(0.05)) this.spawnPickup(e.x, e.y, 'overdrive');   // rare elite Overdrive
       }
       // Rare drops.
       if (chance(0.012)) this.spawnPickup(e.x, e.y, 'health');
@@ -1666,6 +1668,15 @@ class Game {
         this.openLevelUp();
         break;
       }
+      case 'overdrive': {
+        // A rare burst of power: a short, sweeping all-offense surge.
+        p.addBuff('overdrive', { dmgMul: 1.4, hasteMul: 1.4, speedMul: 1.15 }, 8);
+        this.particles.ring(p.x, p.y, 30, { color: '#ff4dff', speed: 280, life: 0.7, size: 4 });
+        Audio2.levelUp(); this.shake(8, 0.3);
+        this.particles.text(p.x, p.y - 24, 'OVERDRIVE!', { color: '#ff4dff', size: 20 });
+        this.toast('⚡ Overdrive! +40% damage & attack speed');
+        break;
+      }
     }
   }
 
@@ -2093,8 +2104,8 @@ class Game {
 
   _drawPickups(ctx, cam) {
     ctx.save();
-    const icons = { health: '✚', magnet: '🧲', bomb: '💣', chest: '🎁' };
-    const cols = { health: '#7affc4', magnet: '#ffb3e6', bomb: '#ffd84d', chest: '#ffe14d' };
+    const icons = { health: '✚', magnet: '🧲', bomb: '💣', chest: '🎁', overdrive: '⚡' };
+    const cols = { health: '#7affc4', magnet: '#ffb3e6', bomb: '#ffd84d', chest: '#ffe14d', overdrive: '#ff4dff' };
     for (const k of this.pickups) {
       const x = k.x - cam.x, y = k.y - cam.y;
       const bob = Math.sin(k.t * 4) * 3;

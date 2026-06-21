@@ -219,6 +219,19 @@ globalThis.__run = function(report) {
   sectionTry('apply all pickups', () => {
     ['health', 'magnet', 'bomb', 'chest'].forEach(k => game.applyPickup(k));
   });
+  sectionTry('pickups: Overdrive grants a timed all-offense surge', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 91 });
+    const m0 = g.player.might, h0 = g.player.haste;
+    g.applyPickup('overdrive');
+    ok('overdrive boosts damage + attack speed', g.player.might > m0 + 1e-9 && g.player.haste > h0 + 1e-9 && g.player.hasBuff('overdrive'));
+    for (let i = 0; i < 60 * 9; i++) g.player.update(1 / 60);   // past the 8s window
+    ok('overdrive wears off', !g.player.hasBuff('overdrive') && Math.abs(g.player.might - m0) < 1e-4);
+    // Champions reliably drop one.
+    const g2 = new Game(document.getElementById('game')); g2.start('spark', 0, { seed: 92 });
+    const c = g2.spawnEnemy('brute', g2.player.x + 80, g2.player.y, 1, 1); g2.makeChampion(c, 2);
+    g2.killEnemy(c);
+    ok('a champion drops an Overdrive', g2.pickups.some(k => k.kind === 'overdrive'));
+  });
 
   // 5b) Blink dash: skill reposition with i-frames + cooldown.
   sectionTry('dash: blinks, grants i-frames, then goes on cooldown', () => {

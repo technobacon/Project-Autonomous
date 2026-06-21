@@ -258,7 +258,8 @@ loot:
   (blinks toward you in sudden lunges) — **9** in all.
 
 Periodically a named **Champion** rises — a two-affix mini-boss with its own
-health bar that drops a chest. And distinct foes prowl the field: the **Stalker**
+health bar that drops a chest **and a rare ⚡ Overdrive orb** (a short, sweeping
+surge of +40% damage & attack speed; elites occasionally drop one too). And distinct foes prowl the field: the **Stalker**
 (orbits and harasses you at range), the **Bomber** (closes in, then detonates),
 the **Conjurer** (an arcane caster that *summons fresh waves of motes*), and the
 **Acolyte** — a support caster whose aura **empowers every foe around it**, making
