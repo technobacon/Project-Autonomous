@@ -187,6 +187,26 @@ globalThis.__run = function(report) {
     }
   });
 
+  sectionTry('boss: Eclipse alternates a shield phase + open window', () => {
+    ok('eclipse registered + in the endless rotation + gauntlet', !!BOSSES.eclipse && BOSSES.eclipse.ai === 'boss_eclipse' && ENDLESS_BOSSES.includes('eclipse'));
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 22 });
+    g.player.invuln = 1e9; const origMove = Input.moveVector; Input.moveVector = () => ({ x: 0, y: 0 });
+    g.director.spawnBoss('eclipse');
+    const boss = g.enemies.find(e => e.boss);
+    ok('eclipse opens vulnerable', boss.type.id === 'eclipse' && boss.shieldPhase === false);
+    // Vulnerable: damage lands.
+    const hp0 = boss.hp; g.dealDamage(boss, 500, g.player.x, g.player.y, 0);
+    ok('damage lands while open', boss.hp < hp0);
+    // Force the shield phase: damage is fully blocked.
+    boss.shieldPhase = true; boss.phaseT = 1.5; boss.shootTimer = 0.05;
+    const hp1 = boss.hp; g.dealDamage(boss, 5000, g.player.x, g.player.y, 0);
+    ok('shielded phase blocks all damage', boss.hp === hp1);
+    // It sprays bolts while shielded, then cycles back to open.
+    let sawShots = false; const pc0 = g.enemyProjectiles.length;
+    for (let i = 0; i < 60 * 3; i++) { g.update(1 / 60); if (g.enemyProjectiles.length > pc0) sawShots = true; if (!boss.shieldPhase) break; }
+    Input.moveVector = origMove;
+    ok('eclipse fires while shielded then reopens', sawShots && boss.shieldPhase === false);
+  });
   sectionTry('boss: Maelstrom weaves a spiral + ring-nova', () => {
     ok('maelstrom registered + scheduled', !!BOSSES.maelstrom && BOSSES.maelstrom.ai === 'boss_maelstrom' &&
       BOSS_SCHEDULE.some(s => s.boss === 'maelstrom') && ENDLESS_BOSSES.includes('maelstrom'));

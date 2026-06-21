@@ -119,6 +119,13 @@ const BOSSES = {
     hp: 4800, speed: 52, radius: 62, damage: 42, xp: 220, ai: 'boss_warden', shape: 'star',
     shootCd: 1.0, projSpeed: 240, projDmg: 18,
   },
+  eclipse: {
+    id: 'eclipse', name: 'The Eclipse', color: '#6c7bff', boss: true,
+    hp: 4200, speed: 48, radius: 58, damage: 40, xp: 200, ai: 'boss_eclipse', shape: 'star',
+    // Alternates a shielded (untouchable, bullet-spraying) phase with an open
+    // vulnerable window — wait out the shield, then burst it down.
+    shootCd: 1.0, projSpeed: 210, projDmg: 15, shieldDur: 4.0, openDur: 6.0,
+  },
 };
 
 const BOSS_SCHEDULE = [
@@ -128,9 +135,9 @@ const BOSS_SCHEDULE = [
   { time: 600, boss: 'devourer' },   // 10:00
 ];
 
-// Past the scheduled bosses, the endless rotation alternates the two toughest
-// so late-game encounters keep varying their mechanics.
-const ENDLESS_BOSSES = ['devourer', 'maelstrom'];
+// Past the scheduled bosses, the endless rotation cycles the toughest so
+// late-game encounters keep varying their mechanics.
+const ENDLESS_BOSSES = ['devourer', 'maelstrom', 'eclipse'];
 
 class Director {
   constructor(game) {
@@ -306,7 +313,7 @@ class Director {
   }
 
   _spawnGauntletRound(round) {
-    const keys = ['warden', 'colossus', 'maelstrom', 'devourer'];
+    const keys = ['warden', 'colossus', 'maelstrom', 'devourer', 'eclipse'];
     const count = round >= 6 ? 2 : 1;        // double bosses in later rounds
     const scale = 1 + (round - 1) * 0.5;     // escalating boss HP
     const dmg = 1 + (round - 1) * 0.12;

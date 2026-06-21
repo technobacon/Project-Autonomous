@@ -43,9 +43,11 @@ the **Help** screen.
 - Survive long enough and **bosses** arrive (3:00, 6:00, 8:00, 10:00, then
   endlessly). Each fights differently — the **Warden** sprays radial volleys,
   the **Colossus** lobs aimed shots and summons adds, the **Maelstrom** weaves an
-  ever-rotating *spiral of bolts* punctuated by a full ring-nova, and the
-  **Devourer** does it all, faster. They hit hard but drop a flood of XP and
-  treasure, and the endless rotation keeps alternating their mechanics.
+  ever-rotating *spiral of bolts* punctuated by a full ring-nova, the
+  **Devourer** does it all faster, and the **Eclipse** cycles between an
+  untouchable *shield phase* (spraying bolts) and an open window you must burst.
+  They hit hard but drop a flood of XP and treasure, and the endless rotation
+  keeps cycling their mechanics.
 
 ## ✦ The Sanctuary (meta-progression)
 

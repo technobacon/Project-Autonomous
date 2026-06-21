@@ -402,6 +402,7 @@ class Game {
       leech: false, frenzied: false, phaser: false, phaseT: 0,
       castFx: 0,   // render-only conjure telegraph (summoner archetype)
       spin: 0, novaT: 0,   // boss spiral angle + nova cadence (Maelstrom)
+      shieldPhase: false, phaseT: 0,   // Eclipse boss: shielded/open rhythm
       warded: 0,   // remaining "empowered by an Acolyte" buff time (sim state)
     };
     this.enemies.push(e);
@@ -532,6 +533,8 @@ class Game {
   // ---- Combat resolution ------------------------------------------------
   dealDamage(e, amount, fromX, fromY, kb = 0, silent = false) {
     if (e.dead) return;
+    // The Eclipse is untouchable during its shield phase (a deflect sparkle).
+    if (e.shieldPhase) { if (!silent) this.particles.spawn(e.x, e.y, { color: '#9fd8ff', size: 3, life: 0.12, speed: 0 }); return; }
     const crit = chance(this.player.crit);
     let dmg = amount * (crit ? this.player.critMult : 1);
     // Berserker omen: bonus damage scaling with the player's missing health.
@@ -719,6 +722,8 @@ class Game {
     this.activeBoss = e;
     // Stagger the Maelstrom's first ring-nova so it doesn't fire on arrival.
     e.spin = 0; e.novaT = (e.type.novaCd || 5) * 0.7;
+    // The Eclipse starts in its open (vulnerable) phase.
+    e.shieldPhase = false; e.phaseT = e.type.openDur || 6.0;
     Audio2.bossWarn();
     this.shake(10, 0.5);
     this.toast('☠ ' + e.type.name + ' approaches!');
@@ -1105,6 +1110,32 @@ class Game {
               const c = this.spawnEnemy('runner', e.x + rand(-30, 30), e.y + rand(-30, 30), 1 + this.time / 120, 1);
             }
           }
+        }
+        break;
+      }
+      case 'boss_eclipse': {
+        // Alternates a shielded phase (untouchable, sprays radial bolts) with an
+        // open window (vulnerable, chases + aimed shots). dt-driven timers and a
+        // fixed-step spin — deterministic. Damage is blocked in dealDamage while
+        // shieldPhase is set.
+        e.phaseT -= dt;
+        if (e.shieldPhase) {
+          e.shootTimer -= dt;
+          if (e.shootTimer <= 0) {
+            e.shootTimer = 0.7;
+            e.spin += 0.55;
+            const n = 14;
+            for (let k = 0; k < n; k++) this.spawnEnemyProjectile(e.x, e.y, e.spin + (k / n) * TAU, e.type.projSpeed || 210, e.type.projDmg || 15, '#9fb0ff');
+          }
+          if (e.phaseT <= 0) { e.shieldPhase = false; e.phaseT = e.type.openDur || 6.0; this.toast('☀ The Eclipse opens — strike now!'); }
+        } else {
+          e.x += Math.cos(ang) * spd * dt; e.y += Math.sin(ang) * spd * dt;
+          e.shootTimer -= dt;
+          if (e.shootTimer <= 0) {
+            e.shootTimer = e.type.shootCd || 1.0;
+            for (let k = -1; k <= 1; k++) this.spawnEnemyProjectile(e.x, e.y, ang + k * 0.22, e.type.projSpeed || 210, e.type.projDmg || 15, '#6c7bff');
+          }
+          if (e.phaseT <= 0) { e.shieldPhase = true; e.phaseT = e.type.shieldDur || 4.0; this.shake(8, 0.3); this.toast('🌑 The Eclipse shields!'); }
         }
         break;
       }
@@ -1896,6 +1927,17 @@ class Game {
         ctx.globalAlpha = 0.5; ctx.strokeStyle = '#ffce5a'; ctx.lineWidth = 1.6;
         ctx.shadowBlur = 8; ctx.shadowColor = '#ffce5a';
         ctx.beginPath(); ctx.arc(x, y, e.radius + 3, 0, TAU); ctx.stroke();
+        ctx.restore();
+      }
+      // Eclipse shield phase: a bright rotating barrier ring (render-only tell).
+      if (e.shieldPhase) {
+        ctx.save();
+        const pulse = 1 + Math.sin(this.time * 6) * 0.06;
+        ctx.globalAlpha = 0.8; ctx.strokeStyle = '#9fd8ff'; ctx.lineWidth = 4;
+        ctx.shadowBlur = 20; ctx.shadowColor = '#9fd8ff';
+        ctx.beginPath(); ctx.arc(x, y, (e.radius + 10) * pulse, 0, TAU); ctx.stroke();
+        ctx.globalAlpha = 0.35;
+        ctx.beginPath(); ctx.arc(x, y, (e.radius + 18) * pulse, 0, TAU); ctx.stroke();
         ctx.restore();
       }
       // Conjure burst: an expanding ring the instant a Conjurer summons (render-only).
