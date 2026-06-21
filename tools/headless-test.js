@@ -1311,6 +1311,22 @@ globalThis.__run = function(report) {
     const g = new Game(document.getElementById('game')); g.start('astra', 0, { seed: 34 });
     ok('Astra starts wielding the Lance', g.player.hasWeapon('lance'));
   });
+  sectionTry('expansion: Flux hero is built around the Blink', () => {
+    const f = getCharacter('flux');
+    ok('Flux exists, spirit start, buyable, has a perk', f && f.id === 'flux' && f.startWeapon === 'spirit' && f.cost > 0 && !f.secret && !!f.perk);
+    Save.data.meta.echo = 0; Save.data.meta.blink = 0;
+    const base = new Game(document.getElementById('game')); base.start('spark', 0, { seed: 36 });
+    const g = new Game(document.getElementById('game')); g.start('flux', 0, { seed: 36 });
+    ok('Flux starts with the seekers', g.player.hasWeapon('spirit'));
+    ok('perk grants an extra Blink charge', g.player.dashMaxCharges === base.player.dashMaxCharges + 1);
+    ok('perk shortens the recharge', g.player.dashCdMax < base.player.dashCdMax - 1e-9);
+    // Blink empowers Flux (a damage surge); Spark's blink does not.
+    const m0 = g.player.might; g.player.moveDir = { x: 1, y: 0 };
+    g.player.dash();
+    ok('blink grants Flux a damage surge', g.player.hasBuff('flux_surge') && g.player.might > m0 + 1e-9);
+    base.player.moveDir = { x: 1, y: 0 }; const bm0 = base.player.might; base.player.dash();
+    ok('a plain hero gets no surge', !base.player.hasBuff('flux_surge') && Math.abs(base.player.might - bm0) < 1e-9);
+  });
   sectionTry('expansion: Entrench synergy ties the new weapons in', () => {
     const wi = id => ({ def: getWeapon(id), level: 1, timer: 0 });
     ok('Lance + Caltrops = Entrench', activeSynergies([wi('lance'), wi('caltrops')]).some(s => s.id === 'entrench'));

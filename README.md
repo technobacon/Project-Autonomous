@@ -63,8 +63,12 @@ each with a distinct starting weapon and playstyle:
 | **Monarch** | Slow, devastating bursts | Nova Burst |
 | **Comet** | Hit-and-run, blades return | Whirling Glaive |
 | **Astra** | Precise piercing striker | Light Lance |
+| **Flux** | Hyper-mobile, blink-empowered glass | Spirit Seekers |
 
-…plus a secret hero, **Void**, unlocked by surviving 15:00. Progress is saved
+…plus a secret hero, **Void**, unlocked by surviving 15:00. Each hero also has a
+distinct feel, and some carry a **signature perk** — Flux, for instance, is built
+around the Blink: an extra charge, a faster recharge, and a damage surge on every
+dash. Progress is saved
 automatically in your browser (`localStorage`).
 
 ## ⚒ Build variety

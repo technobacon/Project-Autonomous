@@ -180,6 +180,7 @@ const UI = {
           ${badge}
           <p class="char-desc">${unlocked || !c.secret ? c.desc : 'A hidden light awaits the worthy.'}</p>
           <p class="char-blurb">${c.blurb}</p>
+          ${c.perkDesc ? `<p class="char-perk" style="color:${c.color}">✦ ${c.perkDesc}</p>` : ''}
           <div class="char-stats">
             <span>❤ ${c.stats.maxHp}</span><span>👟 ${c.stats.speed}</span>
             <span>🗡 ${Math.round(c.stats.might*100)}%</span>

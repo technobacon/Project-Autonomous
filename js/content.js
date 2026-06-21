@@ -64,6 +64,18 @@ const CHARACTERS = [
     blurb: 'A precise striker — line up the horde and run it through.',
   },
   {
+    id: 'flux', name: 'Flux', color: '#5affe0',
+    desc: 'A flicker of light that is never where the dark strikes.',
+    startWeapon: 'spirit',
+    cost: 1100,
+    stats: { maxHp: 70, speed: 210, might: 1.0, haste: 1.1, armor: 0, pickup: 175 },
+    blurb: 'Hyper-mobile glass. Blink constantly — each blink empowers you.',
+    // Per-hero perk: read in player.recalc / player.dash. Flux is built around
+    // the Blink: an extra charge, faster recharge, and a damage surge on use.
+    perk: { dashBonusCharges: 1, dashCdMul: 0.78, blinkBuff: { id: 'flux_surge', mods: { dmgMul: 1.3 }, dur: 2.5 } },
+    perkDesc: '+1 Blink charge, faster recharge, and +30% damage for 2.5s after each Blink.',
+  },
+  {
     // Secret character — not purchasable; unlocked by the "Into the Void"
     // achievement (survive 15:00). Powerful but high-risk.
     id: 'void', name: 'Void', color: '#ff4dff',

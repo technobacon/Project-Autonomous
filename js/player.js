@@ -88,6 +88,12 @@ class Player {
     // Echo Step grants an extra charge. (Capped reduction keeps it sane.)
     this.dashCdMax = 3.5 * (1 - Math.min(0.6, m('blink')));
     this.dashMaxCharges = 1 + m('echo');
+    // Per-hero Blink perk (e.g. Flux): extra charge + faster recharge.
+    const perk = this.char.perk;
+    if (perk) {
+      if (perk.dashCdMul) this.dashCdMax *= perk.dashCdMul;
+      if (perk.dashBonusCharges) this.dashMaxCharges += perk.dashBonusCharges;
+    }
 
     let newMax = base.maxHp + m('vigor') + pv('vigor') * 20;
 
@@ -355,6 +361,9 @@ class Player {
     this._dashGhosts = [{ x: fromX, y: fromY }, { x: this.x, y: this.y }];
     if (typeof Audio2 !== 'undefined' && Audio2.dash) Audio2.dash();
     if (this.game.particles) this.game.particles.burst(fromX, fromY, 12, { color: this.char.color, speed: vrand(60, 180), life: vrand(0.2, 0.5) });
+    // Per-hero "empower on blink" perk (Flux): a brief damage surge each blink.
+    const perk = this.char.perk;
+    if (perk && perk.blinkBuff) this.addBuff(perk.blinkBuff.id, perk.blinkBuff.mods, perk.blinkBuff.dur);
     return true;
   }
 
