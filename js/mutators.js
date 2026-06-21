@@ -28,6 +28,10 @@ const MUTATORS = [
     desc: '+35% XP gained.', apply(m) { m.xpMul *= 1.35; } },
   { id: 'fortune', name: 'Fortune', icon: '🍀', color: '#7affc4', weight: -1,
     desc: '+25% luck & +40% pickup range.', apply(m) { m.luckBonus += 0.25; m.pickupMul *= 1.4; } },
+  { id: 'warded', name: 'Warded', icon: '🛡', color: '#9ad8ff', weight: -2,
+    desc: '+4 armor.', apply(m) { m.armorBonus += 4; } },
+  { id: 'sharpshooter', name: 'Sharpshooter', icon: '✶', color: '#ff9d3c', weight: -1,
+    desc: '+15% crit chance & +0.8× crit damage.', apply(m) { m.critChanceBonus += 0.15; m.critDmgBonus += 0.8; } },
   // ---- Banes (make the run harder → bigger reward) ----
   { id: 'glass', name: 'Glass Cannon', icon: '💔', color: '#ff5d6c', weight: 1,
     desc: '+60% damage, but −45% max health.', apply(m) { m.dmgMul *= 1.6; m.hpMul *= 0.55; } },
@@ -45,6 +49,10 @@ const MUTATORS = [
     desc: 'Foes move +25% faster.', apply(m) { m.enemySpeedMul *= 1.25; } },
   { id: 'onslaught', name: 'Onslaught', icon: '☄', color: '#ff5a2c', weight: 3,
     desc: '+40% foes and they hit +20% harder.', apply(m) { m.enemyCountMul *= 1.4; m.enemyDmgMul *= 1.2; } },
+  { id: 'frailty', name: 'Frailty', icon: '💀', color: '#ff5d6c', weight: 3,
+    desc: '−60% max health.', apply(m) { m.hpMul *= 0.4; } },
+  { id: 'juggernauts', name: 'Juggernauts', icon: '👹', color: '#c98bff', weight: 3,
+    desc: 'Foes are bigger, tougher and faster.', apply(m) { m.enemyHpMul *= 1.6; m.enemySpeedMul *= 1.18; } },
 ];
 
 const MUTATOR_LIST = MUTATORS.slice();
