@@ -162,6 +162,7 @@ class Game {
     this.executes = 0;         // foes finished by a hero execute perk (Reaper)
     this.riftsOpened = 0;      // Void Rift / Event Horizon casts (any pull-rift)
     this.reflectedDamage = 0;  // damage bounced back by a thorns perk (Sentinel)
+    this.ricochets = 0;        // times a projectile caromed to a new foe (Glint)
     this.score = 0;
     this._timeWarpT = 0;          // global enemy-slow from a Time Warp pickup (sim)
     this._inDeathBlast = false;   // reentrancy guard for Pyre's chain explosions
@@ -1509,7 +1510,7 @@ class Game {
           if (pr.bounce > 0) {
             const nt = this.nearestEnemyExcluding(pr.x, pr.y, pr.bounceRange, pr.hit);
             if (nt) {
-              pr.bounce--;
+              pr.bounce--; this.ricochets++;
               const a = angleTo(pr.x, pr.y, nt.x, nt.y);
               pr.vx = Math.cos(a) * pr.speed; pr.vy = Math.sin(a) * pr.speed;
               pr.hitsLeft = pr.maxHits;

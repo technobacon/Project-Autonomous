@@ -45,6 +45,8 @@ const ACHIEVEMENTS = [
   { id: 'harvester',    icon: '🌾', name: 'Harvester',             desc: 'Execute 100 foes in a run (Reaper).',    reward: 70,  check: c => c.executes >= 100 },
   { id: 'riftborn',     icon: '🕳', name: 'Riftborn',              desc: 'Open 60 rifts in a run (Void Rift).',    reward: 60,  check: c => c.riftsOpened >= 60 },
   { id: 'unbroken',     icon: '🛡', name: 'Unbroken',              desc: 'Reflect 3000 damage in a run (Sentinel).', reward: 70, check: c => c.reflectedDamage >= 3000 },
+  { id: 'ricochet',     icon: '◈', name: 'Ricochet',              desc: 'Carom off 300 foes in a run (Glint).',   reward: 60,  check: c => c.ricochets >= 300 },
+  { id: 'pinball',      icon: '❖', name: 'Pinball Wizard',        desc: 'Carom off 1200 foes in a run (Glint).',  reward: 90,  check: c => c.ricochets >= 1200 },
 ];
 
 function getAchievement(id) { return ACHIEVEMENTS.find(a => a.id === id); }
@@ -71,6 +73,7 @@ const Achievements = {
       executes: game ? (game.executes || 0) : 0,
       riftsOpened: game ? (game.riftsOpened || 0) : 0,
       reflectedDamage: game ? (game.reflectedDamage || 0) : 0,
+      ricochets: game ? (game.ricochets || 0) : 0,
       relicsUnlocked: Save.relicCount(),
       relicLoadoutFull: Save.equippedRelics().length >= Save.relicSlotCount(),
       save: s,

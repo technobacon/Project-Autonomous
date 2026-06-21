@@ -316,7 +316,7 @@ stack on these foes too, so a *Shielded Bomber*, a *Swift Stalker*, or a
 
 ## 🏆 Achievements, difficulty & the Codex
 
-- **40 achievements** with shard rewards and long-term goals — survive 15:00 to
+- **42 achievements** with shard rewards and long-term goals — survive 15:00 to
   unlock the secret character **Void**; hunt elites, slay a Champion, collect
   relics, climb the mastery ranks, clear the Trials, defeat **every kind of
   boss** (*Apex Predator*) and **25 bosses** in total (*Nemesis*), and master the
@@ -480,7 +480,7 @@ tools/
 
 A headless harness stubs the DOM/Canvas/WebAudio APIs and actually runs the
 game — a full simulated run, every weapon, all bosses, all 17 evolutions, the
-weapon-synergy set bonuses, all 40 achievements, every omen, the relic loadout
+weapon-synergy set bonuses, all 42 achievements, every omen, the relic loadout
 system, the run-history Chronicle, the lifetime-mastery system (ranks +
 per-hero/weapon accrual), the Trials of Light (rule twists + win/fail paths),
 the Custom Run mutators (free-stacked twists + reward scaling), the Gauntlet

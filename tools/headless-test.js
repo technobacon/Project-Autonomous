@@ -215,6 +215,7 @@ globalThis.__run = function(report) {
     ok('first foe was struck', a.hp < hp0[0]);
     ok('ricochet carried to the second foe', b.hp < hp0[1]);
     ok('ricochet carried to the third foe', c.hp < hp0[2]);
+    ok('the ricochet counter advanced', g.ricochets >= 2);
     // A plain (bounce:0) shot must NOT chain to a second foe.
     const g2 = new Game(document.getElementById('game')); g2.start('spark', 0, { seed: 7 });
     const qx = g2.player.x, qy = g2.player.y;
@@ -541,12 +542,13 @@ globalThis.__run = function(report) {
     ok('marathon/legend/ace fire on a huge run', getAchievement('marathon').check(ctx) && getAchievement('legend').check(ctx) && getAchievement('ace').check(ctx));
     // Content-mastery goals read the new run counters.
     const g3 = new Game(document.getElementById('game')); g3.start('spark', 0);
-    g3.executes = 100; g3.riftsOpened = 60; g3.reflectedDamage = 3000;
+    g3.executes = 100; g3.riftsOpened = 60; g3.reflectedDamage = 3000; g3.ricochets = 1200;
     const c3 = Achievements.context(g3);
     ok('Harvester/Riftborn/Unbroken fire on their counters', getAchievement('harvester').check(c3) && getAchievement('riftborn').check(c3) && getAchievement('unbroken').check(c3));
+    ok('Ricochet/Pinball fire on the bounce counter', getAchievement('ricochet').check(c3) && getAchievement('pinball').check(c3));
     const g4 = new Game(document.getElementById('game')); g4.start('spark', 0);
     const c4 = Achievements.context(g4);
-    ok('content goals stay locked at zero', !getAchievement('harvester').check(c4) && !getAchievement('riftborn').check(c4) && !getAchievement('unbroken').check(c4));
+    ok('content goals stay locked at zero', !getAchievement('harvester').check(c4) && !getAchievement('riftborn').check(c4) && !getAchievement('unbroken').check(c4) && !getAchievement('ricochet').check(c4));
   });
   sectionTry('counters: execute / rift / thorns increment in the sim', () => {
     // Reaper execute increments the run counter.
