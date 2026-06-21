@@ -439,6 +439,7 @@ class Game {
       shieldPhase: false, phaseT: 0,   // Eclipse boss: shielded/open rhythm
       warded: 0,   // remaining "empowered by an Acolyte" buff time (sim state)
       heraldMinion: false, heraldOpen: false,   // Herald boss: add-gated ward
+      chargeAng: 0, dashCount: 0,   // charger telegraph dir + Ravager dash counter
     };
     this.enemies.push(e);
     Save.markSeen('enemies', def.id);
@@ -1284,6 +1285,40 @@ class Game {
           const base = e.spin * 0.5;   // deterministic ring offset
           for (let k = 0; k < n; k++) this.spawnEnemyProjectile(e.x, e.y, base + (k / n) * TAU, e.type.novaSpeed || 150, e.type.novaDmg || 14, '#d8c0ff');
           this.shake(6, 0.3);
+        }
+        break;
+      }
+      case 'boss_ravager': {
+        // The Ravager: a relentless charger. It stalks, locks on, telegraphs a
+        // line, then dashes across the arena dealing heavy contact damage —
+        // punishing standing still and rewarding a perpendicular dodge. After a
+        // burst of dashes it reels (a brief pause), then resumes; each dash ends
+        // with a scattered bolt ring so a clean dodge still has a follow-up.
+        // Deterministic: angle locked at telegraph end, dt-driven timers, the
+        // bolt ring offset by a fixed-step spin.
+        e.stateT -= dt;
+        if (e.state === 0) {            // stalk: slow approach
+          e.x += Math.cos(ang) * spd * dt; e.y += Math.sin(ang) * spd * dt;
+          if (e.stateT <= 0) { e.state = 1; e.stateT = 0.55; e.castFx = 0.55; }
+        } else if (e.state === 1) {     // telegraph: keep the line locked on you
+          e.chargeAng = ang;
+          if (e.castFx > 0) e.castFx -= dt;
+          if (e.stateT <= 0) { e.state = 2; e.stateT = 0.42; this.shake(5, 0.2); }
+        } else if (e.state === 2) {     // dash across the arena
+          const ds = spd * 12 * dt;
+          e.x = clamp(e.x + Math.cos(e.chargeAng) * ds, 30, this.world.w - 30);
+          e.y = clamp(e.y + Math.sin(e.chargeAng) * ds, 30, this.world.h - 30);
+          if (e.stateT <= 0) {
+            const n = 10;
+            for (let k = 0; k < n; k++) this.spawnEnemyProjectile(e.x, e.y, e.spin + (k / n) * TAU, e.type.projSpeed || 190, e.type.projDmg || 16, '#ff9d5a');
+            e.spin += 0.5; e.dashCount++;
+            if (e.dashCount >= (e.type.dashBurst || 3)) {
+              e.dashCount = 0; e.state = 3; e.stateT = e.type.recoverDur || 1.6;
+              this.toast('⚔ The Ravager reels — strike now!');
+            } else { e.state = 1; e.stateT = 0.38; e.castFx = 0.38; }
+          }
+        } else {                        // reel: a brief exposed pause
+          if (e.stateT <= 0) { e.state = 0; e.stateT = 0.7; }
         }
         break;
       }
@@ -2139,7 +2174,8 @@ class Game {
       // Charger / Bomber telegraph flash.
       let fill = e.color;
       if (e.flash > 0) fill = '#ffffff';
-      else if (e.ai === 'charger' && e.state === 1) fill = (Math.floor(this.time * 20) % 2 ? '#fff' : e.color);
+      else if ((e.ai === 'charger' || e.ai === 'boss_ravager') && e.state === 1) fill = (Math.floor(this.time * 20) % 2 ? '#fff' : e.color);
+      else if (e.ai === 'boss_ravager' && e.state === 2) fill = '#ffd0a0';
       else if (e.fuse > 0) fill = (Math.floor(this.time * 24) % 2 ? '#fff' : e.color);
       else if (e.slowAmount > 0) fill = '#9fe9ff';
       ctx.fillStyle = fill;

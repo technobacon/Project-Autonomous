@@ -135,6 +135,14 @@ const BOSSES = {
     shootCd: 1.6, projSpeed: 200, projDmg: 16,
     summonCd: 5.0, summonCount: 4, summonType: 'stalker', openDur: 4.0,
   },
+  ravager: {
+    id: 'ravager', name: 'The Ravager', color: '#ff9d5a', boss: true,
+    hp: 4400, speed: 50, radius: 54, damage: 44, xp: 210, ai: 'boss_ravager', shape: 'arrow',
+    // Stalks, locks on, telegraphs a line, then dashes across the arena for heavy
+    // contact damage and scatters a bolt ring — a dodge fight that punishes
+    // standing still. Always vulnerable; the skill check is reading its charge.
+    projSpeed: 190, projDmg: 16, dashBurst: 3, recoverDur: 1.6,
+  },
 };
 
 const BOSS_SCHEDULE = [
@@ -146,7 +154,7 @@ const BOSS_SCHEDULE = [
 
 // Past the scheduled bosses, the endless rotation cycles the toughest so
 // late-game encounters keep varying their mechanics.
-const ENDLESS_BOSSES = ['devourer', 'maelstrom', 'eclipse', 'herald'];
+const ENDLESS_BOSSES = ['devourer', 'maelstrom', 'eclipse', 'herald', 'ravager'];
 
 class Director {
   constructor(game) {
@@ -322,7 +330,7 @@ class Director {
   }
 
   _spawnGauntletRound(round) {
-    const keys = ['warden', 'colossus', 'maelstrom', 'devourer', 'eclipse', 'herald'];
+    const keys = ['warden', 'colossus', 'maelstrom', 'devourer', 'eclipse', 'herald', 'ravager'];
     const count = round >= 6 ? 2 : 1;        // double bosses in later rounds
     const scale = 1 + (round - 1) * 0.5;     // escalating boss HP
     const dmg = 1 + (round - 1) * 0.12;

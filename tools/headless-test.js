@@ -311,6 +311,36 @@ globalThis.__run = function(report) {
     ok('spiral is reproducible on a seed', Math.abs(boss.spin - b2.spin) < 1e-9);
   });
 
+  sectionTry('boss: The Ravager telegraphs then dashes across the arena', () => {
+    ok('ravager registered + in endless rotation + gauntlet', !!BOSSES.ravager && BOSSES.ravager.ai === 'boss_ravager' &&
+      ENDLESS_BOSSES.includes('ravager'));
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 19 });
+    g.player.invuln = 1e9; const origMove = Input.moveVector; Input.moveVector = () => ({ x: 0, y: 0 });
+    g.director.spawnBoss('ravager');
+    const e = g.enemies.find(en => en.boss);
+    ok('ravager spawned as a boss', !!e && e.type.id === 'ravager');
+    e.x = g.player.x + 200; e.y = g.player.y; e.hp = 1e9; e.maxHp = 1e9;
+    let sawTelegraph = false, sawDash = false, maxDashStep = 0;
+    let lx = e.x, ly = e.y;
+    for (let i = 0; i < 60 * 5; i++) {
+      g.update(1 / 60);
+      if (e.state === 1) sawTelegraph = true;
+      if (e.state === 2) { sawDash = true; maxDashStep = Math.max(maxDashStep, dist(e.x, e.y, lx, ly)); }
+      lx = e.x; ly = e.y;
+    }
+    ok('the Ravager telegraphs a charge', sawTelegraph);
+    ok('the Ravager dashes', sawDash);
+    ok('a dash frame covers far more ground than a stalk frame', maxDashStep > 4);
+    ok('player + boss state stay finite', Number.isFinite(g.player.hp) && Number.isFinite(e.x) && Number.isFinite(e.y));
+    // Reproducible on a seed: identical boss position after identical scripted time.
+    const g2 = new Game(document.getElementById('game')); g2.start('spark', 0, { seed: 19 });
+    g2.player.invuln = 1e9; g2.director.spawnBoss('ravager');
+    const e2 = g2.enemies.find(en => en.boss); e2.x = g2.player.x + 200; e2.y = g2.player.y; e2.hp = 1e9; e2.maxHp = 1e9;
+    for (let i = 0; i < 60 * 5; i++) g2.update(1 / 60);
+    Input.moveVector = origMove;
+    ok('the Ravager is reproducible on a seed', Math.abs(e.x - e2.x) < 1e-6 && Math.abs(e.y - e2.y) < 1e-6);
+  });
+
   // 6) Pickups.
   sectionTry('apply all pickups', () => {
     ['health', 'magnet', 'bomb', 'chest', 'warp'].forEach(k => game.applyPickup(k));

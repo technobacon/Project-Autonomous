@@ -46,8 +46,11 @@ the **Help** screen.
   ever-rotating *spiral of bolts* punctuated by a full ring-nova, the
   **Devourer** does it all faster, the **Eclipse** cycles between an
   untouchable *shield phase* (spraying bolts) and an open window you must burst,
-  and the **Herald** raises a *ward* that makes it invulnerable while its
-  summoned acolytes live — clear the adds to drop the ward and open your window.
+  the **Herald** raises a *ward* that makes it invulnerable while its
+  summoned acolytes live — clear the adds to drop the ward and open your window,
+  and the **Ravager** stalks, locks on, telegraphs a line, then *dashes* across
+  the arena for heavy contact damage and scatters a bolt ring — read its charge
+  and dodge perpendicular.
   They hit hard but drop a flood of XP and treasure, and the endless rotation
   keeps cycling their mechanics. If a boss (or a Champion) wanders off-screen, a
   pulsing **edge arrow** points the way back to it.
