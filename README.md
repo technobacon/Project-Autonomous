@@ -345,20 +345,24 @@ into structured goals you can actually *complete*:
 | 🐜 **The Swarm** | twice the foes (frailer), more XP | Slay 800 | Kindling |
 | 🐢 **Tortoise** | 60% move speed, sturdier, faster foes | Survive 5:30 | Glass Gauntlet |
 | 🩸 **Bloodlust** | Berserker on Hard | Survive 6:00 | The Swarm |
+| 🌊 **Relentless** | Hard + double (frailer) foes | Slay 1,200 | Tortoise |
 | 🌑 **Ascendant Trial** | Nightmare + 50% more foes | Score 80,000 | Tortoise **&** Bloodlust |
+| ☄ **Annihilation** | The Abyss + extra foes | Score 130,000 | Ascendant Trial |
 
 The Trials form an **unlock chain** — a diamond that branches after the opener
 and rejoins at a capstone, so clearing one opens the next on its path and the
 Ascendant Trial only appears once you've conquered *both* branches:
 
 ```
-       Kindling
-       /      \
-    Glass    Swarm
-      |        |
-  Tortoise  Bloodlust
-       \      /
-       Ascendant
+          Kindling
+          /      \
+       Glass    Swarm
+         |        |
+     Tortoise  Bloodlust
+      /   \      /
+Relentless Ascendant
+              |
+         Annihilation
 ```
 
 Trials force their own character, difficulty and rules and **ignore Omens and

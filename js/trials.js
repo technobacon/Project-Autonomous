@@ -47,10 +47,18 @@ const TRIALS = [
     desc: 'Berserker on Hard: the lower your health, the harder you hit. Survive 6:00.',
     req: ['swarm'],
     mods: { berserk: true, hpMul: 0.7 }, win: { type: 'survive', value: 360 }, reward: 150 },
+  { id: 'relentless', name: 'Relentless', icon: '🌊', color: '#46e0a0', char: 'spark', diff: 1,
+    desc: 'Hard difficulty with double the foes (frailer). Cut down 1,200.',
+    req: ['tortoise'],
+    mods: { enemyCountMul: 2.0, enemyHpMul: 0.7, xpMul: 1.2 }, win: { type: 'kills', value: 1200 }, reward: 170 },
   { id: 'ascendant', name: 'Ascendant Trial', icon: '🌑', color: '#c98bff', char: 'spark', diff: 2,
     desc: 'Nightmare difficulty with 50% more foes. Amass a score of 80,000.',
     req: ['tortoise', 'bloodlust'],
     mods: { enemyCountMul: 1.5 }, win: { type: 'score', value: 80000 }, reward: 200 },
+  { id: 'annihilation', name: 'Annihilation', icon: '☄', color: '#ff4d6d', char: 'spark', diff: 3,
+    desc: 'The Abyss itself, with extra foes. Amass a score of 130,000.',
+    req: ['ascendant'],
+    mods: { enemyCountMul: 1.3 }, win: { type: 'score', value: 130000 }, reward: 320 },
 ];
 
 function getTrial(id) { return TRIALS.find(t => t.id === id) || null; }

@@ -1134,6 +1134,14 @@ globalThis.__run = function(report) {
     ok('victory screen frames a win', /Trial Complete/.test(UI.root.innerHTML));
     Save.data.trials = {};
   });
+  sectionTry('trials: the chain extends to a post-capstone finale', () => {
+    ok('Relentless branches off Tortoise', getTrial('relentless') && getTrial('relentless').req.indexOf('tortoise') >= 0);
+    ok('Annihilation is gated behind the Ascendant capstone', getTrial('annihilation') && getTrial('annihilation').req.indexOf('ascendant') >= 0);
+    const upTo = id => ['kindling', 'glass', 'swarm', 'tortoise', 'bloodlust'].includes(id);
+    ok('finale stays locked until the capstone falls', !trialUnlocked(getTrial('annihilation'), upTo));
+    const withAsc = id => upTo(id) || id === 'ascendant';
+    ok('finale opens once Ascendant is cleared', trialUnlocked(getTrial('annihilation'), withAsc));
+  });
   sectionTry('trials: unlock chain gates progression', () => {
     // Every trial declares a req list; the opener is the only thing open at zero.
     ok('all trials declare req array', TRIALS.every(t => Array.isArray(t.req)));
