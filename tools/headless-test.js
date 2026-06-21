@@ -1389,6 +1389,28 @@ globalThis.__run = function(report) {
     const g = new Game(document.getElementById('game')); g.start('astra', 0, { seed: 34 });
     ok('Astra starts wielding the Lance', g.player.hasWeapon('lance'));
   });
+  sectionTry('expansion: Reaper hero crits + executes', () => {
+    const r = getCharacter('reaper');
+    ok('Reaper exists, glaive start, buyable, has perk', r && r.id === 'reaper' && r.startWeapon === 'glaive' && r.cost > 0 && !r.secret && r.perk && r.perk.execute > 0);
+    Save.data.relics = {}; Save.data.equipped = [];
+    const base = new Game(document.getElementById('game')); base.start('spark', 0, { seed: 38, noRelics: true });
+    const g = new Game(document.getElementById('game')); g.start('reaper', 0, { seed: 38, noRelics: true });
+    ok('perk raises crit chance + crit damage', g.player.crit > base.player.crit + 1e-9 && g.player.critMult > base.player.critMult + 1e-9);
+    // Execute: a tiny hit finishes a non-boss foe under the threshold.
+    g.player.crit = 0; g.player.weapons = [];
+    const e = g.spawnEnemy('brute', g.player.x + 300, g.player.y, 1, 1); e.hp = e.maxHp * 0.1;
+    g.dealDamage(e, 1, g.player.x, g.player.y, 0);
+    ok('Reaper executes a low-health foe', e.dead);
+    // A boss is immune to execute.
+    base.player.crit = 0;
+    const b = g.spawnEnemy('warden', g.player.x + 300, g.player.y, 1, 1, BOSSES.warden); b.boss = true; b.hp = b.maxHp * 0.05;
+    g.dealDamage(b, 1, g.player.x, g.player.y, 0);
+    ok('bosses are immune to execute', !b.dead);
+    // A plain hero never executes.
+    const e2 = base.spawnEnemy('brute', base.player.x + 300, base.player.y, 1, 1); e2.hp = e2.maxHp * 0.1;
+    base.dealDamage(e2, 1, base.player.x, base.player.y, 0);
+    ok('a non-Reaper hero does not execute', !e2.dead);
+  });
   sectionTry('expansion: Flux hero is built around the Blink', () => {
     const f = getCharacter('flux');
     ok('Flux exists, spirit start, buyable, has a perk', f && f.id === 'flux' && f.startWeapon === 'spirit' && f.cost > 0 && !f.secret && !!f.perk);

@@ -88,6 +88,18 @@ const CHARACTERS = [
     perkDesc: 'Turrets: +1 active, +30% damage, +40% lifetime.',
   },
   {
+    id: 'reaper', name: 'Reaper', color: '#a06bff',
+    desc: 'Harvests the wounded — the dark fears the killing blow.',
+    startWeapon: 'glaive',
+    cost: 1400,
+    stats: { maxHp: 80, speed: 190, might: 1.1, haste: 1.05, armor: 0, pickup: 160 },
+    blurb: 'Crit-hungry executioner. Bring foes low, then reap them.',
+    // Per-hero perk: a flat stat patch (folded in recalc) + an execute threshold
+    // (read in dealDamage) that instantly finishes low-health, non-boss foes.
+    perk: { mods: { critChanceBonus: 0.12, critDmgBonus: 0.6 }, execute: 0.12 },
+    perkDesc: '+12% crit & +0.6× crit damage; instantly slay non-boss foes below 12% health.',
+  },
+  {
     // Secret character — not purchasable; unlocked by the "Into the Void"
     // achievement (survive 15:00). Powerful but high-risk.
     id: 'void', name: 'Void', color: '#ff4dff',

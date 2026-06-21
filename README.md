@@ -65,6 +65,7 @@ each with a distinct starting weapon and playstyle:
 | **Astra** | Precise piercing striker | Light Lance |
 | **Flux** | Hyper-mobile, blink-empowered glass | Spirit Seekers |
 | **Forge** | Turret specialist, holds ground | Sentry Turret |
+| **Reaper** | Crit-hungry executioner | Whirling Glaive |
 
 …plus a secret hero, **Void**, unlocked by surviving 15:00. Each hero also has a
 distinct feel, and some carry a **signature perk** — Flux, for instance, is built

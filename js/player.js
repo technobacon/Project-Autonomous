@@ -96,6 +96,7 @@ class Player {
     if (perk) {
       if (perk.dashCdMul) this.dashCdMax *= perk.dashCdMul;
       if (perk.dashBonusCharges) this.dashMaxCharges += perk.dashBonusCharges;
+      if (perk.mods) this._applyStatMods(perk.mods);   // flat stat perk (e.g. Reaper crit)
     }
 
     let newMax = base.maxHp + m('vigor') + pv('vigor') * 20;

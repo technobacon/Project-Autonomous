@@ -571,6 +571,10 @@ class Game {
       e.vx += Math.cos(a) * kb * massFactor;
       e.vy += Math.sin(a) * kb * massFactor;
     }
+    // Reaper's Execute perk: finish off low-health, non-boss foes (deterministic
+    // HP-threshold check — read from the hero's perk).
+    const perk = this.player.char.perk;
+    if (perk && perk.execute && !e.boss && !e.champion && e.hp > 0 && e.hp < e.maxHp * perk.execute) e.hp = 0;
     if (e.hp <= 0) this.killEnemy(e);
   }
 
