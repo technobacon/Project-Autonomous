@@ -1128,6 +1128,26 @@ class Game {
         }
         break;
       }
+      case 'lobber': {
+        // Bombardier: kite at range and lob a telegraphed ground strike at the
+        // player's position — reusing the hazard pipeline (warn -> AoE blast),
+        // so it hits foes too and is always dodgeable. Seeded/deterministic.
+        const d = dist(e.x, e.y, p.x, p.y);
+        const range = e.type.shootRange || 360;
+        if (d > range) { e.x += Math.cos(ang) * spd * dt; e.y += Math.sin(ang) * spd * dt; }
+        else if (d < range * 0.6) { e.x -= Math.cos(ang) * spd * dt; e.y -= Math.sin(ang) * spd * dt; }
+        e.shootTimer -= dt;
+        if (e.shootTimer <= 0 && d < range * 1.3) {
+          e.shootTimer = e.type.shootCd || 3.2;
+          const rr = e.type.blastR || 76;
+          this.hazards.push({
+            kind: 'strike', x: clamp(p.x, 40, this.world.w - 40), y: clamp(p.y, 40, this.world.h - 40),
+            r: rr, color: '#ff7a3c', dmg: e.damage, dot: 0, slow: 0,
+            warn: 0.95, dur: 0, fade: 0.35, phase: 'warn', t: 0, tick: 0,
+          });
+        }
+        break;
+      }
       case 'warder': {
         // Acolyte: drift toward the fray and bathe nearby foes in an empowering
         // aura (refreshes their `warded` timer). Uses the spatial grid so it's

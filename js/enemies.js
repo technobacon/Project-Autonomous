@@ -60,6 +60,13 @@ const ENEMY_TYPES = {
     // ignore it and the screen fills. summonCd reused as the spawn timer.
     shootCd: 4.0, summonCd: 4.0, summonCount: 3, summonType: 'swarm', keepRange: 280,
   },
+  bombardier: {
+    id: 'bombardier', name: 'Bombardier', tier: 3.6, color: '#ff8a3c',
+    hp: 40, speed: 42, radius: 14, damage: 15, xp: 4, ai: 'lobber', shape: 'square',
+    // Kites at range and lobs telegraphed ground strikes at where you stand —
+    // keep moving and they fall on empty ground.
+    shootRange: 360, shootCd: 3.2, blastR: 78,
+  },
   acolyte: {
     id: 'acolyte', name: 'Acolyte', tier: 3.8, color: '#ffce5a',
     hp: 64, speed: 46, radius: 14, damage: 9, xp: 5, ai: 'warder', shape: 'cross',

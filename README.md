@@ -265,7 +265,9 @@ surge of +40% damage & attack speed; elites occasionally drop one too). And dist
 (orbits and harasses you at range), the **Bomber** (closes in, then detonates),
 the **Conjurer** (an arcane caster that *summons fresh waves of motes*), and the
 **Acolyte** — a support caster whose aura **empowers every foe around it**, making
-them faster and tougher. The Conjurer and Acolyte are true **priority targets**
+them faster and tougher — and the **Bombardier**, which kites at range and **lobs
+telegraphed ground strikes** at where you stand (keep moving and they fall on
+empty ground). The Conjurer and Acolyte are true **priority targets**
 in different ways: one *creates* the horde, the other *strengthens* it, and the
 Acolyte gets deadlier the more crowded the screen — so cut it down first. Affixes
 stack on these foes too, so a *Shielded Bomber*, a *Swift Stalker*, or a

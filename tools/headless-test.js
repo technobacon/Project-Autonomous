@@ -474,7 +474,19 @@ globalThis.__run = function(report) {
     ok('conjurer archetype', !!ENEMY_TYPES.conjurer && ENEMY_TYPES.conjurer.ai === 'summoner' &&
       ENEMY_TYPES.conjurer.summonCount > 0 && ENEMY_TYPES.conjurer.summonType === 'swarm');
     ok('acolyte archetype', !!ENEMY_TYPES.acolyte && ENEMY_TYPES.acolyte.ai === 'warder' && ENEMY_TYPES.acolyte.auraR > 0);
+    ok('bombardier archetype', !!ENEMY_TYPES.bombardier && ENEMY_TYPES.bombardier.ai === 'lobber' && ENEMY_TYPES.bombardier.blastR > 0);
     ok('AFFIXES table has 9', Object.keys(AFFIXES).length === 9);
+  });
+  sectionTry('enemies: bombardier lobs telegraphed ground strikes', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 63 });
+    g.player.weapons = []; g.player.invuln = 1e9;
+    const origMove = Input.moveVector; Input.moveVector = () => ({ x: 0, y: 0 });
+    g.spawnEnemy('bombardier', g.player.x + 300, g.player.y, 1, 1);
+    let sawStrike = false;
+    for (let i = 0; i < 60 * 6; i++) { g.update(1 / 60); if (g.hazards.some(h => h.kind === 'strike')) sawStrike = true; }
+    Input.moveVector = origMove;
+    ok('bombardier created a telegraphed strike hazard', sawStrike);
+    ok('state stays finite under bombardment', Number.isFinite(g.player.x) && Number.isFinite(g.player.hp));
   });
   sectionTry('enemies: acolyte wards nearby foes (faster + tougher)', () => {
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 61 });
