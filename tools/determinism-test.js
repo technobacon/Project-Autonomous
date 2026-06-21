@@ -132,6 +132,12 @@ globalThis.__det = function(report) {
   eq('beam hazard deterministic (warped to The Corona)', beam, runSim({ seed: SEED, warp: 905, steps: 1200 }));
   ne('beam hazard differs by seed', beam, runSim({ seed: SEED + 7, warp: 905, steps: 1200 }));
 
+  // Wisplight (Duskmoor, ~1055s) homes on the player — moving hazard positions
+  // are folded into the hash, so the pursuit must reproduce exactly per seed.
+  const hunt = runSim({ seed: SEED, warp: 1055, steps: 1200 });
+  eq('hunter hazard deterministic (warped to Duskmoor)', hunt, runSim({ seed: SEED, warp: 1055, steps: 1200 }));
+  ne('hunter hazard differs by seed', hunt, runSim({ seed: SEED + 7, warp: 1055, steps: 1200 }));
+
   report(results);
 };
 `;

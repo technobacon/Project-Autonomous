@@ -1001,7 +1001,7 @@ globalThis.__run = function(report) {
     for (const b of BIOMES.filter(x => x.hazard)) {
       const h = b.hazard;
       const sized = h.kind === 'beam' ? (typeof h.len === 'number' && typeof h.width === 'number') : Array.isArray(h.radius);
-      ok(b.id + ' hazard well-formed', (h.kind === 'strike' || h.kind === 'field' || h.kind === 'vortex' || h.kind === 'beam') &&
+      ok(b.id + ' hazard well-formed', (h.kind === 'strike' || h.kind === 'field' || h.kind === 'vortex' || h.kind === 'beam' || h.kind === 'hunter') &&
         Array.isArray(h.every) && sized && typeof h.warn === 'number' &&
         typeof h.name === 'string' && typeof h.icon === 'string');
     }
@@ -1012,6 +1012,25 @@ globalThis.__run = function(report) {
       const c = BIOMES.find(b => b.id === 'corona');
       return c && c.hazard && c.hazard.kind === 'beam' && Array.isArray(c.hazard.spin) && BIOMES.length >= 7;
     })());
+    ok('an eighth biome (Duskmoor) with a hunting wisp exists', (() => {
+      const d = BIOMES.find(b => b.id === 'duskmoor');
+      return d && d.hazard && d.hazard.kind === 'hunter' && typeof d.hazard.speed === 'number' && BIOMES.length >= 8;
+    })());
+  });
+  sectionTry('hazards: the Wisplight homes in on the player', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 26 });
+    const hz = BIOMES.find(b => b.id === 'duskmoor').hazard;
+    g.spawnHazard(hz);
+    const h = g.hazards[0];
+    ok('hunter spawns away from the player with a speed', h.kind === 'hunter' && h.speed > 0 && dist(h.x, h.y, g.player.x, g.player.y) > 100);
+    h.phase = 'active'; h.t = 0;
+    const d0 = dist(h.x, h.y, g.player.x, g.player.y);
+    for (let i = 0; i < 60; i++) g.updateHazards(1 / 60);
+    ok('the wisp closes on the player', dist(h.x, h.y, g.player.x, g.player.y) < d0 - 1e-6);
+    // Standing in it drains health; stepping away from a slower wisp is safe-ish.
+    g.player.x = h.x; g.player.y = h.y; g.player.invuln = 0; const hp0 = g.player.hp;
+    for (let i = 0; i < 20; i++) { g.player.x = h.x; g.player.y = h.y; g.player.invuln = 0; g.updateHazards(1 / 60); }
+    ok('contact with the wisp costs health', g.player.hp < hp0);
   });
   sectionTry('hazards: the Sunfire Sweep rakes a rotating beam', () => {
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 23 });

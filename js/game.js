@@ -46,6 +46,10 @@ const BIOMES = [
     nebula: [[255, 200, 70], [255, 150, 50], [230, 120, 40]], bias: { runner: 1.6, charger: 1.4, swarm: 1.3 },
     hazard: { kind: 'beam', name: 'Sunfire Sweep', icon: '☼', warnTip: 'searing beams rake across — move with the sweep or duck under',
       every: [3.6, 5.4], count: [1, 1], len: 580, width: 42, warn: 1.1, dur: 2.7, spin: [0.85, 1.25], dot: 46, color: '#ffd24d' } },
+  { id: 'duskmoor', name: 'Duskmoor', base: '#040a08', grid: 'rgba(90,210,170,0.07)', accent: '#8affd0',
+    nebula: [[60, 200, 150], [90, 150, 230], [120, 90, 200]], bias: { wraith: 1.5, stalker: 1.5, drifter: 1.3 },
+    hazard: { kind: 'hunter', name: 'Wisplight', icon: '🟢', warnTip: 'wisps wake and hunt you — keep moving, never get cornered',
+      every: [3.8, 5.6], count: [1, 2], radius: [52, 70], warn: 0.9, dur: 6.5, speed: 78, dot: 34, color: '#7affc4' } },
 ];
 function biomeForTime(t) { return BIOMES[Math.floor(Math.max(0, t) / BIOME_SECONDS) % BIOMES.length]; }
 function biomeIndexForTime(t) { return Math.floor(Math.max(0, t) / BIOME_SECONDS); }
@@ -1609,6 +1613,10 @@ class Game {
           h.ang += h.spin * dt;          // sweep rotates at a fixed rate (dt-driven)
           h.tick -= dt;
           if (h.tick <= 0) { h.tick = 0.12; this._beamTick(h); }
+        } else if (h.kind === 'hunter') {
+          this._hunterChase(h, dt);      // a wisp that slowly homes on the player
+          h.tick -= dt;
+          if (h.tick <= 0) { h.tick = 0.2; this._fieldTick(h); }
         } else {
           h.tick -= dt;
           if (h.tick <= 0) { h.tick = 0.25; this._fieldTick(h); }
@@ -1638,6 +1646,20 @@ class Game {
         kind: 'beam', x: px, y: py, r: hz.len, color: hz.color,
         dot: hz.dot || 0, len: hz.len, width: hz.width, ang: start, spin,
         warn: hz.warn, dur: hz.dur || 0, fade: 0.4, phase: 'warn', t: 0, tick: 0,
+      });
+      return;
+    }
+    // Wisplight: spawns out at a distance, then slowly homes on the player for
+    // its lifetime. You outrun it (it's slower than you) but it denies space and
+    // punishes getting cornered. Seeded spawn point + pure pursuit.
+    if (hz.kind === 'hunter') {
+      const a = rand(0, TAU), d = rand(240, 380);
+      const x = clamp(this.player.x + Math.cos(a) * d, 40, this.world.w - 40);
+      const y = clamp(this.player.y + Math.sin(a) * d, 40, this.world.h - 40);
+      this.hazards.push({
+        kind: 'hunter', x, y, r: rand(hz.radius[0], hz.radius[1]), color: hz.color,
+        dot: hz.dot || 0, speed: hz.speed || 70,
+        warn: hz.warn, dur: hz.dur || 0, fade: 0.5, phase: 'warn', t: 0, tick: 0,
       });
       return;
     }
@@ -1731,6 +1753,17 @@ class Game {
     for (const e of this.enemiesInRadius(h.x, h.y, h.len)) {
       if (this._beamHit(h, e.x, e.y)) this.dealDamage(e, dmg * 1.5, h.x, h.y, 0, true);
     }
+  }
+
+  // Wisplight pursuit: drift toward the player each frame at a fixed speed (pure
+  // geometry — deterministic). Slower than the player, so it's always escapable;
+  // the _fieldTick handles its contact damage to whatever it overlaps.
+  _hunterChase(h, dt) {
+    const p = this.player;
+    if (!p || !p.alive) return;
+    const a = angleTo(h.x, h.y, p.x, p.y);
+    h.x = clamp(h.x + Math.cos(a) * h.speed * dt, 20, this.world.w - 20);
+    h.y = clamp(h.y + Math.sin(a) * h.speed * dt, 20, this.world.h - 20);
   }
 
   hasRelic(id) { return !!(this.relics && this.relics.indexOf(id) >= 0); }
