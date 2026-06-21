@@ -199,8 +199,9 @@ globalThis.__run = function(report) {
 
   sectionTry('weapon: Glint ricochets between foes; evolves to Refraction', () => {
     ok('Glint in the normal pool', !!WEAPONS.glint && WEAPON_LIST.some(w => w.id === 'glint'));
-    ok('Refraction is an evolved (pool-excluded) form', !!WEAPONS.refraction && WEAPONS.refraction.evolved && !WEAPON_LIST.some(w => w.id === 'refraction'));
-    ok('Glint + pierce -> Refraction evolution registered', EVOLUTIONS.some(e => e.base === 'glint' && e.into === 'refraction'));
+    ok('Scintilla is an evolved (pool-excluded) form', !!WEAPONS.scintilla && WEAPONS.scintilla.evolved && !WEAPON_LIST.some(w => w.id === 'scintilla'));
+    ok('Glint + pierce -> Scintilla evolution registered', EVOLUTIONS.some(e => e.base === 'glint' && e.into === 'scintilla'));
+    ok('Cascade synergy = Glint + Arc', !!getSynergy('cascade') && getSynergy('cascade').members.includes('glint') && getSynergy('cascade').members.includes('chain'));
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 7 });
     const px = g.player.x, py = g.player.y;
     // Three foes strung out to the right; a bouncer should carom A -> B -> C.

@@ -23,7 +23,7 @@ const EVOLUTIONS = [
   { base: 'sentry', passive: 'haste',     passiveLvl: 2, into: 'arsenal' },
   { base: 'meteor', passive: 'area',      passiveLvl: 2, into: 'cataclysm' },
   { base: 'rift',   passive: 'magnet',    passiveLvl: 2, into: 'horizon' },
-  { base: 'glint',  passive: 'pierce',    passiveLvl: 2, into: 'refraction' },
+  { base: 'glint',  passive: 'pierce',    passiveLvl: 2, into: 'scintilla' },
 ];
 
 // Evolved weapon definitions (maxLevel 1; power scales with player stats).
@@ -341,8 +341,8 @@ const EVOLVED_WEAPONS = {
       Audio2.blip(80, 0.22, 'sine', 0.16, -70);
     },
   },
-  refraction: {
-    id: 'refraction', name: 'Refraction', icon: '❖', color: '#bdf3ff', maxLevel: 1, evolved: true,
+  scintilla: {
+    id: 'scintilla', name: 'Scintilla', icon: '❖', color: '#bdf3ff', maxLevel: 1, evolved: true,
     desc() { return 'EVOLVED: splinters of light that carom endlessly through the horde.'; },
     cooldown(l, p) { return cd(0.55, p); },
     fire(game, inst) {

@@ -120,7 +120,7 @@ in `recalc`/spawn/combat.
 
 - **17 weapons / 17 evolutions**, **16 passives**, **13 heroes** (Flux = blink perks,
   Forge = turret perks, Reaper = crit/execute perks, Sentinel = thorns/tank perks,
-  Pyre = death-blast perks; Void secret), **12 synergies**,
+  Pyre = death-blast perks; Void secret), **13 synergies**,
   **20 omens**, **23 relics** (3 synergy-aware + Pilgrim's Charm), **22 mutators**,
   **42 achievements**.
 - **13 enemy archetypes** (incl. Conjurer=summoner, Acolyte=warder/aura,

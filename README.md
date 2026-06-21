@@ -129,7 +129,7 @@ a golden **EVOLUTION** — transforming it into a devastating new form:
 | Sentry Turret + Swift Sigil | **Arsenal** — deploys paired, long-lived turrets firing fast piercing volleys |
 | Meteor + Wide Lens | **Cataclysm** — a relentless rain of wide, overlapping strikes |
 | Void Rift + Lodestone | **Event Horizon** — a vast rift that swallows the horde, then annihilates it |
-| Glint + Piercer | **Refraction** — splinters of light that carom endlessly through the horde |
+| Glint + Piercer | **Scintilla** — splinters of light that carom endlessly through the horde |
 
 ## ✷ Weapon synergies
 
@@ -151,6 +151,7 @@ building around a theme, so every level-up choice carries a little extra weight:
 | 🕳 **Collapse** | any 2 of Void Rift / Nova / Meteor | +12% area, +12% damage |
 | 🌀 **Bladestorm** | Light Whip + Whirling Glaive | +12% attack speed, +1 projectile |
 | ❄ **Permafrost** | Frost Shard + Caltrops | +12% area, +2 armor |
+| ◈ **Cascade** | Glint + Arc Lightning | +10% attack speed, +8% crit |
 
 Evolved weapons still count as their base, active synergies show under your
 weapon row (and on the pause screen), and the full set lives in the **Codex**.

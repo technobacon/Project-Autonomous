@@ -72,6 +72,10 @@ const SYNERGIES = [
     members: ['shard', 'caltrops'], need: 2,
     desc: 'Frost + barbs lock the field down. +12% area, +2 armor.',
     mods: { areaMul: 1.12, armorBonus: 2 } },
+  { id: 'cascade', name: 'Cascade', icon: '◈', color: '#a6f0ff',
+    members: ['glint', 'chain'], need: 2,
+    desc: 'Glint + Arc: leaping light cascades from foe to foe. +10% attack speed, +8% crit.',
+    mods: { hasteMul: 1.10, critChanceBonus: 0.08 } },
 ];
 
 function getSynergy(id) { return SYNERGIES.find(s => s.id === id) || null; }
