@@ -169,15 +169,22 @@ class Director {
     this.champTimer = 75 / this.champRateMul;   // periodic Champion mini-boss event
   }
 
-  // Difficulty multipliers as a function of elapsed minutes.
-  hpScale(min) { return 1 + min * 0.34 + min * min * 0.04; }
+  // Difficulty multipliers as a function of elapsed minutes. The quadratic terms
+  // are deliberately weighted to the LATE game: early minutes barely move (the
+  // hero is fragile then), but past ~5:00 the curve steepens hard so a heavily
+  // buffed build (evolutions + synergies + relics + shrines + meta) still meets a
+  // real wall instead of trivialising the run.
+  hpScale(min) { return 1 + min * 0.36 + min * min * 0.06; }
   // Bosses scale more gently than fodder so a strong build can actually melt
-  // them, while they remain a genuine threat.
-  bossScale(min) { return 1 + min * 0.20 + min * min * 0.018; }
-  dmgScale(min) { return 1 + min * 0.14; }
+  // them, while they remain a genuine threat — and a tougher late-game wall.
+  bossScale(min) { return 1 + min * 0.22 + min * min * 0.032; }
+  // Damage was purely linear (and far too gentle for a tanked-up late game); a
+  // small quadratic keeps late hits genuinely dangerous to a buffed survivor.
+  dmgScale(min) { return 1 + min * 0.16 + min * min * 0.007; }
   // Odds a freshly-spawned fodder enemy is promoted to an elite, ramping with
-  // time but capped so the screen never becomes all-elite.
-  eliteChance(min) { return clamp(0.02 + min * 0.006, 0.02, 0.10); }
+  // time but capped so the screen never becomes all-elite (a higher late cap so
+  // the affixed-threat density keeps pace with the player's power).
+  eliteChance(min) { return clamp(0.02 + min * 0.008, 0.02, 0.15); }
   // Roll a spawned enemy into an elite (single affix). Seeded — sim path only.
   maybeElite(e, min) {
     if (!e || e.boss || e.type.id === 'splitling') return e;

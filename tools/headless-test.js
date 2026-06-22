@@ -604,6 +604,21 @@ globalThis.__run = function(report) {
     ok('nightmare DMG > normal DMG', eH.damage > eN.damage);
     ok('diff index set', gH.diffIndex === 2);
   });
+  sectionTry('balance: late-game scaling is steep (counters buff creep)', () => {
+    const dir = new Director({ diff: null, mods: null, maxEnemies: 200 });
+    // Every threat curve climbs monotonically with elapsed minutes.
+    ok('hp/dmg/boss scaling all rise over time',
+      dir.hpScale(10) > dir.hpScale(5) && dir.dmgScale(10) > dir.dmgScale(5) && dir.bossScale(10) > dir.bossScale(5));
+    // Damage is now super-linear (it used to be purely linear): the 5→10min jump
+    // exceeds the 0→5min jump, so late hits accelerate rather than creep.
+    ok('damage scaling is convex / late-weighted',
+      (dir.dmgScale(10) - dir.dmgScale(5)) > (dir.dmgScale(5) - dir.dmgScale(0)));
+    // The late game is a genuine wall for a heavily buffed survivor.
+    ok('fodder is far tougher by 10:00', dir.hpScale(10) >= 9 && dir.dmgScale(10) >= 3);
+    ok('bosses are a hard late wall', dir.bossScale(15) >= 10);
+    // Affixed-threat density keeps climbing past the old 10% cap.
+    ok('elite chance climbs past the old cap', dir.eliteChance(15) > 0.10);
+  });
 
   // 13) New menu screens build without error.
   sectionTry('UI.showAchievements/showCodex/charSelect', () => {
