@@ -211,10 +211,12 @@ seed plays out identically).
 
 The **audio** is fully synthesized and reactive: a master limiter keeps dense
 fights clean, critical hits *ping*, elites pop richer than fodder, and a
-Champion announces itself with a rising sting. The **music adapts** — the
-minor-key arpeggio quickens and brightens as the run heats up, then shifts into
-a darker, driving arrangement (with a tritone tension layer) whenever a boss or
-Champion is on the field.
+Champion announces itself with a rising sting. The **music** is a synthesized
+rendition of Grieg's *In the Hall of the Mountain King* (public domain) — its
+creeping, instantly-recognizable minor theme **quickens and brightens** as the
+run heats up (just as the original famously accelerates to a frenzy), then
+shifts into a darker, driving arrangement (with a tritone dread drone and an
+off-beat pulse) whenever a boss or Champion is on the field.
 
 ## 🌌 Biomes (a transforming world)
 

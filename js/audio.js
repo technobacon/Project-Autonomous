@@ -1,7 +1,8 @@
 // ===========================================================================
 // LASTLIGHT - audio.js
 // All sound is synthesized at runtime via the Web Audio API — no asset files.
-// Includes a small procedural music engine (an evolving minor-key arpeggio).
+// Includes a small music engine that plays Grieg's "In the Hall of the Mountain
+// King" (public domain), accelerating with the run's intensity.
 // ===========================================================================
 
 const Audio2 = {
@@ -146,11 +147,13 @@ const Audio2 = {
   dash()       { if (!this._gate('dash', 90)) return; this.noise(0.14, 0.14, 1800, 'highpass'); this.blip(vrand(440, 520), 0.10, 'sine', 0.09, 380); },
   shrine()     { [523, 784, 1046].forEach((f, i) => setTimeout(() => this.blip(f, 0.3, 'sine', 0.12, 80), i * 70)); },
 
-  // ---- Procedural music -------------------------------------------------
-  // An evolving minor arpeggio whose tempo, brightness and harmony respond to
-  // the run: it quickens and brightens as intensity climbs, and shifts to a
-  // darker, driving mode (with a tritone tension layer) while a boss or
-  // Champion is on the field.
+  // ---- Music ------------------------------------------------------------
+  // The lead is Grieg's "In the Hall of the Mountain King" (Peer Gynt, 1875 —
+  // public domain): an iconic, instantly-hummable minor call-and-answer theme
+  // that famously starts low and creeps, then accelerates to a frenzy. That arc
+  // maps perfectly onto our intensity engine — the beat quickens and brightens
+  // as the run heats up, and a boss/Champion shifts it darker (a tritone dread
+  // drone + a driving off-beat pulse). All synthesized; no audio files.
   startMusic(intensity = 0) {
     if (!this.enabled) return;
     this.init();
@@ -160,36 +163,40 @@ const Audio2 = {
     this.musicGain.gain.cancelScheduledValues(this._now());
     this.musicGain.gain.linearRampToValueAtTime(this._curVol, this._now() + 1.5);
 
-    const roots = [110, 110, 130.81, 146.83, 98]; // A2, A2, C3, D3, G2
-    const calmScale = [0, 3, 5, 7, 10, 12, 15];   // natural minor feel
-    const bossScale = [0, 3, 6, 7, 10, 13, 12];   // adds the b5 tritone (dread)
-    let step = 0, rootIdx = 0;
+    const ROOT = 110;                              // A2 — the minor tonic (bass pedal)
     const semis = (base, s) => base * Math.pow(2, s / 12);
+    // The Mountain King theme as semitone offsets from ROOT (natural minor):
+    //   call   1  2 b3  4  5 b3  5   — the creeping ascent + turn
+    //   answer b6  5 b3  5            — leans on the flat-6 (the "menace")
+    //   call   (repeats)
+    //   resolve 4 b3  2  1            — settles back to the tonic
+    const MELODY = [0, 2, 3, 5, 7, 3, 7,  8, 7, 3, 7,  0, 2, 3, 5, 7, 3, 7,  5, 3, 2, 0];
+    const LEN = MELODY.length;
+    let mi = 0;
 
     const tick = () => {
       if (!this.enabled) return;
       const t = this._now();
       const I = this._intensity, boss = this._bossMode;
-      const root = roots[rootIdx];
-      const scale = boss ? bossScale : calmScale;
-      // Bass note (longer/heavier in boss mode) + tritone tension drone.
-      if (step % 4 === 0) {
-        this._mNote(root / 2, boss ? 2.2 : 1.6, 'triangle', boss ? 0.55 : 0.5, t);
-        if (boss) this._mNote(semis(root / 2, 6), 1.4, 'sawtooth', 0.14 + 0.08 * I, t);
-        rootIdx = (rootIdx + 1) % roots.length;
+      const k = mi % LEN;
+      const off = MELODY[k];
+      const slot = this._interval / 1000;          // seconds per step (for staccato length)
+      // Lead — the melody itself, warm mid register, brighter under load.
+      this._mNote(semis(ROOT, off) * 2, Math.min(0.5, slot * 0.92), boss ? 'sawtooth' : 'triangle', 0.24 + 0.06 * I, t);
+      // An octave-up sparkle doubles the line as the run climbs (the "frenzy").
+      if (I > 0.3) this._mNote(semis(ROOT, off) * 4, slot * 0.5, 'triangle', 0.05 + 0.06 * I, t);
+      // Bass pedal on the down-beats: tonic under the call, dominant under the
+      // answer — the I→V pull that gives the theme its march. Boss adds a
+      // tritone dread drone beneath it.
+      if (mi % 4 === 0) {
+        const onAnswer = k >= 7 && k <= 10;
+        const bassDeg = onAnswer ? 7 : 0;
+        this._mNote(semis(ROOT, bassDeg) / 2, boss ? 2.0 : 1.5, 'triangle', boss ? 0.5 : 0.42, t);
+        if (boss) this._mNote(semis(ROOT, bassDeg + 6) / 2, 1.2, 'sawtooth', 0.12 + 0.08 * I, t);
       }
-      // Lead arpeggio.
-      const deg = scale[(step * 2 + (step % 3)) % scale.length];
-      this._mNote(semis(root, deg) * 2, 0.5, 'sine', 0.3, t);
-      // High sparkle as intensity rises.
-      if (I > 0.35 && step % 2 === 0) {
-        this._mNote(semis(root, scale[(step + 4) % scale.length]) * 4, 0.25, 'triangle', 0.09 + 0.07 * I, t);
-      }
-      // Driving inner pulse during boss fights.
-      if (boss && step % 2 === 1) {
-        this._mNote(semis(root, scale[(step + 2) % scale.length]) * 2, 0.18, 'square', 0.06, t);
-      }
-      step++;
+      // Driving off-beat pulse during boss fights.
+      if (boss && mi % 2 === 1) this._mNote(semis(ROOT, off) * 2, slot * 0.45, 'square', 0.06, t);
+      mi++;
     };
 
     this._tickFn = tick;
