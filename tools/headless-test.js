@@ -1476,10 +1476,38 @@ globalThis.__run = function(report) {
   sectionTry('synergies: Codex + Help surface them', () => {
     const g = new Game(document.getElementById('game'));
     UI.init(document.getElementById('overlay'), g);
-    UI.showCodex();
-    ok('Codex lists the Synergies section', /Synergies/.test(UI.root.innerHTML) && /Wildfire/.test(UI.root.innerHTML));
+    UI.showCodex('synergies');
+    ok('Compendium lists the Synergies tab', /Synergies/.test(UI.root.innerHTML) && /Wildfire/.test(UI.root.innerHTML));
     UI.showHelp();
     ok('Help explains synergies', /Synergies/.test(UI.root.innerHTML));
+  });
+  sectionTry('compendium: every foe/weapon/evolution/stat is described + tabs work', () => {
+    const g = new Game(document.getElementById('game'));
+    UI.init(document.getElementById('overlay'), g);
+    // Every foe and boss carries a player-facing description (one source of truth).
+    ok('every enemy has a Compendium description', Object.keys(ENEMY_TYPES).every(id => enemyDesc(id).length > 0));
+    ok('every boss has a Compendium description', Object.keys(BOSSES).every(id => enemyDesc(id).length > 0));
+    // Foes tab surfaces that lore for a seen enemy.
+    Save.markSeen('enemies', 'drifter');
+    UI.showCodex('foes');
+    ok('foes tab shows lore for a seen enemy', String(UI.root.innerHTML).includes('drifts straight at you'));
+    // Arsenal tab shows a seen weapon plus its evolution path.
+    Save.markSeen('weapons', 'bolt');
+    UI.showCodex('arsenal');
+    ok('arsenal tab shows a weapon evolution path', /Evolves into/.test(UI.root.innerHTML));
+    // Evolutions tab states each forge requirement.
+    UI.showCodex('evolutions');
+    ok('evolutions tab shows the forge requirement', /Max /.test(UI.root.innerHTML));
+    // Stats glossary is comprehensive and describes the core levers.
+    UI.showCodex('stats');
+    ok('stats glossary covers the core stats', STAT_GLOSSARY.length >= 14 &&
+      /Damage/.test(UI.root.innerHTML) && /Move Speed/.test(UI.root.innerHTML) && /Crit/.test(UI.root.innerHTML));
+    // Default tab + tabs are wired.
+    UI.showCodex();
+    ok('compendium defaults to the Foes tab', /cdx-tab on/.test(UI.root.innerHTML) && /☠ Foes/.test(UI.root.innerHTML));
+    // Hover tooltips are wired into the chrome.
+    UI.showMenu();
+    ok('UI carries hover tooltips (data-tip)', /data-tip="/.test(UI.root.innerHTML));
   });
   sectionTry('synergies: shown on the pause screen when active', () => {
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 3 });

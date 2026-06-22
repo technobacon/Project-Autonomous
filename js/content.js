@@ -200,3 +200,27 @@ function metaCost(up, level) {
 }
 
 function getMeta(id) { return META_UPGRADES.find(u => u.id === id); }
+
+// ---- Stat glossary --------------------------------------------------------
+// Plain-language descriptions of every stat the player can build, surfaced in
+// the Compendium and as hover tooltips. Display-only data (no effect on the sim).
+const STAT_GLOSSARY = [
+  { icon: '🗡', name: 'Damage', color: '#ff6b6b', desc: 'A global multiplier on every weapon’s hit. The backbone of your DPS — most builds want it.' },
+  { icon: '⏩', name: 'Attack Speed', color: '#ffd84d', desc: 'How often weapons fire. More uptime, more projectiles on screen, more damage over time.' },
+  { icon: '👟', name: 'Move Speed', color: '#8affc1', desc: 'How fast you move. Your single best defence — outrun rings, reach shrines, kite bosses.' },
+  { icon: '❤', name: 'Max Health', color: '#ff5d8f', desc: 'Your life pool. Raising it also heals you for the gain. The buffer between you and the dark.' },
+  { icon: '🛡', name: 'Armor', color: '#9ad8ff', desc: 'Flat damage reduction subtracted from every hit. Brutal against swarms of small hits.' },
+  { icon: '✚', name: 'Health Regen', color: '#7affc4', desc: 'Health restored per second. Quietly undoes chip damage between threats.' },
+  { icon: '✶', name: 'Crit Chance', color: '#ff9d3c', desc: 'Odds a hit lands a critical for bonus damage. Pairs with Crit Damage for spiky burst.' },
+  { icon: '✷', name: 'Crit Damage', color: '#ff7a3c', desc: 'The multiplier a critical hit applies (base ×2). Turns lucky hits into execution blows.' },
+  { icon: '⊙', name: 'Area', color: '#9ad8ff', desc: 'Size of projectiles, blasts and zones. More overlap, more multi-hits in a packed crowd.' },
+  { icon: '⋔', name: 'Projectiles', color: '#c98bff', desc: 'Extra shots added to weapons that fire them. Raw output, and wider coverage of the field.' },
+  { icon: '➶', name: 'Pierce', color: '#5ad9ff', desc: 'How many foes a shot passes through before it dies. Lethal against lined-up ranks.' },
+  { icon: '»', name: 'Projectile Speed', color: '#9aff9a', desc: 'How fast shots travel. Faster shots reach distant foes and miss less against movers.' },
+  { icon: '🧲', name: 'Pickup Range', color: '#ffb3e6', desc: 'How far light shards are drawn to you. Faster XP, smoother leveling, less backtracking.' },
+  { icon: '🩸', name: 'Lifesteal', color: '#e0405a', desc: 'Heal a sliver of health on each kill. Sustain that scales with how fast you clear.' },
+  { icon: '🍀', name: 'Luck', color: '#7affc4', desc: 'Tilts the level-up draft toward rarer, stronger offers. A long-game build accelerator.' },
+  { icon: '📘', name: 'XP Gain', color: '#5ad9ff', desc: 'Bonus experience from shards. Level faster, draft more upgrades, snowball sooner.' },
+  { icon: '✦', name: 'Shards', color: '#ffe14d', desc: 'The meta currency earned each run. Spent in the Sanctuary on permanent power and heroes.' },
+  { icon: '⟫', name: 'Blink', color: '#b6f0ff', desc: 'A short dash with brief invulnerability, on a cooldown. Punch through walls of foes or escape a closing ring.' },
+];

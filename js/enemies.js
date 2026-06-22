@@ -146,6 +146,34 @@ const BOSSES = {
   },
 };
 
+// Player-facing descriptions for the Compendium / tooltips — kept beside the
+// stat tables so every foe is "properly described" from one source of truth.
+const ENEMY_LORE = {
+  drifter: 'A slow husk of dark that drifts straight at you. Harmless alone; lethal in a crowd.',
+  runner: 'Fast and frail — sprints in recklessly. Frail enough to clip on the way past.',
+  swarm: 'A tiny, fragile spark that comes in swarms. Pure chip damage by sheer numbers.',
+  brute: 'A hulking bruiser: slow, very tough, and a heavy hit. Make space and whittle it down.',
+  shooter: 'Hangs back and spits venom bolts from range. Close the gap or break line of sight.',
+  charger: 'Winds up, then charges in a fast straight burst. Sidestep the lunge and punish the recovery.',
+  splitter: 'Bursts into a trio of Splitlings when destroyed — clear the brood before it grows.',
+  splitling: 'A shard of a slain Splitter. Weak on its own, but they pile up fast.',
+  wraith: 'A swift, sturdy phantom of the deeper biomes. Hits hard and keeps pace with a kiter.',
+  stalker: 'Circles you at a distance, then darts in to strike. Watch for the inward dart.',
+  bomber: 'Closes in and detonates into a ring of shrapnel. Kill it early or be elsewhere when it pops.',
+  conjurer: 'Kites at range and conjures fans of motes. A priority target — ignore it and the screen fills.',
+  bombardier: 'Lobs telegraphed ground strikes where you stand. Keep moving and they fall on empty ground.',
+  acolyte: 'Bathes nearby foes in an empowering aura (faster, tougher). Cut it down first to weaken the pack.',
+  // Bosses.
+  warden: 'The first great dark. Chases you down and fires bolts in steady volleys — a test of the basics.',
+  colossus: 'A massive wall of dark: immense health and a punishing presence. Bring sustained damage.',
+  maelstrom: 'Weaves an ever-rotating spiral of bolts, punctuated by a full ring-nova. Read the spiral and thread it.',
+  devourer: 'A relentless apex predator — fast, vast health, heavy fire. The 10:00 gatekeeper.',
+  eclipse: 'Alternates an untouchable shielded phase with an open window. Wait out the shield, then burst it down.',
+  herald: 'Invulnerable while its summoned acolytes live. Clear the adds to drop the ward and open a damage window.',
+  ravager: 'Stalks, locks on, telegraphs a line, then dashes across the arena. Read the charge and dodge — never stand still.',
+};
+function enemyDesc(id) { return ENEMY_LORE[id] || ''; }
+
 const BOSS_SCHEDULE = [
   { time: 180, boss: 'warden' },     // 3:00
   { time: 360, boss: 'colossus' },   // 6:00

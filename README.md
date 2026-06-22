@@ -157,7 +157,7 @@ building around a theme, so every level-up choice carries a little extra weight:
 | ◈ **Cascade** | Glint + Arc Lightning | +10% attack speed, +8% crit |
 
 Evolved weapons still count as their base, active synergies show under your
-weapon row (and on the pause screen), and the full set lives in the **Codex**.
+weapon row (and on the pause screen), and the full set lives in the **Compendium**.
 Synergies are a pure function of your arsenal — no luck involved — so they're
 deterministic and the Daily Challenge stays fair.
 
@@ -329,7 +329,7 @@ Acolyte gets deadlier the more crowded the screen — so cut it down first. Affi
 stack on these foes too, so a *Shielded Bomber*, a *Swift Stalker*, or a
 *Hardened Conjurer* keeps every minute different.
 
-## 🏆 Achievements, difficulty & the Codex
+## 🏆 Achievements, difficulty & the Compendium
 
 - **42 achievements** with shard rewards and long-term goals — survive 15:00 to
   unlock the secret character **Void**; hunt elites, slay a Champion, collect
@@ -340,8 +340,11 @@ stack on these foes too, so a *Shielded Bomber*, a *Swift Stalker*, or a
 - **Ascension difficulties** — Normal → Hard → Nightmare → Abyss. Each scales
   enemies *and* shard rewards up, and unlocks by surviving a threshold on the
   tier below.
-- **Codex** — a bestiary + arsenal that fills in as you discover foes, weapons,
-  and evolutions, and now tracks your **lifetime kill count for each boss**.
+- **Compendium** — a tabbed reference (Foes · Arsenal · Evolutions · Synergies ·
+  Stats) where **every** foe, weapon, evolution, synergy and stat is fully
+  described. The Foes and Arsenal pages fill in as you discover them, foes carry
+  their role + stats + how to handle them, and it tracks your **lifetime kill
+  count for each boss**. Hover any stat or menu entry for an instant tooltip.
 - **Options** — toggle SFX, music, screen shake, floating damage numbers,
   the mastery trail FX, and a **Low Flash** accessibility mode (accessibility /
   clarity).

@@ -11,9 +11,47 @@ const UI = {
   init(root, game) {
     this.root = root;
     this.game = game;
+    this._initTips();
   },
 
   _esc() { /* allow Escape handling elsewhere */ },
+
+  // ---- Hover tooltips ---------------------------------------------------
+  // A single floating box driven by event delegation: any element carrying a
+  // `data-tip` attribute shows its text on hover and follows the cursor. Set up
+  // once; fully guarded so the headless harness (no real DOM) is a no-op.
+  _initTips() {
+    if (this._tipsReady) return;
+    this._tipsReady = true;
+    try {
+      const tip = document.createElement('div');
+      tip.className = 'tooltip'; tip.style.display = 'none';
+      if (document.body && document.body.appendChild) document.body.appendChild(tip);
+      this._tip = tip;
+      const place = (e) => {
+        if (tip.style.display === 'none') return;
+        const pad = 16, vw = window.innerWidth || 960, vh = window.innerHeight || 640;
+        const w = tip.offsetWidth || 240, h = tip.offsetHeight || 64;
+        let x = e.clientX + pad, y = e.clientY + pad;
+        if (x + w > vw - 10) x = e.clientX - w - pad;
+        if (y + h > vh - 10) y = e.clientY - h - pad;
+        tip.style.left = Math.max(8, x) + 'px';
+        tip.style.top = Math.max(8, y) + 'px';
+      };
+      document.addEventListener('mouseover', (e) => {
+        const el = e.target && e.target.closest && e.target.closest('[data-tip]');
+        if (!el) return;
+        tip.innerHTML = el.getAttribute('data-tip') || '';
+        tip.style.display = 'block'; this._tipEl = el; place(e);
+      });
+      document.addEventListener('mousemove', place);
+      document.addEventListener('mouseout', (e) => {
+        const el = e.target && e.target.closest && e.target.closest('[data-tip]');
+        if (el && el === this._tipEl) { tip.style.display = 'none'; this._tipEl = null; }
+      });
+    } catch (e) { /* no DOM (headless) — tooltips are purely cosmetic */ }
+  },
+  _hideTip() { if (this._tip && this._tip.style) { this._tip.style.display = 'none'; this._tipEl = null; } },
 
   _dailyChip() {
     const best = Save.getDailyBest(dailyDateString());
@@ -29,7 +67,7 @@ const UI = {
     return ` <span class="shard-chip">${Save.trialsDone()}/${TRIALS.length}</span>`;
   },
 
-  clear() { this.root.innerHTML = ''; this.root.className = 'overlay'; this._omens = null; },
+  clear() { this.root.innerHTML = ''; this.root.className = 'overlay'; this._omens = null; this._hideTip(); },
   show() { this.root.style.display = 'flex'; },
   hide() { this.root.style.display = 'none'; },
 
@@ -42,19 +80,19 @@ const UI = {
         <h1 class="title">LAST<span>LIGHT</span></h1>
         <p class="tagline">A spark of light against the endless dark.<br>Survive as long as you can.</p>
         <div class="menu-buttons">
-          <button class="btn btn-primary" id="btn-play">▶ PLAY</button>
-          <button class="btn" id="btn-gauntlet">⚔ GAUNTLET${this._gauntletChip()}</button>
-          <button class="btn" id="btn-daily">🗓 DAILY CHALLENGE${this._dailyChip()}</button>
-          <button class="btn" id="btn-trials">🎯 TRIALS${this._trialsChip()}</button>
-          <button class="btn" id="btn-custom">🧪 CUSTOM RUN</button>
-          <button class="btn" id="btn-shop">⚙ SANCTUARY <span class="shard-chip">✦ ${formatNum(d.shards)}</span></button>
-          <button class="btn" id="btn-relics">🔮 RELICS <span class="shard-chip">${Save.relicCount()}/${RELIC_LIST.length}</span></button>
+          <button class="btn btn-primary" id="btn-play" data-tip="Endless survival. Pick a hero, draft an Omen, last as long as you can.">▶ PLAY</button>
+          <button class="btn" id="btn-gauntlet" data-tip="Boss rush — back-to-back bosses, escalating each round. You start armed.">⚔ GAUNTLET${this._gauntletChip()}</button>
+          <button class="btn" id="btn-daily" data-tip="One seeded run shared by everyone today. Pure skill, no relics — beat your score.">🗓 DAILY CHALLENGE${this._dailyChip()}</button>
+          <button class="btn" id="btn-trials" data-tip="Fixed-rule challenges with set objectives. Omens & relics off — clear them for shards.">🎯 TRIALS${this._trialsChip()}</button>
+          <button class="btn" id="btn-custom" data-tip="Stack any mutators you like; self-imposed difficulty scales the shard payout.">🧪 CUSTOM RUN</button>
+          <button class="btn" id="btn-shop" data-tip="Spend shards on permanent upgrades and unlock new heroes.">⚙ SANCTUARY <span class="shard-chip">✦ ${formatNum(d.shards)}</span></button>
+          <button class="btn" id="btn-relics" data-tip="Unlock and equip relics into your loadout for permanent run bonuses.">🔮 RELICS <span class="shard-chip">${Save.relicCount()}/${RELIC_LIST.length}</span></button>
           <div class="menu-buttons row">
-            <button class="btn" id="btn-ach">🏆 ${Save.achievementCount()}/${ACHIEVEMENTS.length}</button>
-            <button class="btn" id="btn-codex">📖 CODEX</button>
-            <button class="btn" id="btn-mastery">🎖 MASTERY</button>
-            <button class="btn" id="btn-history">📜 HISTORY</button>
-            <button class="btn" id="btn-help">? HELP</button>
+            <button class="btn" id="btn-ach" data-tip="Feats and milestones — many unlock relics or heroes.">🏆 ${Save.achievementCount()}/${ACHIEVEMENTS.length}</button>
+            <button class="btn" id="btn-codex" data-tip="A full reference: every foe, weapon, evolution, synergy and stat.">📖 COMPENDIUM</button>
+            <button class="btn" id="btn-mastery" data-tip="Lifetime rank for each hero and weapon you play.">🎖 MASTERY</button>
+            <button class="btn" id="btn-history" data-tip="Your run chronicle — mode, build, score and time for every attempt.">📜 HISTORY</button>
+            <button class="btn" id="btn-help" data-tip="How to play, plus a tour of every system.">? HELP</button>
           </div>
         </div>
         <div class="stats-row">
@@ -107,7 +145,7 @@ const UI = {
           <div class="help-card"><h3>☠ Bosses</h3><p>Bosses arrive on a timer and hit hard — but drop a flood of XP and treasure. Survive past 10:00 to face the Devourer.</p></div>
           <div class="help-card"><h3>✦ Sanctuary</h3><p>Earn shards every run. Spend them in the Sanctuary on <b>permanent upgrades</b> and to <b>unlock new characters</b>.</p></div>
           <div class="help-card"><h3>🧬 Evolve</h3><p>Max a weapon <b>and</b> own its paired passive to unlock a golden <b>EVOLUTION</b> — a far more powerful form. Chase them.</p></div>
-          <div class="help-card"><h3>✷ Synergies</h3><p>Hold the right <b>weapon pairs</b> together to trigger a <b>synergy</b> — an always-on set bonus (e.g. Flame + Toxin = <b>Wildfire</b>). Active synergies show under your weapons. Discover all ${SYNERGIES.length} in the Codex.</p></div>
+          <div class="help-card"><h3>✷ Synergies</h3><p>Hold the right <b>weapon pairs</b> together to trigger a <b>synergy</b> — an always-on set bonus (e.g. Flame + Toxin = <b>Wildfire</b>). Active synergies show under your weapons. Discover all ${SYNERGIES.length} in the Compendium.</p></div>
           <div class="help-card"><h3>🎴 Omens</h3><p>Before each run, draft a powerful <b>Omen</b> that reshapes the whole run — usually a big upside with a tradeoff. Or play with none.</p></div>
           <div class="help-card"><h3>⚔ Gauntlet</h3><p>A boss-rush mode: <b>endless rounds of bosses</b>, escalating each time, with a short breather between. You start with extra upgrades — how many rounds can you clear?</p></div>
           <div class="help-card"><h3>🎯 Trials</h3><p><b>${TRIALS.length} fixed-rule challenges</b>, each with a twist and a clear objective (survive, slay, or score). They ignore Omens & Relics — pure skill. Clear one for a shard bounty.</p></div>
@@ -184,8 +222,8 @@ const UI = {
           <p class="char-blurb">${c.blurb}</p>
           ${c.perkDesc ? `<p class="char-perk" style="color:${c.color}">✦ ${c.perkDesc}</p>` : ''}
           <div class="char-stats">
-            <span>❤ ${c.stats.maxHp}</span><span>👟 ${c.stats.speed}</span>
-            <span>🗡 ${Math.round(c.stats.might*100)}%</span>
+            <span data-tip="Starting max health">❤ ${c.stats.maxHp}</span><span data-tip="Move speed">👟 ${c.stats.speed}</span>
+            <span data-tip="Base damage multiplier">🗡 ${Math.round(c.stats.might*100)}%</span>
           </div>
           ${action}
         </div>`;
@@ -518,52 +556,113 @@ const UI = {
     document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
   },
 
-  // ---- Codex / Bestiary -------------------------------------------------
-  showCodex() {
+  // ---- Compendium (foes / arsenal / evolutions / synergies / stats) -----
+  // A tabbed reference where every foe, weapon, evolution, synergy and stat is
+  // fully described. Each foe/weapon entry unlocks once encountered in a run.
+  showCodex(tab) {
     this.clear(); this.show();
-    const enemyCards = Object.values(ENEMY_TYPES).concat(Object.values(BOSSES)).map(e => {
-      const seen = Save.isSeen('enemies', e.id);
-      let info = 'Undiscovered';
-      if (seen) {
-        if (e.boss) { const n = Save.bossKillsOf(e.id); info = n > 0 ? `Boss · ⚔ ${formatNum(n)} slain` : 'Boss'; }
-        else info = 'HP ' + e.hp + ' · DMG ' + e.damage;
-      }
-      return `<div class="codex-card ${seen ? '' : 'locked'}" style="--c:${e.color}">
-        <div class="codex-glyph" style="color:${seen ? e.color : '#444'}">${e.boss ? '☠' : '◆'}</div>
-        <h4>${seen ? e.name : '???'}</h4>
-        <p>${info}</p>
-      </div>`;
-    }).join('');
-    const weaponCards = WEAPON_LIST.concat(Object.values(EVOLVED_WEAPONS)).map(w => {
-      const seen = Save.isSeen('weapons', w.id);
-      const evo = w.evolved;
-      return `<div class="codex-card ${seen ? '' : 'locked'} ${evo ? 'evo' : ''}" style="--c:${w.color}">
-        <div class="codex-glyph" style="color:${seen ? w.color : '#444'}">${seen ? w.icon : '?'}</div>
-        <h4>${seen ? w.name : '???'}</h4>
-        <p>${seen ? (evo ? 'Evolved' : 'Weapon') : 'Undiscovered'}</p>
-      </div>`;
-    }).join('');
-    const synergyCards = SYNERGIES.map(s => {
-      const icons = s.members.map(id => { const w = getWeapon(id); return w ? `<span style="color:${w.color}">${w.icon}</span>` : ''; }).join('<span class="syn-plus">+</span>');
-      return `<div class="syn-card" style="--c:${s.color}">
-        <div class="syn-card-head"><span class="syn-name" style="color:${s.color}">${s.icon} ${s.name}</span><span class="syn-req">any ${s.need}</span></div>
-        <div class="syn-members">${icons}</div>
-        <p>${s.desc}</p>
-      </div>`;
-    }).join('');
+    if (tab) this._codexTab = tab;
+    if (!this._codexTab) this._codexTab = 'foes';
+    const t = this._codexTab;
+
     const eSeen = Object.keys(ENEMY_TYPES).filter(k => Save.isSeen('enemies', k)).length;
     const wSeen = WEAPON_LIST.filter(w => Save.isSeen('weapons', w.id)).length;
+    const eTotal = Object.keys(ENEMY_TYPES).length, bTotal = Object.keys(BOSSES).length;
+    const tabs = [
+      ['foes', `☠ Foes <small>${eSeen}/${eTotal}</small>`],
+      ['arsenal', `⚔ Arsenal <small>${wSeen}/${WEAPON_LIST.length}</small>`],
+      ['evolutions', `🧬 Evolutions <small>${EVOLUTIONS.length}</small>`],
+      ['synergies', `✷ Synergies <small>${SYNERGIES.length}</small>`],
+      ['stats', '📊 Stats'],
+    ];
+    const tabBar = tabs.map(([id, label]) => `<button class="cdx-tab ${t === id ? 'on' : ''}" data-tab="${id}">${label}</button>`).join('');
+
+    const roleOf = (e) => e.boss ? 'Boss' : ({ chase: 'Fodder', shooter: 'Ranged', charger: 'Charger', stalker: 'Skirmisher', bomber: 'Bomber', summoner: 'Summoner', lobber: 'Artillery', warder: 'Support' }[e.ai] || 'Foe');
+    let body = '', intro = '';
+
+    if (t === 'foes') {
+      intro = 'Every foe of the dark, with its role, stats and how to handle it. Defeat one to record it here.';
+      const card = (e) => {
+        const seen = Save.isSeen('enemies', e.id);
+        const line = e.boss
+          ? (seen ? `<span class="cdx-tag" style="border-color:${e.color};color:${e.color}">BOSS</span>${Save.bossKillsOf(e.id) > 0 ? ` ⚔ ${formatNum(Save.bossKillsOf(e.id))} slain` : ''}` : 'Boss')
+          : `<span data-tip="Health">❤ ${e.hp}</span> &nbsp; <span data-tip="Contact damage">⚔ ${e.damage}</span> &nbsp; <span data-tip="Move speed">👟 ${e.speed}</span> &nbsp; <span data-tip="XP dropped">✦ ${e.xp}</span>`;
+        return `<div class="cdx-entry ${seen ? '' : 'locked'} ${e.boss ? 'is-boss' : ''}" style="--c:${e.color}">
+          <div class="cdx-sym" style="color:${seen ? e.color : '#3c465a'}">${seen ? (e.boss ? '☠' : '◆') : '?'}</div>
+          <div class="cdx-meta">
+            <div class="cdx-name">${seen ? e.name : '???'}<span class="cdx-role">${seen ? roleOf(e) : '???'}</span></div>
+            <div class="cdx-line">${seen ? line : 'Undiscovered'}</div>
+            <p class="cdx-desc">${seen ? enemyDesc(e.id) : 'A shape in the dark you have not yet faced.'}</p>
+          </div>
+        </div>`;
+      };
+      body = `<div class="cdx-list">${Object.values(ENEMY_TYPES).map(card).join('')}${Object.values(BOSSES).map(card).join('')}</div>`;
+    } else if (t === 'arsenal') {
+      intro = 'Your weapons and what each does at first acquisition — plus the evolution it can one day become.';
+      const card = (w) => {
+        const seen = Save.isSeen('weapons', w.id);
+        const ev = EVOLUTIONS.find(x => x.base === w.id);
+        let evNote = '';
+        if (ev) { const into = getWeapon(ev.into), pas = PASSIVES[ev.passive]; if (into && pas) evNote = `<div class="cdx-evonote">🧬 Evolves into <b style="color:${into.color}">${into.name}</b> — max it &amp; hold <b style="color:${pas.color}">${pas.name}</b> Lv${ev.passiveLvl}</div>`; }
+        return `<div class="cdx-entry ${seen ? '' : 'locked'}" style="--c:${w.color}">
+          <div class="cdx-sym" style="color:${seen ? w.color : '#3c465a'}">${seen ? w.icon : '?'}</div>
+          <div class="cdx-meta">
+            <div class="cdx-name">${seen ? w.name : '???'}<span class="cdx-role">Weapon</span></div>
+            <p class="cdx-desc">${seen ? (typeof w.desc === 'function' ? w.desc(1) : '') : 'Wield it in a run to record it.'}</p>
+            ${seen ? evNote : ''}
+          </div>
+        </div>`;
+      };
+      body = `<div class="cdx-list">${WEAPON_LIST.map(card).join('')}</div>`;
+    } else if (t === 'evolutions') {
+      intro = 'Max a weapon and hold its paired passive to forge a far stronger evolved form.';
+      const card = (ev) => {
+        const base = getWeapon(ev.base), into = getWeapon(ev.into), pas = PASSIVES[ev.passive];
+        if (!base || !into) return '';
+        const seen = Save.isSeen('weapons', into.id);
+        return `<div class="cdx-entry evo ${seen ? '' : 'locked'}" style="--c:${into.color}">
+          <div class="cdx-sym cdx-pair">
+            <span style="color:${base.color}">${base.icon}</span>
+            <span class="cdx-arrow">→</span>
+            <span style="color:${seen ? into.color : '#3c465a'}">${seen ? into.icon : '?'}</span>
+          </div>
+          <div class="cdx-meta">
+            <div class="cdx-name">${seen ? into.name : '???'}<span class="cdx-role">Evolved</span></div>
+            <div class="cdx-line">Max <b style="color:${base.color}">${base.name}</b> + <b style="color:${pas ? pas.color : '#fff'}">${pas ? pas.name : ev.passive}</b> Lv${ev.passiveLvl}</div>
+            <p class="cdx-desc">${seen ? (typeof into.desc === 'function' ? into.desc(1) : '') : 'Forge it once to reveal its power.'}</p>
+          </div>
+        </div>`;
+      };
+      body = `<div class="cdx-list">${EVOLUTIONS.map(card).join('')}</div>`;
+    } else if (t === 'synergies') {
+      intro = 'Hold the right weapon pairs together for an always-on set bonus.';
+      const synergyCards = SYNERGIES.map(s => {
+        const icons = s.members.map(id => { const w = getWeapon(id); return w ? `<span style="color:${w.color}">${w.icon}</span>` : ''; }).join('<span class="syn-plus">+</span>');
+        return `<div class="syn-card" style="--c:${s.color}">
+          <div class="syn-card-head"><span class="syn-name" style="color:${s.color}">${s.icon} ${s.name}</span><span class="syn-req">any ${s.need}</span></div>
+          <div class="syn-members">${icons}</div>
+          <p>${s.desc}</p>
+        </div>`;
+      }).join('');
+      body = `<div class="syn-grid">${synergyCards}</div>`;
+    } else { // stats
+      intro = 'Every stat you can build, in plain language. Hover any stat in-game or here for a reminder.';
+      const card = (s) => `<div class="cdx-entry" style="--c:${s.color}" data-tip="${s.desc}">
+        <div class="cdx-sym" style="color:${s.color}">${s.icon}</div>
+        <div class="cdx-meta"><div class="cdx-name">${s.name}</div><p class="cdx-desc">${s.desc}</p></div>
+      </div>`;
+      body = `<div class="cdx-list">${STAT_GLOSSARY.map(card).join('')}</div>`;
+    }
+
     this.root.innerHTML = `
       <div class="screen panel wide">
-        <div class="panel-head"><h2>Codex</h2></div>
-        <h3 class="sub">Foes <small>(${eSeen}/${Object.keys(ENEMY_TYPES).length})</small></h3>
-        <div class="codex-grid">${enemyCards}</div>
-        <h3 class="sub">Arsenal <small>(${wSeen}/${WEAPON_LIST.length} + evolutions)</small></h3>
-        <div class="codex-grid">${weaponCards}</div>
-        <h3 class="sub">Synergies <small>(${SYNERGIES.length} set bonuses)</small></h3>
-        <div class="syn-grid">${synergyCards}</div>
+        <div class="panel-head"><h2>Compendium</h2></div>
+        <div class="cdx-tabs">${tabBar}</div>
+        <p class="cdx-intro">${intro}</p>
+        ${body}
         <button class="btn" id="btn-back">← Back</button>
       </div>`;
+    this.root.querySelectorAll('.cdx-tab').forEach(b => { b.onclick = () => { Audio2.uiMove(); this.showCodex(b.dataset.tab); }; });
     document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
   },
 
