@@ -4,7 +4,7 @@ A living handoff for whoever (human or future session) picks this up. It capture
 **what the game is, how it's built, the rules you must not break, and where to go
 next.** Pair it with `README.md` (player-facing) — this doc is builder-facing.
 
-Current head: see `git log` (latest is the `v44` Bombardier milestone). Develop on
+Current head: see `git log` (latest is the `v74` Searing-affix milestone). Develop on
 branch `claude/compassionate-thompson-r1yo8r`.
 
 ---
@@ -24,9 +24,10 @@ milestone** that increases long-term replayability/enjoyment, committed and push
 - **Play:** open `index.html` (or `python3 -m http.server` then visit it).
 - **Three headless harnesses** (Node, no deps) concatenate the `js/*.js` files in an
   `order` array and run in a `vm` sandbox with a stubbed canvas/localStorage:
-  - `node tools/headless-test.js` — functional suite (**587 assertions, 0 failures**).
-    Prints `ALL CHECKS PASSED ✓`. Sections are `sectionTry('name', () => { ok(...) })`.
-  - `node tools/determinism-test.js` — **15 checks**. Proves seed → identical run
+  - `node tools/headless-test.js` — functional suite (**~784 assertions, 0 failures**;
+    the count drifts ±a few via an RNG loop — gate on `ALL CHECKS PASSED ✓`, not the
+    number). Sections are `sectionTry('name', () => { ok(...) })`.
+  - `node tools/determinism-test.js` — **21 checks**. Proves seed → identical run
     regardless of render cadence / audio / shake, and that hazards/vortex differ by
     seed. Prints `ALL DETERMINISM CHECKS PASSED ✓`.
   - `node tools/balance-sim.js` — auto-play dodge-AI, random seed each run, high
@@ -59,7 +60,7 @@ Consequences, always:
 The Daily Challenge relies on this (everyone shares a date-seed); Trials/Custom use a
 fresh seed per attempt but their *rules* are pure data.
 
-## 4. Architecture / file map (`js/`, ~6.6k lines)
+## 4. Architecture / file map (`js/`, ~7.4k lines)
 
 - **game.js** — the engine core (largest file): world/camera, entity arrays, the
   fixed-step `update(dt)` and `render()`, spatial grid, collision/combat
@@ -75,30 +76,31 @@ fresh seed per attempt but their *rules* are pure data.
   timed buffs, via the `_applyStatMods(sm)` helper), weapons firing, XP/level,
   `hurt/heal`, the **Blink** (`dash()` + charge regen), **timed buffs**
   (`addBuff/hasBuff`, `buffs[]`), `applyUpgrade`, draw (incl. mastery trail/halo).
-- **enemies.js** — `ENEMY_TYPES`, `AFFIXES` (9), `BOSSES` (4), `BOSS_SCHEDULE`,
+- **enemies.js** — `ENEMY_TYPES` (13), `AFFIXES` (11), `BOSSES` (7), `BOSS_SCHEDULE`,
   `ENDLESS_BOSSES`, and the `Director` (spawn scheduling, scaling curves, packs,
   rings, champions, gauntlet rounds).
-- **weapons.js** — `WEAPONS` (15 base) + `WEAPON_LIST`. Periodic weapons implement
+- **weapons.js** — `WEAPONS` (17 base) + `WEAPON_LIST`. Periodic weapons implement
   `cooldown(l,p)` + `fire(game,inst)`; continuous ones implement `tick(game,inst,dt)`.
-- **evolutions.js** — `EVOLUTIONS` table (base+passive→into) + `EVOLVED_WEAPONS` (15),
+  Projectiles support `bounce`/`bounceRange` (ricochet — Glint/Scintilla).
+- **evolutions.js** — `EVOLUTIONS` table (base+passive→into) + `EVOLVED_WEAPONS` (17),
   merged into `WEAPONS` (excluded from normal pools).
-- **synergies.js** — `SYNERGIES` (9) set bonuses; `activeSynergies(weapons)` is a pure
+- **synergies.js** — `SYNERGIES` (13) set bonuses; `activeSynergies(weapons)` is a pure
   function (evolved forms count as base).
 - **modifiers.js** — `defaultMods()` (the neutral mods object & channel list),
-  `MODIFIERS`/Omens (17), `buildMods`, `draftOmens`.
-- **relics.js** — `RELICS` (21), `applyRelics`, `relicSlots`. Some relics are
+  `MODIFIERS`/Omens (20), `buildMods`, `draftOmens`.
+- **relics.js** — `RELICS` (25), `applyRelics`, `relicSlots`. Some relics are
   synergy-aware: `apply()` is a no-op and the work is a pure `synergyMods(n)` read in
   `recalc`. Some are read by systems via `game.hasRelic(id)` (e.g. Pilgrim's Charm).
-- **mutators.js** — `MUTATORS` (19) for Custom Run; each `apply(m)` + a `weight` that
+- **mutators.js** — `MUTATORS` (22) for Custom Run; each `apply(m)` + a `weight` that
   feeds `mutatorRewardMul` (payout scales with self-imposed difficulty).
-- **trials.js** — `TRIALS` (8) with `req` unlock chain; `trialUnlocked/trialLockedBy`
+- **trials.js** — `TRIALS` (10) with `req` unlock chain; `trialUnlocked/trialLockedBy`
   (pure predicates), goal/progress helpers.
-- **content.js** — `CHARACTERS` (9; some have a `perk` + `perkDesc`), `DIFFICULTIES`,
+- **content.js** — `CHARACTERS` (13; most have a `perk` + `perkDesc`), `DIFFICULTIES`,
   `META_UPGRADES` (Sanctuary), cost helpers.
-- **upgrades.js** — `PASSIVES` (15) + `buildUpgradeChoices` (the level-up draft).
+- **upgrades.js** — `PASSIVES` (16) + `buildUpgradeChoices` (the level-up draft).
 - **save.js** — `Save` object, localStorage persistence (KEY `lastlight.save.v1`),
   deep-merged `defaults()` on load, mastery/trials/bossLog/history/etc.
-- **achievements.js** — `ACHIEVEMENTS` (37), `Achievements.context(game)`,
+- **achievements.js** — `ACHIEVEMENTS` (42), `Achievements.context(game)`,
   `Achievements.check(game)`.
 - **ui.js** — all DOM overlay screens (menu, char-select, sanctuary, codex, mastery,
   trials, mutators, help, pause, game-over, options).
@@ -112,11 +114,11 @@ fresh seed per attempt but their *rules* are pure data.
 timed buffs, all through `_applyStatMods`. **Channels:** dmgMul, hpMul, speedMul,
 hasteMul, areaMul, projSpeedMul, pickupMul, xpMul, shardMul, critChanceBonus,
 critDmgBonus, armorBonus, luckBonus, regenBonus, lifesteal, berserk, reviveBonus,
-extraChoice, enemy{Hp,Dmg,Speed,Count}Mul, plus addProj/addPierce (synergies/mutators
-→ player.bonusProj/bonusPierce). To add a stat lever, add a channel here and apply it
-in `recalc`/spawn/combat.
+extraChoice, enemy{Hp,Dmg,Speed,Count}Mul, plus addProj/addPierce/thornsBonus
+(synergies/relics/mutators/buffs → player.bonusProj/bonusPierce/thorns). To add a stat
+lever, add a channel here and apply it in `recalc`/spawn/combat.
 
-## 5. Current feature state (as of v47)
+## 5. Current feature state (as of v74)
 
 - **17 weapons / 17 evolutions**, **16 passives**, **13 heroes** (Flux = blink perks,
   Forge = turret perks, Reaper = crit/execute perks, Sentinel = thorns/tank perks,
@@ -162,20 +164,33 @@ in `recalc`/spawn/combat.
 
 - **Mutator-aware content** — Custom Run has no cross-system interactions yet (e.g. a
   mutator that makes shrines constant, or boss frequency; would need new channels +
-  wiring into those systems).
-- **Another perk hero** — e.g. a shrine/risk specialist, reusing the `perk` hook
-  (perks currently cover dash + turret + stat + execute + thorns + deathBlast; add
-  new perk keys read where relevant).
-- **More biomes / a new hazard kind** (e.g. a damaging trail, a tracking pillar) —
-  the hazard framework (`updateHazards` + `kind` switch + `_drawHazards`) takes new
-  kinds cleanly; remember a determinism warp-check for late biomes. *(Done so far:
-  strike / field / vortex / beam.)*
+  wiring into those systems). *Still open — a strong, distinctive next step.*
+- **Another perk hero** — e.g. a shrine/risk specialist or a ricochet/bounce
+  specialist, reusing the `perk` hook (perks currently cover dash + turret + stat +
+  execute + thorns + deathBlast; add new perk keys read where relevant).
+- **More biomes / a new hazard kind** — the hazard framework (`updateHazards` + `kind`
+  switch + `_drawHazards` + `spawnHazard`) takes new kinds cleanly; **append new biomes
+  LAST** so existing indices (and the determinism warp-checks keyed off them) don't
+  move. *(Hazard kinds done: strike / field / vortex / beam / hunter / gale.)*
 - **A new boss** with a distinct mechanic (add to `BOSSES`, a `boss_*` AI case,
-  schedule/rotation/gauntlet keys).
+  schedule/rotation/gauntlet keys). *(Done recently: Herald = add-gated ward, Ravager =
+  telegraphed dash.)*
 - **Weapon/synergy/relic/omen drops** — always-welcome build variety; cheapest are
-  omens/mutators/synergies (pure data).
-- **Polish/accessibility** — colorblind-safe palette toggle, reduced-flash mode, more
-  options.
+  omens/mutators/synergies (pure data). *(A ricochet line — Glint/Scintilla + Cascade
+  synergy + Piercer's Eye relic + Ricochet achievements — landed in v66–v73.)*
+- **Polish/accessibility** — colorblind-safe palette toggle (reduced-flash already
+  shipped), more options.
+
+### Recurring gotchas worth re-reading before you start
+- **headless-test.js test bodies live inside a `src += \`…\`` template literal.** Never
+  use an apostrophe in a single-quoted string there (`'Warden\'s'` → the `\'` collapses
+  to `'` and breaks the generated source), and never use an escaped slash regex
+  (`/\//` collapses to `//` → a line comment). Use `String.includes('/')` instead.
+- **`killEnemy` does NOT splice the enemies array** (the update loop does) — assert on
+  spawned-children counts / flags, not `enemies.length`, right after calling it.
+- **Zones (`spawnZone`) damage enemies only; hazards (`updateHazards`) damage the
+  player too.** Use the hazard pipeline for anything meant to threaten the player
+  (that's how the Searing affix lays its trail).
 
 ## 8. Definition of done (every milestone)
 
