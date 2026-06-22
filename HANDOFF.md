@@ -4,8 +4,9 @@ A living handoff for whoever (human or future session) picks this up. It capture
 **what the game is, how it's built, the rules you must not break, and where to go
 next.** Pair it with `README.md` (player-facing) — this doc is builder-facing.
 
-Current head: see `git log` (latest is the `v76` Votary-hero milestone). Develop on
-branch `claude/sharp-knuth-5hbl8w`.
+Current head: see `git log` (latest is the `v80` UI-polish milestone — a four-part
+polish wave: v77 balance, v78 music, v79 Compendium+tooltips, v80 UI restyle).
+Develop on branch `claude/sharp-knuth-5hbl8w`.
 
 ---
 
@@ -102,10 +103,23 @@ fresh seed per attempt but their *rules* are pure data.
   deep-merged `defaults()` on load, mastery/trials/bossLog/history/etc.
 - **achievements.js** — `ACHIEVEMENTS` (42), `Achievements.context(game)`,
   `Achievements.check(game)`.
-- **ui.js** — all DOM overlay screens (menu, char-select, sanctuary, codex, mastery,
-  trials, mutators, help, pause, game-over, options).
-- **audio.js** (`Audio2`), **particles.js**, **input.js** (`Input`), **utils.js**
-  (math + `RNG` + `vrand`), **main.js** (`App` bootstrap).
+- **ui.js** — all DOM overlay screens (menu, char-select, sanctuary, Compendium,
+  mastery, trials, mutators, help, pause, game-over, options). The **Compendium**
+  (`showCodex`) is tabbed via `_codexTab` (foes/arsenal/evolutions/synergies/stats).
+  **Tooltips:** tag any element `data-tip="…"`; `UI._initTips()` (called from
+  `init`) wires one delegated floating box, fully guarded so headless is a no-op.
+- **audio.js** (`Audio2`) — SFX + a music engine that plays Grieg's *In the Hall of
+  the Mountain King* (`MELODY` = semitone offsets; cosmetic, accelerates with
+  intensity). **particles.js**, **input.js** (`Input`), **utils.js** (math + `RNG`
+  + `vrand`), **main.js** (`App` bootstrap).
+- **Descriptions live in data:** foe/boss prose = `ENEMY_LORE`/`enemyDesc()`
+  (enemies.js); the build-stat glossary = `STAT_GLOSSARY` (content.js). Reused by
+  the Compendium, Help and tooltips — keep them the single source of truth.
+- **css/style.css** — a four-layer dark palette (`--bg`/`--panel*`/`--line*`) with a
+  warm-gold `--accent` "light" identity and a `--display` heading font; depth via
+  layered shadows, not uniform glow. `--panel-border` is a back-compat alias of
+  `--line`. Balance curves (`Director.hpScale/dmgScale/bossScale/eliteChance`) are
+  late-weighted quadratics (v77) — retune there, no test pins exact values.
 
 ### The mods pipeline (how nearly everything composes)
 `defaultMods()` → omen overwrites (`buildMods`) **or** trial mods **or**
