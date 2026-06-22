@@ -76,13 +76,16 @@ each with a distinct starting weapon and playstyle:
 | **Reaper** | Crit-hungry executioner | Whirling Glaive |
 | **Sentinel** | Immovable tank, reflects contact damage | Flame Aura |
 | **Pyre** | Chain-reaction — slain foes erupt | Nova Burst |
+| **Votary** | Shrine pilgrim — snowballs Devotion from every altar | Nova Burst |
 
 …plus a secret hero, **Void**, unlocked by surviving 15:00. Each hero also has a
 distinct feel, and some carry a **signature perk** — Flux, for instance, is built
 around the Blink (an extra charge, a faster recharge, and a damage surge on every
-dash), the **Reaper** executes low-health foes outright, and the **Sentinel**
-reflects a chunk of contact damage straight back, so the horde breaks itself on
-your shield. Progress is saved
+dash), the **Reaper** executes low-health foes outright, the **Sentinel**
+reflects a chunk of contact damage straight back so the horde breaks itself on
+your shield, and the **Votary** turns the risk/reward Shrines into an engine of
+escalation — every altar claimed permanently empowers the light (Devotion), so a
+shrine-hopping pilgrim only grows stronger. Progress is saved
 automatically in your browser (`localStorage`).
 
 ## ⚒ Build variety

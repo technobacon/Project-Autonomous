@@ -1940,6 +1940,14 @@ class Game {
         const def = getShrineType(s.type);
         if (def) def.invoke(this);
         if (pilgrim) p.heal(p.maxHp * 0.12);   // the Charm softens every shrine's bite
+        // Votary Devotion: each claim permanently empowers the hero and heals.
+        const dev = p.char.perk && p.char.perk.shrineDevotion;
+        if (dev) {
+          p.devotion = (p.devotion || 0) + 1;
+          if (dev.heal) p.heal(p.maxHp * dev.heal);
+          p.recalc();
+          this.toast('✦ Devotion deepens (×' + p.devotion + ') — your light swells.', '#ffd27a');
+        }
         this.particles.ring(s.x, s.y, 30, { color: s.color, speed: 240, life: 0.7, size: 4 });
         if (Audio2.shrine) Audio2.shrine();
         this.shrines.splice(i, 1);

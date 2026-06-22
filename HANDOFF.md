@@ -4,7 +4,7 @@ A living handoff for whoever (human or future session) picks this up. It capture
 **what the game is, how it's built, the rules you must not break, and where to go
 next.** Pair it with `README.md` (player-facing) — this doc is builder-facing.
 
-Current head: see `git log` (latest is the `v75` system-mutators milestone). Develop on
+Current head: see `git log` (latest is the `v76` Votary-hero milestone). Develop on
 branch `claude/sharp-knuth-5hbl8w`.
 
 ---
@@ -122,11 +122,11 @@ twist, like enemy*Mul): `shrineRateMul` (updateShrines rearm), `hazardRateMul`
 (updateBiome grace + updateHazards rearm), `champRateMul` (Director champ cadence).
 Each divides a seeded timer, so two runs with the same seed+set stay bit-identical.
 
-## 5. Current feature state (as of v75)
+## 5. Current feature state (as of v76)
 
-- **17 weapons / 17 evolutions**, **16 passives**, **13 heroes** (Flux = blink perks,
+- **17 weapons / 17 evolutions**, **16 passives**, **14 heroes** (Flux = blink perks,
   Forge = turret perks, Reaper = crit/execute perks, Sentinel = thorns/tank perks,
-  Pyre = death-blast perks; Void secret), **13 synergies**,
+  Pyre = death-blast perks, Votary = shrine-Devotion snowball perk; Void secret), **13 synergies**,
   **20 omens**, **25 relics** (3 synergy-aware + Pilgrim's Charm), **25 mutators**
   (incl. 3 *system-cadence* twists: Pilgrimage/Upheaval/Warband), **42 achievements**.
 - **13 enemy archetypes** (incl. Conjurer=summoner, Acolyte=warder/aura,
@@ -172,9 +172,11 @@ Each divides a seeded timer, so two runs with the same seed+set stay bit-identic
   alters **boss frequency** (would need to scale `BOSS_SCHEDULE` times / the endless
   timer — touch carefully, the determinism warp-checks are keyed off biome/boss
   timing), shrines-always-on, or elite/swarm cadence (`eliteTimer`/`swarmTimer`).
-- **Another perk hero** — e.g. a shrine/risk specialist or a ricochet/bounce
-  specialist, reusing the `perk` hook (perks currently cover dash + turret + stat +
-  execute + thorns + deathBlast; add new perk keys read where relevant).
+- **Another perk hero** — the shrine/risk specialist landed in v76 (Votary =
+  `shrineDevotion`, read in `updateShrines` + `recalc`). A **ricochet/bounce
+  specialist** is still open (lean on the Glint/Refraction `bounce` line). Reuse the
+  `perk` hook (keys now cover dash + turret + stat + execute + thorns + deathBlast +
+  shrineDevotion; add new keys read where relevant).
 - **More biomes / a new hazard kind** — the hazard framework (`updateHazards` + `kind`
   switch + `_drawHazards` + `spawnHazard`) takes new kinds cleanly; **append new biomes
   LAST** so existing indices (and the determinism warp-checks keyed off them) don't

@@ -124,6 +124,19 @@ const CHARACTERS = [
     perkDesc: 'Slain non-boss foes erupt for area damage — kills can cascade through the horde.',
   },
   {
+    id: 'votary', name: 'Votary', color: '#ffd27a',
+    desc: 'Draws power from every altar — each shrine claimed burns brighter.',
+    startWeapon: 'nova',
+    cost: 1500,
+    stats: { maxHp: 105, speed: 185, might: 1.0, haste: 1.0, armor: 1, pickup: 155 },
+    blurb: 'A high-risk pilgrim. Chase every shrine, weather the packs, and snowball.',
+    // Per-hero perk: read in game.updateShrines (the claim path) + player.recalc.
+    // Each shrine claimed grows a permanent "Devotion" stack (damage + move speed)
+    // and heals — turning the risk/reward altars into an engine of escalation.
+    perk: { shrineDevotion: { dmg: 0.07, spd: 0.03, heal: 0.14 } },
+    perkDesc: 'Each Shrine claimed grants a permanent +7% damage & +3% move speed (Devotion) and heals 14% max health.',
+  },
+  {
     // Secret character — not purchasable; unlocked by the "Into the Void"
     // achievement (survive 15:00). Powerful but high-risk.
     id: 'void', name: 'Void', color: '#ff4dff',

@@ -47,7 +47,7 @@ globalThis.__det = function(report) {
 
   // A run that is identical given (seed, inputs), regardless of cosmetic config.
   function runSim(opts) {
-    const o = Object.assign({ render: false, renderEvery: 1, mute: false, shakeOff: false, reducedFlash: false, steps: 2400, daily: false, mutators: null }, opts);
+    const o = Object.assign({ render: false, renderEvery: 1, mute: false, shakeOff: false, reducedFlash: false, steps: 2400, daily: false, mutators: null, char: 'spark' }, opts);
     Audio2.muted = o.mute; Audio2.musicMuted = o.mute;
     Save.data.shakeOff = o.shakeOff;
     Save.data.reducedFlash = o.reducedFlash;
@@ -57,7 +57,7 @@ globalThis.__det = function(report) {
     let step = 0;
     // Deterministic, input-only movement (a pure function of the step index).
     Input.moveVector = () => ({ x: Math.cos(step * 0.13) * 0.8, y: Math.sin(step * 0.17) * 0.8 });
-    game.start('spark', 0, o.daily ? { daily: true, date: '2026-06-18' }
+    game.start(o.char, 0, o.daily ? { daily: true, date: '2026-06-18' }
       : (o.mutators ? { seed: o.seed, mode: 'custom', mutators: o.mutators } : { seed: o.seed }));
     // Optionally jump the clock forward to exercise a later (hazardous) biome
     // without simulating the full lead-up. Deterministic for a given (seed, warp).
@@ -86,7 +86,7 @@ globalThis.__det = function(report) {
       g.eliteKills, g.championKills, g.enemyProjectiles.length, g.zones.length,
       g.hazards.length, hx.toFixed(2), hy.toFixed(2), hp,
       g.shrines.length, sx.toFixed(2), sy.toFixed(2), sl.toFixed(2), stypes.join(','),
-      g.player.buffs.length, bt.toFixed(3), ew.toFixed(2),
+      g.player.buffs.length, bt.toFixed(3), g.player.devotion, ew.toFixed(2),
       g.turrets.length, tx.toFixed(2), tl.toFixed(2),
       (g.player.synergies || []).map(s => s.id).join(','), g.player.weapons.length].join('|');
   }
@@ -147,6 +147,13 @@ globalThis.__det = function(report) {
   const sys = runSim({ seed: SEED, mutators: sysmut, warp: 305, steps: 1200 });
   eq('system mutators deterministic (same seed + set)', sys, runSim({ seed: SEED, mutators: sysmut, warp: 305, steps: 1200 }));
   ne('system mutators change the run vs un-twisted', sys, haz);
+
+  // The Votary perk (Devotion) folds into might/speed — a movement-affecting stat —
+  // so its run must stay identical regardless of render cadence, and differ from
+  // another hero. Devotion itself is now part of the hashed state.
+  const vot = runSim({ seed: SEED, char: 'votary' });
+  eq('Votary run reproduces regardless of render cadence', vot, runSim({ seed: SEED, char: 'votary', render: true, renderEvery: 5 }));
+  ne('Votary plays differently from Spark', vot, base);
 
   report(results);
 };

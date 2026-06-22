@@ -47,6 +47,10 @@ class Player {
     // recalc and ticked down in update — pure, seeded-safe (no RNG of their own).
     this.buffs = [];
 
+    // Devotion stacks (Votary perk): a permanent count of Shrines claimed this run.
+    // Folded into might/speed in recalc; grows only on the deterministic claim path.
+    this.devotion = 0;
+
     // Mastery cosmetics (set at run start from lifetime rank). Purely visual —
     // never read by the simulation, so they can't affect fairness/determinism.
     this.masteryRank = 0;     // rank index of this hero (0 = Untrained)
@@ -99,6 +103,12 @@ class Player {
       if (perk.dashBonusCharges) this.dashMaxCharges += perk.dashBonusCharges;
       if (perk.thorns) this.thorns += perk.thorns;
       if (perk.mods) this._applyStatMods(perk.mods);   // flat stat perk (e.g. Reaper crit)
+      // Votary Devotion: every claimed Shrine permanently empowers the light.
+      if (perk.shrineDevotion && this.devotion) {
+        const d = perk.shrineDevotion;
+        if (d.dmg) this.might *= 1 + d.dmg * this.devotion;
+        if (d.spd) this.speed *= 1 + d.spd * this.devotion;
+      }
     }
 
     let newMax = base.maxHp + m('vigor') + pv('vigor') * 20;

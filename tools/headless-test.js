@@ -1997,6 +1997,39 @@ globalThis.__run = function(report) {
     for (let i = 0; i < 30; i++) g.updateTurrets(1 / 60);   // past their 0.3s life
     ok('turrets expire after their lifetime', g.turrets.length === 0);
   });
+  sectionTry('expansion: Votary snowballs Devotion from each Shrine claimed', () => {
+    const v = getCharacter('votary');
+    ok('Votary exists, buyable, has a shrineDevotion perk',
+      v && v.id === 'votary' && v.cost > 0 && !v.secret && v.perk && v.perk.shrineDevotion);
+    // Claim a Fortune shrine (gems + elite pack, but NO stat buff of its own) so
+    // the only change to might/speed/hp is the Devotion perk itself.
+    const claimFortune = (g) => {
+      g.shrines.push({ type: 'fortune', color: '#ffe14d', icon: '💰', x: g.player.x, y: g.player.y, radius: 24, t: 0, life: 26 });
+      g.updateShrines(1 / 60);
+    };
+    const g = new Game(document.getElementById('game')); g.start('votary', 0, { seed: 88, noRelics: true });
+    const might0 = g.player.might, speed0 = g.player.speed;
+    ok('starts with no Devotion', g.player.devotion === 0);
+    g.player.hp = g.player.maxHp * 0.5; const hp0 = g.player.hp;
+    claimFortune(g);
+    ok('a claim grants one Devotion stack', g.player.devotion === 1);
+    ok('one stack raises might about 7%', Math.abs(g.player.might / might0 - 1.07) < 1e-6);
+    ok('one stack raises speed about 3%', Math.abs(g.player.speed / speed0 - 1.03) < 1e-6);
+    ok('the claim heals the Votary', g.player.hp >= hp0 + g.player.maxHp * 0.14 - 1e-6);
+    claimFortune(g);
+    ok('Devotion stacks multiply', g.player.devotion === 2 && Math.abs(g.player.might / might0 - 1.14) < 1e-6);
+    // A plain hero gains nothing from a shrine claim (no perk).
+    const g2 = new Game(document.getElementById('game')); g2.start('spark', 0, { seed: 88, noRelics: true });
+    const m2 = g2.player.might;
+    claimFortune(g2);
+    ok('a plain hero never accrues Devotion', g2.player.devotion === 0 && Math.abs(g2.player.might - m2) < 1e-9);
+    // Devotion math is pure: identical claims yield identical stats (Daily-fair).
+    const ga = new Game(document.getElementById('game')); ga.start('votary', 0, { seed: 90, noRelics: true });
+    const gb = new Game(document.getElementById('game')); gb.start('votary', 0, { seed: 90, noRelics: true });
+    for (let i = 0; i < 3; i++) { claimFortune(ga); claimFortune(gb); }
+    ok('repeated identical claims are deterministic',
+      ga.player.devotion === 3 && ga.player.devotion === gb.player.devotion && Math.abs(ga.player.might - gb.player.might) < 1e-9);
+  });
 
   // 11.5) Gauntlet (boss-rush) mode (v6).
   // Auto-resolve a fresh game's level-up screens (the opening Gauntlet picks
