@@ -439,8 +439,13 @@ Where Trials are *authored*, a **Custom Run** is *yours*. Toggle any combination
 of **mutators** — **boons** that ease the run (+damage, +health, lifesteal, more
 XP, +projectiles, +pierce, thorns…) or **banes** that brutalise it (more foes,
 tougher/faster/angrier enemies, Glass Cannon, Berserker, Onslaught…) — then pick
-a hero and play. There are **22** to mix freely, for effectively endless
+a hero and play. There are **25** to mix freely, for effectively endless
 make-your-own variety.
+
+Most mutators tune a stat, but a few **reshape a whole system's cadence**:
+**⛩ Pilgrimage** floods the field with Shrines (more optional altars to chase),
+**🌋 Upheaval** makes biome hazards strike far more often, and **👑 Warband** sets
+Champion mini-bosses hounding you on a doubled clock.
 
 Your self-imposed difficulty **scales the shard payout**: every mutator carries a
 weight, and the net total moves a reward multiplier (shown live) from **×0.25**

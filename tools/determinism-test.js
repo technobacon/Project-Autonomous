@@ -47,7 +47,7 @@ globalThis.__det = function(report) {
 
   // A run that is identical given (seed, inputs), regardless of cosmetic config.
   function runSim(opts) {
-    const o = Object.assign({ render: false, renderEvery: 1, mute: false, shakeOff: false, reducedFlash: false, steps: 2400, daily: false }, opts);
+    const o = Object.assign({ render: false, renderEvery: 1, mute: false, shakeOff: false, reducedFlash: false, steps: 2400, daily: false, mutators: null }, opts);
     Audio2.muted = o.mute; Audio2.musicMuted = o.mute;
     Save.data.shakeOff = o.shakeOff;
     Save.data.reducedFlash = o.reducedFlash;
@@ -57,7 +57,8 @@ globalThis.__det = function(report) {
     let step = 0;
     // Deterministic, input-only movement (a pure function of the step index).
     Input.moveVector = () => ({ x: Math.cos(step * 0.13) * 0.8, y: Math.sin(step * 0.17) * 0.8 });
-    game.start('spark', 0, o.daily ? { daily: true, date: '2026-06-18' } : { seed: o.seed });
+    game.start('spark', 0, o.daily ? { daily: true, date: '2026-06-18' }
+      : (o.mutators ? { seed: o.seed, mode: 'custom', mutators: o.mutators } : { seed: o.seed }));
     // Optionally jump the clock forward to exercise a later (hazardous) biome
     // without simulating the full lead-up. Deterministic for a given (seed, warp).
     if (o.warp) game.time = o.warp;
@@ -137,6 +138,15 @@ globalThis.__det = function(report) {
   const hunt = runSim({ seed: SEED, warp: 1055, steps: 1200 });
   eq('hunter hazard deterministic (warped to Duskmoor)', hunt, runSim({ seed: SEED, warp: 1055, steps: 1200 }));
   ne('hunter hazard differs by seed', hunt, runSim({ seed: SEED + 7, warp: 1055, steps: 1200 }));
+
+  // Custom Run "system" mutators (Pilgrimage / Upheaval / Warband) only scale
+  // seeded cadence timers, so a given seed + the same set reproduces exactly — and
+  // the twisted run is provably different from the un-twisted one (Upheaval fires
+  // the Glacial Rift hazard far more often, so the warped state diverges).
+  const sysmut = ['pilgrimage', 'upheaval', 'warband'];
+  const sys = runSim({ seed: SEED, mutators: sysmut, warp: 305, steps: 1200 });
+  eq('system mutators deterministic (same seed + set)', sys, runSim({ seed: SEED, mutators: sysmut, warp: 305, steps: 1200 }));
+  ne('system mutators change the run vs un-twisted', sys, haz);
 
   report(results);
 };

@@ -1671,6 +1671,49 @@ globalThis.__run = function(report) {
     ok('game-over shows the custom chip', /Custom/.test(UI.root.innerHTML));
     UI._mutators = [];
   });
+  sectionTry('mutators: system twists reshape shrine/hazard/champion cadence', () => {
+    // Unlike the stat-channel mutators, these three reach into whole systems via
+    // new cadence channels (neutral = 1 everywhere they are not set).
+    const nd = defaultMods();
+    ok('cadence channels default neutral', nd.shrineRateMul === 1 && nd.hazardRateMul === 1 && nd.champRateMul === 1);
+    const sm = buildMutatorMods(['pilgrimage', 'upheaval', 'warband']);
+    ok('each system mutator sets its channel', sm.shrineRateMul > 1 && sm.hazardRateMul > 1 && sm.champRateMul > 1);
+
+    // Pilgrimage: shrines re-arm faster than the un-twisted minimum of 34s.
+    const gp = new Game(document.getElementById('game'));
+    gp.start('spark', 0, { mode: 'custom', mutators: ['pilgrimage'], seed: 4 });
+    ok('custom run carries the shrine channel', gp.mods.shrineRateMul > 1);
+    gp.shrines.length = 0; gp._shrineTimer = 0;
+    gp.updateShrines(0.001);                  // fires the re-arm and spawns a shrine
+    ok('pilgrimage shortens shrine cadence', gp._shrineTimer > 0 && gp._shrineTimer < 34);
+    ok('a shrine actually appeared', gp.shrines.length === 1);
+
+    // Upheaval: hazards re-arm inside the scaled band for the active biome.
+    const gh = new Game(document.getElementById('game'));
+    gh.start('spark', 0, { mode: 'custom', mutators: ['upheaval'], seed: 4 });
+    gh.biome = BIOMES.find(b => b.hazard);    // a biome that actually has a hazard
+    const hz = gh.biome.hazard, H = gh.mods.hazardRateMul;
+    gh.hazards.length = 0; gh._hazardTimer = 0; gh.player.alive = true;
+    gh.updateHazards(0.001);                  // fires the re-arm (before spawnHazard draws)
+    ok('upheaval re-arm sits in the scaled band',
+      gh._hazardTimer <= hz.every[1] / H + 1e-6 && gh._hazardTimer >= hz.every[0] / H - 1e-6);
+    ok('the scaled band is strictly faster', hz.every[1] / H < hz.every[1]);
+
+    // Warband: the Champion event arms sooner and re-arms on a halved cadence.
+    const gc = new Game(document.getElementById('game'));
+    gc.start('spark', 0, { mode: 'custom', mutators: ['warband'], seed: 4 });
+    ok('warband arms champions sooner',
+      gc.director.champTimer < 75 && Math.abs(gc.director.champTimer - 75 / gc.mods.champRateMul) < 1e-9);
+    gc.time = 0; gc.enemies.length = 0; gc.director.champTimer = 0;
+    gc.director.update(0.001);                // fires a champion re-arm at minute 0
+    ok('warband halves champion cadence', Math.abs(gc.director.champTimer - 110 / gc.mods.champRateMul) < 1e-6);
+
+    // A plain run leaves every cadence untouched.
+    const gn2 = new Game(document.getElementById('game'));
+    gn2.start('spark', 0, { seed: 4 });
+    ok('plain run leaves cadence neutral',
+      gn2.mods.shrineRateMul === 1 && gn2.mods.hazardRateMul === 1 && gn2.director.champRateMul === 1);
+  });
 
   // 11.15) Mastery rewards (v19): rank-gated titles, trail + halo (cosmetic).
   sectionTry('mastery rewards: run reflects the hero rank', () => {

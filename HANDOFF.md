@@ -4,8 +4,8 @@ A living handoff for whoever (human or future session) picks this up. It capture
 **what the game is, how it's built, the rules you must not break, and where to go
 next.** Pair it with `README.md` (player-facing) — this doc is builder-facing.
 
-Current head: see `git log` (latest is the `v74` Searing-affix milestone). Develop on
-branch `claude/compassionate-thompson-r1yo8r`.
+Current head: see `git log` (latest is the `v75` system-mutators milestone). Develop on
+branch `claude/sharp-knuth-5hbl8w`.
 
 ---
 
@@ -117,14 +117,18 @@ critDmgBonus, armorBonus, luckBonus, regenBonus, lifesteal, berserk, reviveBonus
 extraChoice, enemy{Hp,Dmg,Speed,Count}Mul, plus addProj/addPierce/thornsBonus
 (synergies/relics/mutators/buffs → player.bonusProj/bonusPierce/thorns). To add a stat
 lever, add a channel here and apply it in `recalc`/spawn/combat.
+**System-cadence channels** (NOT player stats — read directly by the system they
+twist, like enemy*Mul): `shrineRateMul` (updateShrines rearm), `hazardRateMul`
+(updateBiome grace + updateHazards rearm), `champRateMul` (Director champ cadence).
+Each divides a seeded timer, so two runs with the same seed+set stay bit-identical.
 
-## 5. Current feature state (as of v74)
+## 5. Current feature state (as of v75)
 
 - **17 weapons / 17 evolutions**, **16 passives**, **13 heroes** (Flux = blink perks,
   Forge = turret perks, Reaper = crit/execute perks, Sentinel = thorns/tank perks,
   Pyre = death-blast perks; Void secret), **13 synergies**,
-  **20 omens**, **25 relics** (3 synergy-aware + Pilgrim's Charm), **22 mutators**,
-  **42 achievements**.
+  **20 omens**, **25 relics** (3 synergy-aware + Pilgrim's Charm), **25 mutators**
+  (incl. 3 *system-cadence* twists: Pilgrimage/Upheaval/Warband), **42 achievements**.
 - **13 enemy archetypes** (incl. Conjurer=summoner, Acolyte=warder/aura,
   Bombardier=lobber), **11 affixes**, **7 bosses** (Warden/Colossus/Maelstrom/Devourer/
   Eclipse/Herald/Ravager, endless rotation cycles the toughest), **9 biomes** with **6 hazard kinds**
@@ -142,7 +146,7 @@ lever, add a channel here and apply it in `recalc`/spawn/combat.
   `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>` and
   `Claude-Session: <session url>`. Never put the model identifier in committed
   artifacts.
-- **Branch:** develop/commit/push only to `claude/compassionate-thompson-r1yo8r`.
+- **Branch:** develop/commit/push only to `claude/sharp-knuth-5hbl8w`.
   Push with `git push -u origin <branch>`. No PRs unless explicitly asked.
 - **New content auto-flows:** weapons → level-up pool + Codex + weapon-mastery;
   enemies → Codex + biome bias; the test for "every boss"/"every omen" iterates the
@@ -162,9 +166,12 @@ lever, add a channel here and apply it in `recalc`/spawn/combat.
 
 ## 7. Good next milestones (menu, pick one per "continue")
 
-- **Mutator-aware content** — Custom Run has no cross-system interactions yet (e.g. a
-  mutator that makes shrines constant, or boss frequency; would need new channels +
-  wiring into those systems). *Still open — a strong, distinctive next step.*
+- **Mutator-aware content** — *the first cross-system mutators landed in v75*
+  (Pilgrimage/Upheaval/Warband twist shrine/hazard/champion cadence via
+  `shrineRateMul`/`hazardRateMul`/`champRateMul`). More are open: a mutator that
+  alters **boss frequency** (would need to scale `BOSS_SCHEDULE` times / the endless
+  timer — touch carefully, the determinism warp-checks are keyed off biome/boss
+  timing), shrines-always-on, or elite/swarm cadence (`eliteTimer`/`swarmTimer`).
 - **Another perk hero** — e.g. a shrine/risk specialist or a ricochet/bounce
   specialist, reusing the `perk` hook (perks currently cover dash + turret + stat +
   execute + thorns + deathBlast; add new perk keys read where relevant).

@@ -38,6 +38,13 @@ const MUTATORS = [
     desc: '+2 pierce to every weapon.', apply(m) { m.addPierce += 2; } },
   { id: 'thornplate', name: 'Thornplate', icon: '🌵', color: '#9fd86a', weight: -1,
     desc: 'Reflect 40% of contact damage at attackers.', apply(m) { m.thornsBonus += 0.40; } },
+  // ---- System twists (reshape a whole subsystem's cadence, not just a stat) ----
+  // Unlike every mutator above (which folds into a player/enemy stat channel),
+  // these reach into a game system — shrine spawning, biome hazards, the Champion
+  // event — and change how *often* it fires. Pilgrimage is a boon (more optional
+  // shrine boons on offer); the other two pile on pressure.
+  { id: 'pilgrimage', name: 'Pilgrimage', icon: '⛩', color: '#ffd28a', weight: -1,
+    desc: 'Shrines appear far more often.', apply(m) { m.shrineRateMul *= 2.2; } },
   // ---- Banes (make the run harder → bigger reward) ----
   { id: 'glass', name: 'Glass Cannon', icon: '💔', color: '#ff5d6c', weight: 1,
     desc: '+60% damage, but −45% max health.', apply(m) { m.dmgMul *= 1.6; m.hpMul *= 0.55; } },
@@ -59,6 +66,10 @@ const MUTATORS = [
     desc: '−60% max health.', apply(m) { m.hpMul *= 0.4; } },
   { id: 'juggernauts', name: 'Juggernauts', icon: '👹', color: '#c98bff', weight: 3,
     desc: 'Foes are bigger, tougher and faster.', apply(m) { m.enemyHpMul *= 1.6; m.enemySpeedMul *= 1.18; } },
+  { id: 'upheaval', name: 'Upheaval', icon: '🌋', color: '#ff7a3c', weight: 2,
+    desc: 'Biome hazards strike far more often.', apply(m) { m.hazardRateMul *= 1.8; } },
+  { id: 'warband', name: 'Warband', icon: '👑', color: '#ff5d8f', weight: 3,
+    desc: 'Champion mini-bosses hound you far more often.', apply(m) { m.champRateMul *= 2.0; } },
 ];
 
 const MUTATOR_LIST = MUTATORS.slice();

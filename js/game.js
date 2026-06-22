@@ -833,8 +833,9 @@ class Game {
     this.biome = BIOMES[idx % BIOMES.length];
     this._buildNebula();           // cosmetic retint (vrand only)
     // Grace period before the new stage's hazard begins (seeded for fairness),
-    // so entering a biome never lands an instant unavoidable hit.
-    this._hazardTimer = this.biome.hazard ? rand(2.0, 3.5) : 0;
+    // so entering a biome never lands an instant unavoidable hit. The Upheaval
+    // mutator shortens it (but it stays a real grace window — never an instant hit).
+    this._hazardTimer = this.biome.hazard ? rand(2.0, 3.5) / (this.mods.hazardRateMul || 1) : 0;
     if (!first) {
       this._biomeFlash = 1;
       this.toast('❖ Entering ' + this.biome.name);
@@ -1697,7 +1698,7 @@ class Game {
     if (hz && this.player && this.player.alive) {
       this._hazardTimer -= dt;
       if (this._hazardTimer <= 0) {
-        this._hazardTimer = rand(hz.every[0], hz.every[1]);
+        this._hazardTimer = rand(hz.every[0], hz.every[1]) / (this.mods.hazardRateMul || 1);
         const n = hz.count ? randInt(hz.count[0], hz.count[1]) : 1;
         for (let k = 0; k < n; k++) this.spawnHazard(hz);
       }
@@ -1924,7 +1925,8 @@ class Game {
     if (allowed) {
       this._shrineTimer -= dt;
       if (this._shrineTimer <= 0 && this.shrines.length === 0) {
-        this._shrineTimer = rand(34, 52) * (pilgrim ? 0.55 : 1);
+        // Pilgrim's Charm relic and the Pilgrimage mutator both quicken the cadence.
+        this._shrineTimer = rand(34, 52) * (pilgrim ? 0.55 : 1) / (this.mods.shrineRateMul || 1);
         this.spawnShrine();
       }
     }

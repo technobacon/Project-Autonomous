@@ -14,6 +14,11 @@ function defaultMods() {
     pickupMul: 1, xpMul: 1, shardMul: 1,
     critChanceBonus: 0, critDmgBonus: 0, armorBonus: 0, luckBonus: 0,
     enemyHpMul: 1, enemyDmgMul: 1, enemySpeedMul: 1, enemyCountMul: 1,
+    // System-cadence levers (read directly by the systems they twist, not by
+    // player.recalc — like the enemy*Mul channels above). 1 = untouched.
+    shrineRateMul: 1, // how often Shrines appear (Pilgrimage mutator)
+    hazardRateMul: 1, // how often biome hazards strike (Upheaval mutator)
+    champRateMul: 1,  // how often Champion mini-bosses arrive (Warband mutator)
     berserk: false,   // bonus damage scaling with missing HP
     lifesteal: 0,     // fraction of max HP healed per kill (+1 flat)
     extraChoice: false,

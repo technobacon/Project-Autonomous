@@ -164,7 +164,9 @@ class Director {
     this.bossIndex = 0;
     this.eliteTimer = 18;            // periodic tougher pack
     this.swarmTimer = 35;           // periodic ring rush
-    this.champTimer = 75;           // periodic Champion mini-boss event
+    // Champion cadence is twistable by Custom Run mutators (Warband quickens it).
+    this.champRateMul = (game.mods && game.mods.champRateMul) || 1;
+    this.champTimer = 75 / this.champRateMul;   // periodic Champion mini-boss event
   }
 
   // Difficulty multipliers as a function of elapsed minutes.
@@ -243,7 +245,7 @@ class Director {
     // is never reached in gauntlet mode). Only one champion lives at a time.
     this.champTimer -= dt;
     if (this.champTimer <= 0 && !g.enemies.some(e => e.champion)) {
-      this.champTimer = Math.max(55, 110 - min * 3);
+      this.champTimer = Math.max(55, 110 - min * 3) / this.champRateMul;
       this.spawnChampion(min);
     }
   }
