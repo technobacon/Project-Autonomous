@@ -4,8 +4,8 @@ A living handoff for whoever (human or future session) picks this up. It capture
 **what the game is, how it's built, the rules you must not break, and where to go
 next.** Pair it with `README.md` (player-facing) — this doc is builder-facing.
 
-Current head: see `git log` (latest is the `v74` Searing-affix milestone). Develop on
-branch `claude/compassionate-thompson-r1yo8r`.
+Current head: see `git log` (latest is the `v75` identity/feel/reroll milestone).
+Develop on branch `claude/survivor-game-polish-s0khgw`.
 
 ---
 
@@ -133,7 +133,8 @@ lever, add a channel here and apply it in `recalc`/spawn/combat.
   unlock chain), Custom Run (stack mutators, scaled payout).
 - **Systems:** Blink dash (charge-based, meta upgrades Quickstep/Echo Step, per-hero
   perks), timed buffs, deployable turrets, shrines (risk/reward + buffs), Overdrive
-  pickup, lifetime Mastery (ranks + cosmetic prestige), Chronicle (run history),
+  pickup, level-up rerolls (base 1/run + Second Sight meta), cosmetic hit-stop,
+  lifetime Mastery (ranks + cosmetic prestige), Chronicle (run history),
   per-boss kill log, coaching tutorial.
 
 ## 6. Conventions & gotchas
@@ -142,8 +143,18 @@ lever, add a channel here and apply it in `recalc`/spawn/combat.
   `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>` and
   `Claude-Session: <session url>`. Never put the model identifier in committed
   artifacts.
-- **Branch:** develop/commit/push only to `claude/compassionate-thompson-r1yo8r`.
+- **Branch:** develop/commit/push only to `claude/survivor-game-polish-s0khgw`.
   Push with `git push -u origin <branch>`. No PRs unless explicitly asked.
+- **UI identity (v75):** the DOM chrome is a restrained "instrument panel" —
+  hairline borders, flat gold primary, mono numerals, uppercase tracked labels.
+  No color emoji in chrome or data-table `icon` fields; icons are monochrome
+  glyphs tinted by each item's `color`. Keep new content on that glyph language.
+- **Hit-stop (v75):** `game.hitstop` is cosmetic; it's set via `hitstopKick()`
+  (boss/champion kills, player hurt) and consumed ONLY by `App.loop`, which
+  discards frozen wall-clock time. `update()` must never read it.
+- **Reroll (v75):** `game.rerolls` (1 + `Save.metaLevel('reroll')`, the Second
+  Sight meta) redraws the level-up hand via `rerollLevelUp()` — input-only, so
+  harnesses never consume the extra RNG draws.
 - **New content auto-flows:** weapons → level-up pool + Codex + weapon-mastery;
   enemies → Codex + biome bias; the test for "every boss"/"every omen" iterates the
   tables, so new entries get baseline coverage automatically.

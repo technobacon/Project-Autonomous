@@ -77,7 +77,7 @@ const WEAPONS = {
 
   // -- Flame Aura: continuous burning ring that grows with level. ----------
   flame: {
-    id: 'flame', name: 'Flame Aura', icon: '🔥', color: '#ff7a3c', maxLevel: 8,
+    id: 'flame', name: 'Flame Aura', icon: '🜂', color: '#ff7a3c', maxLevel: 8,
     continuous: true,
     desc(l) {
       return [
@@ -198,7 +198,7 @@ const WEAPONS = {
 
   // -- Spirit Seekers: slow homing orbs that relentlessly chase. -----------
   spirit: {
-    id: 'spirit', name: 'Spirit Seekers', icon: '👻', color: '#b6f0ff', maxLevel: 8,
+    id: 'spirit', name: 'Spirit Seekers', icon: '◌', color: '#b6f0ff', maxLevel: 8,
     desc(l) {
       return [
         'Summon a homing spirit.',
@@ -253,7 +253,7 @@ const WEAPONS = {
 
   // -- Whirling Glaive: a blade that flies out and returns, cutting twice. --
   glaive: {
-    id: 'glaive', name: 'Whirling Glaive', icon: '🪃', color: '#9affe0', maxLevel: 8,
+    id: 'glaive', name: 'Whirling Glaive', icon: '⟲', color: '#9affe0', maxLevel: 8,
     desc(l) {
       return [
         'Hurl a blade that returns, cutting both ways.',
@@ -344,7 +344,7 @@ const WEAPONS = {
 
   // -- Light Lance: a fast, far-reaching spear that skewers a whole line. ----
   lance: {
-    id: 'lance', name: 'Light Lance', icon: '🔱', color: '#cfe3ff', maxLevel: 8,
+    id: 'lance', name: 'Light Lance', icon: '♆', color: '#cfe3ff', maxLevel: 8,
     desc(l) {
       return [
         'Hurl a swift lance that pierces all in a line.',
@@ -376,7 +376,7 @@ const WEAPONS = {
 
   // -- Caltrops: scatter damaging spikes in a ring around you (zone control). -
   caltrops: {
-    id: 'caltrops', name: 'Caltrops', icon: '🪤', color: '#c0d860', maxLevel: 8,
+    id: 'caltrops', name: 'Caltrops', icon: '⌗', color: '#c0d860', maxLevel: 8,
     desc(l) {
       return [
         'Scatter spikes around you that wound foes.',
@@ -409,7 +409,7 @@ const WEAPONS = {
   // -- Sentry: deploy a stationary auto-firing turret. The roster's only
   //    placeable ally — reward good positioning (drop one to cover an angle).
   sentry: {
-    id: 'sentry', name: 'Sentry Turret', icon: '🗼', color: '#7fe0b0', maxLevel: 8,
+    id: 'sentry', name: 'Sentry Turret', icon: '♖', color: '#7fe0b0', maxLevel: 8,
     desc(l) {
       return [
         'Deploy a turret that fires at nearby foes.',
@@ -472,7 +472,7 @@ const WEAPONS = {
   //    control+burst weapon — it bunches the horde and detonates them together.
   //    Pairs beautifully with anything AoE (and with the Riftvortex biome).
   rift: {
-    id: 'rift', name: 'Void Rift', icon: '🕳', color: '#b98bff', maxLevel: 8,
+    id: 'rift', name: 'Void Rift', icon: '⊚', color: '#b98bff', maxLevel: 8,
     desc(l) {
       return [
         'Open a rift that drags foes in, then implodes.',

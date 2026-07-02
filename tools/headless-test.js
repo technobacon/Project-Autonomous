@@ -1295,7 +1295,7 @@ globalThis.__run = function(report) {
     ok('thorns shrine registered', !!getShrineType('thorns') && SHRINE_TYPES.length >= 6);
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 57 });
     ok('no thorns before invoking', g.player.thorns === 0);
-    g.shrines.push({ type: 'thorns', color: '#9fd86a', icon: '🌵', x: g.player.x, y: g.player.y, radius: 24, t: 0, life: 26 });
+    g.shrines.push({ type: 'thorns', color: '#9fd86a', icon: '✻', x: g.player.x, y: g.player.y, radius: 24, t: 0, life: 26 });
     g.updateShrines(1 / 60);
     ok('Thorns shrine grants the reflect buff', g.player.hasBuff('shrine_thorns') && g.player.thorns >= 0.80 - 1e-9);
     // It reflects in contact while the buff is up.
@@ -1307,7 +1307,7 @@ globalThis.__run = function(report) {
     ok('barrage shrine registered', !!getShrineType('barrage') && SHRINE_TYPES.length >= 7);
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 61 });
     const proj0 = g.player.bonusProj, pierce0 = g.player.bonusPierce;
-    g.shrines.push({ type: 'barrage', color: '#9ad8ff', icon: '🎆', x: g.player.x, y: g.player.y, radius: 24, t: 0, life: 26 });
+    g.shrines.push({ type: 'barrage', color: '#9ad8ff', icon: '✹', x: g.player.x, y: g.player.y, radius: 24, t: 0, life: 26 });
     g.updateShrines(1 / 60);
     ok('Barrage shrine grants +projectiles & +pierce', g.player.hasBuff('shrine_barrage') &&
       g.player.bonusProj >= proj0 + 2 && g.player.bonusPierce >= pierce0 + 1);
@@ -1317,7 +1317,7 @@ globalThis.__run = function(report) {
     ok('five shrine types incl. swiftness + wrath', SHRINE_TYPES.length >= 5 && !!getShrineType('swiftness') && !!getShrineType('wrath'));
     const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 53 });
     // Swiftness grants a move/haste buff on touch.
-    g.shrines.push({ type: 'swiftness', color: '#8affc1', icon: '👟', x: g.player.x, y: g.player.y, radius: 24, t: 0, life: 26 });
+    g.shrines.push({ type: 'swiftness', color: '#8affc1', icon: '➤', x: g.player.x, y: g.player.y, radius: 24, t: 0, life: 26 });
     g.updateShrines(1 / 60);
     ok('Swiftness shrine buffs speed', g.player.hasBuff('shrine_swift'));
     // Wrath blasts nearby foes.
@@ -1330,7 +1330,7 @@ globalThis.__run = function(report) {
     // Pilgrim's Charm: heals on shrine use.
     const g3 = new Game(document.getElementById('game')); g3.start('spark', 0, { seed: 55, noRelics: true });
     g3.relics = ['pilgrim']; g3.player.hp = g3.player.maxHp * 0.5; const hp0 = g3.player.hp;
-    g3.shrines.push({ type: 'fortune', color: '#ffe14d', icon: '💰', x: g3.player.x, y: g3.player.y, radius: 24, t: 0, life: 26 });
+    g3.shrines.push({ type: 'fortune', color: '#ffe14d', icon: '❖', x: g3.player.x, y: g3.player.y, radius: 24, t: 0, life: 26 });
     g3._shrineTimer = 999; g3.updateShrines(1 / 60);
     ok('Pilgrim heals on a shrine touch', g3.player.hp > hp0);
     // Pilgrim shortens the cadence when the next shrine arms.
@@ -1607,7 +1607,7 @@ globalThis.__run = function(report) {
     ok('locked trial refused at start', g.trial === null && g.mode === 'survival');
     // UI reflects the lock with a disabled control.
     UI.showTrials();
-    ok('locked card shows a lock + disabled button', /🔒/.test(UI.root.innerHTML) && /disabled/.test(UI.root.innerHTML));
+    ok('locked card shows a lock + disabled button', /Locked/.test(UI.root.innerHTML) && /disabled/.test(UI.root.innerHTML));
     Save.data.trials = {};
   });
 
@@ -1700,7 +1700,7 @@ globalThis.__run = function(report) {
     const g = new Game(document.getElementById('game'));
     UI.init(document.getElementById('overlay'), g);
     UI.showCharacterSelect('survival');
-    ok('character screen shows the rank badge', /🎖/.test(UI.root.innerHTML) && /char-mastery/.test(UI.root.innerHTML));
+    ok('character screen shows the rank badge', /char-mastery/.test(UI.root.innerHTML) && /mast/.test(UI.root.innerHTML));
     g.start('spark', 0, { seed: 3 });
     UI.showGameOver(g);
     ok('game over shows the hero title', /go-hero/.test(UI.root.innerHTML) && /Spark/.test(UI.root.innerHTML));
@@ -2045,6 +2045,44 @@ globalThis.__run = function(report) {
     ok('hitFlash set after hurt', g.player.hitFlash > 0);
     g.render(); // exercises _drawHurtFlash + nebula + trails
     ok('player finite after flashed render', Number.isFinite(g.player.x) && Number.isFinite(g.player.hp));
+  });
+
+  // Feel: cosmetic hit-stop is sim-inert (update() never reads it).
+  sectionTry('feel: hit-stop timer is cosmetic only', () => {
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 5 });
+    ok('hitstop starts at zero', g.hitstop === 0);
+    g.player.invuln = 0; g.player.hurt(5);
+    ok('player hurt kicks hit-stop', g.hitstop > 0);
+    const before = g.hitstop;
+    g.update(1 / 60);
+    ok('update never consumes hit-stop', g.hitstop === before);
+    Save.data.reducedFlash = true;
+    g.hitstop = 0; g.hitstopKick(0.1);
+    ok('reduced-flash suppresses hit-stop', g.hitstop === 0);
+    Save.data.reducedFlash = false;
+  });
+
+  // Balance/agency: the level-up reroll redraws the hand for input only.
+  sectionTry('levelup: reroll redraws the hand (input-only)', () => {
+    Save.data.meta = Save.data.meta || {};
+    const prevMeta = Save.data.meta.reroll || 0;
+    Save.data.meta.reroll = 0;
+    const g = new Game(document.getElementById('game')); g.start('spark', 0, { seed: 9 });
+    ok('one base reroll per run', g.rerolls === 1);
+    g.rerollLevelUp();
+    ok('reroll outside levelup is a no-op', g.rerolls === 1);
+    g.pendingLevels = 1; g.openLevelUp();
+    ok('levelup opened', g.state === 'levelup');
+    g.rerollLevelUp();
+    ok('reroll consumed on use', g.rerolls === 0 && g.state === 'levelup');
+    g.rerollLevelUp();
+    ok('no reroll below zero', g.rerolls === 0);
+    const choices = g._buildLevelChoices();
+    ok('rebuilt hand is well-formed', choices.length >= 3 && choices.every(c => c.name && c.kind));
+    Save.data.meta.reroll = 2;
+    const g2 = new Game(document.getElementById('game')); g2.start('spark', 0, { seed: 9 });
+    ok('Second Sight meta grants extra rerolls', g2.rerolls === 3);
+    Save.data.meta.reroll = prevMeta;
   });
   ok('dmgNumbers default is on', Save.defaults().dmgNumbers === true);
 

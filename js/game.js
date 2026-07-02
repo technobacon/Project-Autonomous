@@ -40,7 +40,7 @@ const BIOMES = [
       every: [1.5, 2.6], count: [1, 3], radius: [82, 122], warn: 0.95, dmg: 17, color: '#ff5d7a' } },
   { id: 'sundering', name: 'The Sundering', base: '#080611', grid: 'rgba(150,110,230,0.09)', accent: '#caa6ff',
     nebula: [[150, 110, 255], [110, 70, 210], [190, 140, 255]], bias: { stalker: 1.5, wraith: 1.4, charger: 1.3 },
-    hazard: { kind: 'vortex', name: 'Riftvortex', icon: '🌀', warnTip: 'vortices drag you inward — fight outward',
+    hazard: { kind: 'vortex', name: 'Riftvortex', icon: '❋', warnTip: 'vortices drag you inward — fight outward',
       every: [3.4, 5.0], count: [1, 1], radius: [150, 200], warn: 0.9, dur: 4.5, dot: 11, color: '#b07cff' } },
   { id: 'corona', name: 'The Corona', base: '#0d0a02', grid: 'rgba(235,185,55,0.08)', accent: '#ffe08a',
     nebula: [[255, 200, 70], [255, 150, 50], [230, 120, 40]], bias: { runner: 1.6, charger: 1.4, swarm: 1.3 },
@@ -48,14 +48,14 @@ const BIOMES = [
       every: [3.6, 5.4], count: [1, 1], len: 580, width: 42, warn: 1.1, dur: 2.7, spin: [0.85, 1.25], dot: 46, color: '#ffd24d' } },
   { id: 'duskmoor', name: 'Duskmoor', base: '#040a08', grid: 'rgba(90,210,170,0.07)', accent: '#8affd0',
     nebula: [[60, 200, 150], [90, 150, 230], [120, 90, 200]], bias: { wraith: 1.5, stalker: 1.5, drifter: 1.3 },
-    hazard: { kind: 'hunter', name: 'Wisplight', icon: '🟢', warnTip: 'wisps wake and hunt you — keep moving, never get cornered',
+    hazard: { kind: 'hunter', name: 'Wisplight', icon: '◉', warnTip: 'wisps wake and hunt you — keep moving, never get cornered',
       every: [3.8, 5.6], count: [1, 2], radius: [52, 70], warn: 0.9, dur: 6.5, speed: 78, dot: 34, color: '#7affc4' } },
   // Appended last so existing biome indices stay put (determinism warp-checks key
   // off them). Stormveil's Galewinds shove the player along a fixed current — the
   // inverse of the Riftvortex — forcing you to fight the wind to hold your line.
   { id: 'stormveil', name: 'Stormveil', base: '#05080d', grid: 'rgba(120,165,215,0.08)', accent: '#bfe0ff',
     nebula: [[120, 170, 235], [90, 130, 215], [160, 195, 255]], bias: { runner: 1.5, swarm: 1.4, drifter: 1.3 },
-    hazard: { kind: 'gale', name: 'Galewinds', icon: '🌬', warnTip: 'currents shove you off your line — fight the wind',
+    hazard: { kind: 'gale', name: 'Galewinds', icon: '≋', warnTip: 'currents shove you off your line — fight the wind',
       every: [3.4, 5.0], count: [1, 1], radius: [175, 235], warn: 0.85, dur: 5.0, dot: 8, push: 118, color: '#bcdcff' } },
 ];
 function biomeForTime(t) { return BIOMES[Math.floor(Math.max(0, t) / BIOME_SECONDS) % BIOMES.length]; }
@@ -68,34 +68,34 @@ function biomeIndexForTime(t) { return Math.floor(Math.max(0, t) / BIOME_SECONDS
 // so Shrines are fully deterministic and the Daily stays fair. `invoke(game)`
 // runs the boon+consequence; helper effects (heal/buff/elite pack) already exist.
 const SHRINE_TYPES = [
-  { id: 'power', name: 'Shrine of Power', icon: '🔥', color: '#ff8a3c',
+  { id: 'power', name: 'Shrine of Power', icon: '🜂', color: '#ff8a3c',
     desc: '+50% damage for 18s — but an elite pack answers the call.',
     invoke(g) {
       g.player.addBuff('shrine_power', { dmgMul: 1.5 }, 18);
       g.spawnShrinePack(3, true);
-      g.toast('🔥 Power surges through you!');
+      g.toast('Power surges through you');
     } },
-  { id: 'vigor', name: 'Shrine of Vigor', icon: '❤', color: '#7affc4',
+  { id: 'vigor', name: 'Shrine of Vigor', icon: '♥', color: '#7affc4',
     desc: 'Heal 45% of max health — but a ring of foes closes in.',
     invoke(g) {
       g.player.heal(g.player.maxHp * 0.45);
       g.director.spawnRing(g.time / 60);
-      g.toast('❤ Vigor floods your light!');
+      g.toast('Vigor floods your light');
     } },
-  { id: 'fortune', name: 'Shrine of Fortune', icon: '💰', color: '#ffe14d',
+  { id: 'fortune', name: 'Shrine of Fortune', icon: '❖', color: '#ffe14d',
     desc: 'A shower of light shards — but elites are drawn to the gleam.',
     invoke(g) {
       const min = g.time / 60;
       for (let i = 0; i < 14; i++) g.spawnGem(g.player.x + rand(-60, 60), g.player.y + rand(-60, 60), 2 + Math.floor(min));
       g.spawnShrinePack(2, false);
-      g.toast('💰 Fortune favors the bold!');
+      g.toast('Fortune favors the bold');
     } },
-  { id: 'swiftness', name: 'Shrine of Swiftness', icon: '👟', color: '#8affc1',
+  { id: 'swiftness', name: 'Shrine of Swiftness', icon: '➤', color: '#8affc1',
     desc: '+25% move & +30% attack speed for 16s — but a ring of foes closes in.',
     invoke(g) {
       g.player.addBuff('shrine_swift', { speedMul: 1.25, hasteMul: 1.30 }, 16);
       g.director.spawnRing(g.time / 60);
-      g.toast('👟 Swiftness quickens your light!');
+      g.toast('Swiftness quickens your step');
     } },
   { id: 'wrath', name: 'Shrine of Wrath', icon: '⚔', color: '#ff5d6c',
     desc: 'A devastating blast scours nearby foes — but an elite pack retaliates.',
@@ -104,21 +104,21 @@ const SHRINE_TYPES = [
       for (const e of g.enemiesInRadius(g.player.x, g.player.y, r)) g.dealDamage(e, dmg, g.player.x, g.player.y, 280);
       g.nova(g.player.x, g.player.y, r, 0, 0, '#ff5d6c');
       g.spawnShrinePack(3, true);
-      g.toast('⚔ Wrath erupts outward!');
+      g.toast('Wrath erupts outward');
     } },
-  { id: 'thorns', name: 'Shrine of Thorns', icon: '🌵', color: '#9fd86a',
+  { id: 'thorns', name: 'Shrine of Thorns', icon: '✻', color: '#9fd86a',
     desc: 'Reflect 80% of contact damage & +2 armor for 16s — but a ring of foes closes in.',
     invoke(g) {
       g.player.addBuff('shrine_thorns', { thornsBonus: 0.80, armorBonus: 2 }, 16);
       g.director.spawnRing(g.time / 60);
-      g.toast('🌵 Thorns sheathe your light!');
+      g.toast('Thorns sheathe your light');
     } },
-  { id: 'barrage', name: 'Shrine of Barrage', icon: '🎆', color: '#9ad8ff',
+  { id: 'barrage', name: 'Shrine of Barrage', icon: '✹', color: '#9ad8ff',
     desc: '+2 projectiles & +1 pierce for 16s — but an elite pack answers the call.',
     invoke(g) {
       g.player.addBuff('shrine_barrage', { addProj: 2, addPierce: 1 }, 16);
       g.spawnShrinePack(3, true);
-      g.toast('🎆 A barrage of light pours forth!');
+      g.toast('A barrage of light pours forth');
     } },
 ];
 function getShrineType(id) { return SHRINE_TYPES.find(s => s.id === id) || null; }
@@ -181,6 +181,7 @@ class Game {
     this._timeWarpT = 0;          // global enemy-slow from a Time Warp pickup (sim)
     this._inDeathBlast = false;   // reentrancy guard for Pyre's chain explosions
     this.shake_ = { mag: 0, t: 0 };
+    this.hitstop = 0;             // cosmetic freeze-frame; consumed by App.loop only
     this.toasts = [];
     this.biomeIndex = 0;          // which biome stage we're in (time-driven)
     this.biome = BIOMES[0];       // current biome (palette + spawn bias + hazard)
@@ -192,6 +193,10 @@ class Game {
     this._coaching = false;       // first-run coaching tips active?
     this.activeBoss = null;
     this.pendingLevels = 0;
+    // Level-up rerolls for this run: one by default, more from the Second Sight
+    // meta upgrade. Spent only via player input on the level-up screen, so the
+    // auto-sim harnesses never consume the extra RNG draws.
+    this.rerolls = 1 + Save.metaLevel('reroll');
     this.scheduled = [];       // sim-time delayed actions {t, fn}
     this.seed = 0;
     this.daily = false;
@@ -335,9 +340,9 @@ class Game {
     if (this.trial) {
       this.toast(this.trial.icon + ' ' + this.trial.name + ' — ' + trialGoalText(this.trial), this.trial.color, 3.6);
     } else if (this.customRun) {
-      this.toast('🧪 Custom Run — ' + this.mutators.length + ' mutator' + (this.mutators.length === 1 ? '' : 's') + ' · ×' + this.mutatorRewardMul.toFixed(2) + ' shards', '#c9a8ff', 3.4);
+      this.toast('Custom Run — ' + this.mutators.length + ' mutator' + (this.mutators.length === 1 ? '' : 's') + ' · ×' + this.mutatorRewardMul.toFixed(2) + ' shards', '#c9a8ff', 3.4);
     } else if (this.mode === 'gauntlet') {
-      this.toast('⚔ GAUNTLET — endless bosses await.');
+      this.toast('Gauntlet — endless bosses await');
       this.onLevelUp(3); // opening picks so you arrive armed for the first boss
     } else {
       this.toast(this.daily ? 'Daily Challenge — ' + this.dailyDate
@@ -686,6 +691,7 @@ class Game {
       this.activeBoss = null;
       Audio2.bossDie();
       this.shake(16, 0.6);
+      this.hitstopKick(0.12);
       this.particles.burst(e.x, e.y, 60, { color: e.color, speed: rand(120, 360), life: rand(0.5, 1.1), size: rand(2, 5) });
       const gemCount = Math.min(40, 12 + Math.floor(e.xp / 6));
       for (let i = 0; i < gemCount; i++) this.spawnGem(e.x + rand(-40, 40), e.y + rand(-40, 40), Math.ceil(e.xp / gemCount));
@@ -696,6 +702,7 @@ class Game {
       this.championKills++;
       Audio2.bossDie();
       this.shake(12, 0.4);
+      this.hitstopKick(0.07);
       this.particles.burst(e.x, e.y, 36, { color: e.auraColor || e.color, speed: rand(120, 320), life: rand(0.5, 1.0), size: rand(2, 4) });
       const gc = Math.min(24, 8 + Math.floor(e.xp / 8));
       for (let i = 0; i < gc; i++) this.spawnGem(e.x + rand(-34, 34), e.y + rand(-34, 34), Math.ceil(e.xp / gc));
@@ -753,6 +760,10 @@ class Game {
     if (this.pendingLevels <= 0) { this.state = 'playing'; return; }
     this.state = 'levelup';
     this.running = false;
+    UI.showLevelUp(this, this._buildLevelChoices());
+  }
+
+  _buildLevelChoices() {
     // 4 choices if lucky or the Abundance omen is active, otherwise 3.
     const luckBonus = (this.mods.extraChoice || chance(this.player.luck)) ? 4 : 3;
 
@@ -769,7 +780,17 @@ class Game {
       const normal = buildUpgradeChoices(this, targetN - choices.length);
       choices = choices.concat(normal);
     }
-    UI.showLevelUp(this, choices);
+    return choices;
+  }
+
+  // Redraw the level-up hand (player input only — never fired by the auto-sim,
+  // so the extra seeded-RNG draws can't desync a replay that didn't reroll).
+  // Evolutions are rebuilt deterministically, so a reroll can't lose one.
+  rerollLevelUp() {
+    if (this.state !== 'levelup' || this.rerolls <= 0) return;
+    this.rerolls--;
+    Audio2.uiMove();
+    UI.showLevelUp(this, this._buildLevelChoices());
   }
 
   chooseUpgrade(choice) {
@@ -794,7 +815,7 @@ class Game {
     this.shake(12, 0.4);
     this.particles.ring(this.player.x, this.player.y, 40, { color: choice.color, speed: 320, life: 0.9, size: 4 });
     this.nova(this.player.x, this.player.y, 220, 40 * this.player.might, 260, choice.color);
-    this.toast('🧬 EVOLVED: ' + choice.name + '!');
+    this.toast('★ EVOLVED — ' + choice.name);
     Audio2.victory();
   }
 
@@ -802,7 +823,7 @@ class Game {
   announce(newly) {
     if (!newly || !newly.length) return;
     for (const a of newly) {
-      this.toast('🏆 ' + a.name + (a.reward ? '  (+' + a.reward + '✦)' : ''));
+      this.toast('★ ' + a.name + (a.reward ? '  (+' + a.reward + '✦)' : ''));
     }
     Audio2.levelUp();
   }
@@ -975,6 +996,15 @@ class Game {
     // Reduced-flash mode suppresses camera shake entirely (motion + strobe).
     if (Save.data && (Save.data.shakeOff || Save.data.reducedFlash)) return;
     if (mag > this.shake_.mag) { this.shake_.mag = mag; this.shake_.t = t; this.shake_.max = t; }
+  }
+
+  // A brief freeze-frame on heavy impacts. The timer is only ever consumed by
+  // App.loop, which pauses *stepping* in wall-clock time — update() never reads
+  // it, so seeded runs and the headless harnesses are byte-identical with or
+  // without it. Follows the shake toggles: players who turn motion off get none.
+  hitstopKick(t) {
+    if (Save.data && (Save.data.shakeOff || Save.data.reducedFlash)) return;
+    this.hitstop = Math.max(this.hitstop, t);
   }
 
   // Accessibility: a single multiplier the render path applies to full-screen
@@ -1256,7 +1286,7 @@ class Game {
             e.shootTimer = e.type.shootCd || 1.0;
             for (let k = -1; k <= 1; k++) this.spawnEnemyProjectile(e.x, e.y, ang + k * 0.22, e.type.projSpeed || 210, e.type.projDmg || 15, '#6c7bff');
           }
-          if (e.phaseT <= 0) { e.shieldPhase = true; e.phaseT = e.type.shieldDur || 4.0; this.shake(8, 0.3); this.toast('🌑 The Eclipse shields!'); }
+          if (e.phaseT <= 0) { e.shieldPhase = true; e.phaseT = e.type.shieldDur || 4.0; this.shake(8, 0.3); this.toast('The Eclipse shields itself'); }
         }
         break;
       }
@@ -2053,7 +2083,7 @@ class Game {
       case 'bomb': {
         Audio2.bossDie(); this.shake(14, 0.5);
         this.nova(p.x, p.y, 600, 9999, 300, '#ffd84d');
-        this.toast('💥 Cataclysm!');
+        this.toast('Cataclysm!');
         break;
       }
       case 'chest': {
@@ -2072,7 +2102,7 @@ class Game {
         this.particles.ring(p.x, p.y, 40, { color: '#7fe9ff', speed: 240, life: 0.8, size: 4 });
         Audio2.pickupBig(); this.shake(6, 0.25);
         this.particles.text(p.x, p.y - 24, 'TIME WARP!', { color: '#7fe9ff', size: 20 });
-        this.toast('⏳ Time Warp — foes crawl!');
+        this.toast('Time Warp — foes crawl');
         break;
       }
       case 'overdrive': {
@@ -2081,7 +2111,7 @@ class Game {
         this.particles.ring(p.x, p.y, 30, { color: '#ff4dff', speed: 280, life: 0.7, size: 4 });
         Audio2.levelUp(); this.shake(8, 0.3);
         this.particles.text(p.x, p.y - 24, 'OVERDRIVE!', { color: '#ff4dff', size: 20 });
-        this.toast('⚡ Overdrive! +40% damage & attack speed');
+        this.toast('Overdrive — +40% damage and attack speed');
         break;
       }
     }
@@ -2322,7 +2352,7 @@ class Game {
         ctx.fillRect(x - bw / 2, by, bw * clamp(e.hp / e.maxHp, 0, 1), bh);
         if (e.champion && e.eliteName) {
           ctx.save();
-          ctx.font = 'bold 12px "Segoe UI", system-ui, sans-serif';
+          ctx.font = 'bold 12px system-ui, sans-serif';
           ctx.fillStyle = '#ffe9a8'; ctx.textAlign = 'center'; ctx.shadowBlur = 4; ctx.shadowColor = '#000';
           ctx.fillText('☠ ' + e.eliteName, x, by - 6);
           ctx.restore();
@@ -2584,7 +2614,7 @@ class Game {
 
   _drawPickups(ctx, cam) {
     ctx.save();
-    const icons = { health: '✚', magnet: '🧲', bomb: '💣', chest: '🎁', overdrive: '⚡', warp: '⏳' };
+    const icons = { health: '✚', magnet: '⌾', bomb: '✹', chest: '❑', overdrive: '⚡', warp: '◔' };
     const cols = { health: '#7affc4', magnet: '#ffb3e6', bomb: '#ffd84d', chest: '#ffe14d', overdrive: '#ff4dff', warp: '#7fe9ff' };
     for (const k of this.pickups) {
       const x = k.x - cam.x, y = k.y - cam.y;
@@ -2687,19 +2717,19 @@ class Game {
     ctx.fillRect(0, 0, W * xpFrac, 8); ctx.shadowBlur = 0;
 
     // Level badge.
-    ctx.font = 'bold 14px "Segoe UI", system-ui, sans-serif';
+    ctx.font = 'bold 14px system-ui, sans-serif';
     ctx.fillStyle = '#cfe6ff'; ctx.textAlign = 'left';
     ctx.fillText('LV ' + p.level, 12, 16);
 
     // Timer (center top).
-    ctx.font = 'bold 26px "Segoe UI", system-ui, sans-serif';
+    ctx.font = '600 26px ui-monospace, Consolas, monospace';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#ffffff'; ctx.shadowBlur = 6; ctx.shadowColor = '#000';
     ctx.fillText(formatTime(this.time), W / 2, 16);
     ctx.shadowBlur = 0;
     // Current biome name beneath the timer (hidden while a boss banner shows).
     if (this.biome && !this.activeBoss) {
-      ctx.font = 'bold 11px "Segoe UI", system-ui, sans-serif';
+      ctx.font = 'bold 11px system-ui, sans-serif';
       ctx.fillStyle = this.biome.accent;
       ctx.globalAlpha = 0.85;
       ctx.fillText('❖ ' + this.biome.name, W / 2, 46);
@@ -2707,19 +2737,19 @@ class Game {
     }
     // Trial objective + progress (under the biome line).
     if (this.trial) {
-      ctx.font = 'bold 12px "Segoe UI", system-ui, sans-serif';
+      ctx.font = 'bold 12px system-ui, sans-serif';
       ctx.fillStyle = this.trial.color; ctx.shadowBlur = 4; ctx.shadowColor = '#000';
       ctx.fillText(this.trial.icon + ' ' + trialGoalText(this.trial) + '  ·  ' + trialProgressText(this.trial, this), W / 2, this.activeBoss ? 64 : 62);
       ctx.shadowBlur = 0;
     } else if (this.customRun && this.mutators.length) {
-      ctx.font = 'bold 11px "Segoe UI", system-ui, sans-serif';
+      ctx.font = 'bold 11px system-ui, sans-serif';
       ctx.fillStyle = '#c9a8ff'; ctx.shadowBlur = 4; ctx.shadowColor = '#000';
-      ctx.fillText('🧪 Custom · ' + this.mutators.length + ' mutators · ×' + this.mutatorRewardMul.toFixed(2), W / 2, this.activeBoss ? 64 : 62);
+      ctx.fillText('Custom · ' + this.mutators.length + ' mutators · ×' + this.mutatorRewardMul.toFixed(2), W / 2, this.activeBoss ? 64 : 62);
       ctx.shadowBlur = 0;
     }
 
     // Kills + score (right top).
-    ctx.font = 'bold 13px "Segoe UI", system-ui, sans-serif';
+    ctx.font = 'bold 13px system-ui, sans-serif';
     ctx.textAlign = 'right';
     ctx.fillStyle = '#9fb4d6';
     ctx.fillText('☠ ' + formatNum(this.kills) + '   ✦ ' + formatNum(this.score), W - 12, 16);
@@ -2732,7 +2762,7 @@ class Game {
     ctx.shadowBlur = 8; ctx.shadowColor = ctx.fillStyle;
     ctx.fillRect(hbX, hbY, hbW * hpFrac, hbH); ctx.shadowBlur = 0;
     ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.strokeRect(hbX, hbY, hbW, hbH);
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 11px "Segoe UI", system-ui, sans-serif';
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 11px system-ui, sans-serif';
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     ctx.fillText(Math.ceil(p.hp) + ' / ' + p.maxHp, hbX + 6, hbY + hbH / 2 + 1);
     if (p.revives > 0) ctx.fillText('  ♻×' + p.revives, hbX + hbW + 6, hbY + hbH / 2 + 1);
@@ -2747,7 +2777,7 @@ class Game {
     ctx.fillStyle = ready ? '#5ad9ff' : 'rgba(90,217,255,0.45)';
     if (ready) { ctx.shadowBlur = 8; ctx.shadowColor = '#5ad9ff'; }
     ctx.fillRect(dbX, dbY, dbW * frac, dbH); ctx.shadowBlur = 0;
-    ctx.fillStyle = ready ? '#cfeeff' : '#789'; ctx.font = 'bold 8px "Segoe UI", system-ui, sans-serif';
+    ctx.fillStyle = ready ? '#cfeeff' : '#789'; ctx.font = 'bold 8px system-ui, sans-serif';
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     ctx.fillText('⟫ BLINK', dbX + 5, dbY + dbH / 2 + 1);
     // Charge dots (only when more than one charge is possible).
@@ -2783,7 +2813,7 @@ class Game {
     const syn = (p.synergies && p.synergies.length) ? p.synergies : null;
     if (syn) {
       let sx = 12; const sy = wy + 36;
-      ctx.font = 'bold 12px "Segoe UI", system-ui, sans-serif';
+      ctx.font = 'bold 12px system-ui, sans-serif';
       ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
       for (const s of syn) {
         const label = s.icon + ' ' + s.name;
@@ -2800,7 +2830,7 @@ class Game {
 
     // Gauntlet round indicator.
     if (this.mode === 'gauntlet') {
-      ctx.textAlign = 'center'; ctx.font = 'bold 15px "Segoe UI", system-ui, sans-serif';
+      ctx.textAlign = 'center'; ctx.font = 'bold 15px system-ui, sans-serif';
       ctx.fillStyle = '#ffd84d'; ctx.shadowBlur = 6; ctx.shadowColor = '#000';
       ctx.fillText('⚔ ROUND ' + Math.max(1, this.gauntletRound), W / 2, 48);
       ctx.shadowBlur = 0;
@@ -2808,7 +2838,7 @@ class Game {
 
     // Boss banner.
     if (this.activeBoss && !this.activeBoss.dead) {
-      ctx.textAlign = 'center'; ctx.font = 'bold 16px "Segoe UI", system-ui, sans-serif';
+      ctx.textAlign = 'center'; ctx.font = 'bold 16px system-ui, sans-serif';
       ctx.fillStyle = '#ff6b8a';
       ctx.fillText('☠ ' + this.activeBoss.type.name, W / 2, this.mode === 'gauntlet' ? 68 : 48);
     }
@@ -2818,7 +2848,7 @@ class Game {
     let ty = this.view.h - 120;
     for (const t of this.toasts) {
       ctx.globalAlpha = clamp(t.life, 0, 1);
-      ctx.font = 'bold 18px "Segoe UI", system-ui, sans-serif';
+      ctx.font = 'bold 18px system-ui, sans-serif';
       ctx.fillStyle = t.color || '#ffe9a8'; ctx.shadowBlur = 6; ctx.shadowColor = '#000';
       ctx.fillText(t.msg, W / 2, ty);
       ctx.shadowBlur = 0;

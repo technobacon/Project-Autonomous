@@ -39,7 +39,8 @@ the **Help** screen.
 - Defeated foes drop **light shards**. Collect them to **level up** and choose
   an upgrade: a new weapon, a weapon level, or a passive boost.
 - **Pause** any time with `Esc` or `P`. During a level-up, press `1`–`4` or
-  click a card.
+  click a card — or press `R` to **reroll** the hand (once per run, more with
+  the *Second Sight* Sanctuary upgrade).
 - Survive long enough and **bosses** arrive (3:00, 6:00, 8:00, 10:00, then
   endlessly). Each fights differently — the **Warden** sprays radial volleys,
   the **Colossus** lobs aimed shots and summons adds, the **Maelstrom** weaves an

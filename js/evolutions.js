@@ -140,7 +140,7 @@ const EVOLVED_WEAPONS = {
   },
 
   tempest: {
-    id: 'tempest', name: 'Tempest', icon: '🌩', color: '#bfe6ff', maxLevel: 1, evolved: true,
+    id: 'tempest', name: 'Tempest', icon: '☇', color: '#bfe6ff', maxLevel: 1, evolved: true,
     desc() { return 'EVOLVED: a storm that arcs through the whole horde.'; },
     cooldown(l, p) { return cd(1.0, p); },
     fire(game, inst) {
@@ -174,7 +174,7 @@ const EVOLVED_WEAPONS = {
   },
 
   eclipse: {
-    id: 'eclipse', name: 'Eclipse Blade', icon: '🌑', color: '#ffb0f0', maxLevel: 1, evolved: true,
+    id: 'eclipse', name: 'Eclipse Blade', icon: '●', color: '#ffb0f0', maxLevel: 1, evolved: true,
     desc() { return 'EVOLVED: encircling blades sweep all around you.'; },
     cooldown(l, p) { return cd(0.85, p); },
     fire(game, inst) {
@@ -188,7 +188,7 @@ const EVOLVED_WEAPONS = {
   },
 
   ouroboros: {
-    id: 'ouroboros', name: 'Ouroboros', icon: '➿', color: '#7dffd0', maxLevel: 1, evolved: true,
+    id: 'ouroboros', name: 'Ouroboros', icon: '∞', color: '#7dffd0', maxLevel: 1, evolved: true,
     desc() { return 'EVOLVED: an eternal ring of returning blades.'; },
     cooldown(l, p) { return cd(0.9, p); },
     fire(game, inst) {
@@ -208,7 +208,7 @@ const EVOLVED_WEAPONS = {
   },
 
   pandemic: {
-    id: 'pandemic', name: 'Pandemic', icon: '🦠', color: '#b6ff3c', maxLevel: 1, evolved: true,
+    id: 'pandemic', name: 'Pandemic', icon: '⌬', color: '#b6ff3c', maxLevel: 1, evolved: true,
     desc() { return 'EVOLVED: a creeping plague that engulfs the field.'; },
     cooldown(l, p) { return cd(1.4, p); },
     fire(game, inst) {
@@ -222,7 +222,7 @@ const EVOLVED_WEAPONS = {
   },
 
   spectrum: {
-    id: 'spectrum', name: 'Spectrum', icon: '🌈', color: '#ff6bd6', maxLevel: 1, evolved: true,
+    id: 'spectrum', name: 'Spectrum', icon: '△', color: '#ff6bd6', maxLevel: 1, evolved: true,
     desc() { return 'EVOLVED: a rotating storm of prismatic beams.'; },
     cooldown(l, p) { return cd(0.7, p); },
     fire(game, inst) {
@@ -267,7 +267,7 @@ const EVOLVED_WEAPONS = {
   },
 
   thornfield: {
-    id: 'thornfield', name: 'Thornfield', icon: '🌿', color: '#d7ff6a', maxLevel: 1, evolved: true,
+    id: 'thornfield', name: 'Thornfield', icon: '✻', color: '#d7ff6a', maxLevel: 1, evolved: true,
     desc() { return 'EVOLVED: a sprawling ring of barbs that grips and grinds the horde.'; },
     cooldown(l, p) { return cd(1.5, p); },
     fire(game, inst) {
@@ -287,7 +287,7 @@ const EVOLVED_WEAPONS = {
     },
   },
   arsenal: {
-    id: 'arsenal', name: 'Arsenal', icon: '🏯', color: '#9fffe0', maxLevel: 1, evolved: true,
+    id: 'arsenal', name: 'Arsenal', icon: '♜', color: '#9fffe0', maxLevel: 1, evolved: true,
     desc() { return 'EVOLVED: deploy a pair of long-lived turrets that fire fast, piercing volleys.'; },
     cooldown(l, p) { return cd(2.4, p); },
     fire(game, inst) {
@@ -304,7 +304,7 @@ const EVOLVED_WEAPONS = {
     },
   },
   cataclysm: {
-    id: 'cataclysm', name: 'Cataclysm', icon: '🌠', color: '#ffb14d', maxLevel: 1, evolved: true,
+    id: 'cataclysm', name: 'Cataclysm', icon: '✵', color: '#ffb14d', maxLevel: 1, evolved: true,
     desc() { return 'EVOLVED: a relentless rain of wide, overlapping meteor strikes.'; },
     cooldown(l, p) { return cd(1.6, p); },
     fire(game, inst) {

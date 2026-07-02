@@ -120,7 +120,7 @@ class Particles {
       const grow = age < 0.18 ? clamp(age / 0.18, 0, 1) : 1;
       const scale = (t.pop || 1) * (0.5 + 0.5 * grow) * (age < 0.18 ? (1 + (1 - grow) * 0.25) : 1);
       ctx.globalAlpha = a < 0.35 ? a / 0.35 : 1; // fade only at the tail end
-      ctx.font = `bold ${(t.size * scale).toFixed(1)}px "Segoe UI", system-ui, sans-serif`;
+      ctx.font = `bold ${(t.size * scale).toFixed(1)}px system-ui, sans-serif`;
       ctx.fillStyle = t.color;
       ctx.shadowBlur = 4; ctx.shadowColor = '#000';
       ctx.fillText(t.str, t.x - cam.x, t.y - cam.y);

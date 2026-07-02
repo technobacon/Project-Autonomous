@@ -40,21 +40,21 @@ const UI = {
     this.root.innerHTML = `
       <div class="screen menu">
         <h1 class="title">LAST<span>LIGHT</span></h1>
-        <p class="tagline">A spark of light against the endless dark.<br>Survive as long as you can.</p>
+        <p class="tagline">Hold the last light against the endless dark.</p>
         <div class="menu-buttons">
-          <button class="btn btn-primary" id="btn-play">▶ PLAY</button>
-          <button class="btn" id="btn-gauntlet">⚔ GAUNTLET${this._gauntletChip()}</button>
-          <button class="btn" id="btn-daily">🗓 DAILY CHALLENGE${this._dailyChip()}</button>
-          <button class="btn" id="btn-trials">🎯 TRIALS${this._trialsChip()}</button>
-          <button class="btn" id="btn-custom">🧪 CUSTOM RUN</button>
-          <button class="btn" id="btn-shop">⚙ SANCTUARY <span class="shard-chip">✦ ${formatNum(d.shards)}</span></button>
-          <button class="btn" id="btn-relics">🔮 RELICS <span class="shard-chip">${Save.relicCount()}/${RELIC_LIST.length}</span></button>
+          <button class="btn btn-primary" id="btn-play">Play</button>
+          <button class="btn" id="btn-gauntlet">Gauntlet${this._gauntletChip()}</button>
+          <button class="btn" id="btn-daily">Daily Challenge${this._dailyChip()}</button>
+          <button class="btn" id="btn-trials">Trials${this._trialsChip()}</button>
+          <button class="btn" id="btn-custom">Custom Run</button>
+          <button class="btn" id="btn-shop">Sanctuary <span class="shard-chip">✦ ${formatNum(d.shards)}</span></button>
+          <button class="btn" id="btn-relics">Relics <span class="shard-chip">${Save.relicCount()}/${RELIC_LIST.length}</span></button>
           <div class="menu-buttons row">
-            <button class="btn" id="btn-ach">🏆 ${Save.achievementCount()}/${ACHIEVEMENTS.length}</button>
-            <button class="btn" id="btn-codex">📖 CODEX</button>
-            <button class="btn" id="btn-mastery">🎖 MASTERY</button>
-            <button class="btn" id="btn-history">📜 HISTORY</button>
-            <button class="btn" id="btn-help">? HELP</button>
+            <button class="btn" id="btn-ach">Feats <span class="shard-chip">${Save.achievementCount()}/${ACHIEVEMENTS.length}</span></button>
+            <button class="btn" id="btn-codex">Codex</button>
+            <button class="btn" id="btn-mastery">Mastery</button>
+            <button class="btn" id="btn-history">History</button>
+            <button class="btn" id="btn-help">Help</button>
           </div>
         </div>
         <div class="stats-row">
@@ -64,14 +64,14 @@ const UI = {
           <div class="stat"><span>Total Kills</span><b>${formatNum(d.totalKills)}</b></div>
         </div>
         <div class="audio-toggles">
-          <button class="mini" id="btn-sfx">${Audio2.muted ? '🔇' : '🔊'} SFX</button>
-          <button class="mini" id="btn-music">${Audio2.musicMuted ? '🎵̶' : '🎵'} Music</button>
-          <button class="mini" id="btn-shake">${d.shakeOff ? '⬚' : '⬛'} Shake</button>
-          <button class="mini" id="btn-dmg">${d.dmgNumbers ? '🔢' : '⬚'} Damage #</button>
-          <button class="mini" id="btn-trail">${d.trailFx !== false ? '✦' : '⬚'} Trail</button>
-          <button class="mini" id="btn-flash">${d.reducedFlash ? '🌙' : '☀'} ${d.reducedFlash ? 'Low Flash' : 'Flash'}</button>
+          <button class="mini ${Audio2.muted ? '' : 'on'}" id="btn-sfx">Sound</button>
+          <button class="mini ${Audio2.musicMuted ? '' : 'on'}" id="btn-music">Music</button>
+          <button class="mini ${d.shakeOff ? '' : 'on'}" id="btn-shake">Shake</button>
+          <button class="mini ${d.dmgNumbers ? 'on' : ''}" id="btn-dmg">Damage numbers</button>
+          <button class="mini ${d.trailFx !== false ? 'on' : ''}" id="btn-trail">Trails</button>
+          <button class="mini ${d.reducedFlash ? 'on' : ''}" id="btn-flash">Reduced flash</button>
         </div>
-        <p class="hint">Move: WASD / Arrows • Pause: Esc/P • Weapons fire automatically</p>
+        <p class="hint">Move: WASD or arrows &nbsp;·&nbsp; Blink: Space &nbsp;·&nbsp; Pause: Esc &nbsp;·&nbsp; Weapons fire on their own</p>
       </div>`;
     document.getElementById('btn-play').onclick = () => { Audio2.uiSelect(); this.showCharacterSelect('survival'); };
     document.getElementById('btn-gauntlet').onclick = () => { Audio2.uiSelect(); this.showCharacterSelect('gauntlet'); };
@@ -85,12 +85,12 @@ const UI = {
     document.getElementById('btn-mastery').onclick = () => { Audio2.uiSelect(); this.showMastery(); };
     document.getElementById('btn-history').onclick = () => { Audio2.uiSelect(); this.showHistory(); };
     document.getElementById('btn-help').onclick = () => { Audio2.uiSelect(); this.showHelp(); };
-    document.getElementById('btn-sfx').onclick = (e) => { Audio2.resume(); const m = Audio2.toggleMute(); Save.data.muted = m; Save.save(); e.target.textContent = (m ? '🔇' : '🔊') + ' SFX'; };
-    document.getElementById('btn-music').onclick = (e) => { Audio2.resume(); const m = Audio2.toggleMusic(); Save.data.musicMuted = m; Save.save(); e.target.textContent = (m ? '🎵̶' : '🎵') + ' Music'; };
-    document.getElementById('btn-shake').onclick = (e) => { Save.data.shakeOff = !Save.data.shakeOff; Save.save(); e.target.textContent = (Save.data.shakeOff ? '⬚' : '⬛') + ' Shake'; Audio2.uiMove(); };
-    document.getElementById('btn-dmg').onclick = (e) => { Save.data.dmgNumbers = !Save.data.dmgNumbers; Save.save(); e.target.textContent = (Save.data.dmgNumbers ? '🔢' : '⬚') + ' Damage #'; Audio2.uiMove(); };
-    document.getElementById('btn-trail').onclick = (e) => { Save.data.trailFx = Save.data.trailFx === false; Save.save(); e.target.textContent = (Save.data.trailFx !== false ? '✦' : '⬚') + ' Trail'; Audio2.uiMove(); };
-    document.getElementById('btn-flash').onclick = (e) => { Save.data.reducedFlash = !Save.data.reducedFlash; Save.save(); e.target.textContent = (Save.data.reducedFlash ? '🌙 Low Flash' : '☀ Flash'); Audio2.uiMove(); };
+    document.getElementById('btn-sfx').onclick = (e) => { Audio2.resume(); const m = Audio2.toggleMute(); Save.data.muted = m; Save.save(); e.target.classList.toggle('on', !m); };
+    document.getElementById('btn-music').onclick = (e) => { Audio2.resume(); const m = Audio2.toggleMusic(); Save.data.musicMuted = m; Save.save(); e.target.classList.toggle('on', !m); };
+    document.getElementById('btn-shake').onclick = (e) => { Save.data.shakeOff = !Save.data.shakeOff; Save.save(); e.target.classList.toggle('on', !Save.data.shakeOff); Audio2.uiMove(); };
+    document.getElementById('btn-dmg').onclick = (e) => { Save.data.dmgNumbers = !Save.data.dmgNumbers; Save.save(); e.target.classList.toggle('on', Save.data.dmgNumbers); Audio2.uiMove(); };
+    document.getElementById('btn-trail').onclick = (e) => { Save.data.trailFx = Save.data.trailFx === false; Save.save(); e.target.classList.toggle('on', Save.data.trailFx !== false); Audio2.uiMove(); };
+    document.getElementById('btn-flash').onclick = (e) => { Save.data.reducedFlash = !Save.data.reducedFlash; Save.save(); e.target.classList.toggle('on', Save.data.reducedFlash); Audio2.uiMove(); };
   },
 
   showHelp() {
@@ -99,32 +99,32 @@ const UI = {
       <div class="screen panel">
         <h2>How to Play</h2>
         <div class="help-grid">
-          <div class="help-card"><h3>🎯 Goal</h3><p>You are the last light. Endless waves of dark close in. Survive as long as you can — there is no winning, only how long you last.</p></div>
-          <div class="help-card"><h3>🕹 Move</h3><p><b>WASD</b> or <b>Arrow keys</b> to move (drag on touch screens). Your weapons fire <b>automatically</b> — focus on positioning and dodging.</p></div>
-          <div class="help-card"><h3>⟫ Blink</h3><p>Tap <b>Space</b> or <b>Shift</b> (double-tap on touch) to <b>dash</b> a short distance with brief <b>invulnerability</b>, on a cooldown. Blink through a wall of foes or out of a closing ring — the HUD bar glows when it's ready.</p></div>
-          <div class="help-card"><h3>💎 Grow</h3><p>Defeated foes drop light shards. Collect them to level up and <b>choose an upgrade</b> — new weapons, weapon levels, or passive boosts.</p></div>
-          <div class="help-card"><h3>⚒ Build</h3><p>You hold up to <b>6 weapons</b> and <b>6 passives</b>. Combine them into a build. Every run is different.</p></div>
-          <div class="help-card"><h3>☠ Bosses</h3><p>Bosses arrive on a timer and hit hard — but drop a flood of XP and treasure. Survive past 10:00 to face the Devourer.</p></div>
-          <div class="help-card"><h3>✦ Sanctuary</h3><p>Earn shards every run. Spend them in the Sanctuary on <b>permanent upgrades</b> and to <b>unlock new characters</b>.</p></div>
-          <div class="help-card"><h3>🧬 Evolve</h3><p>Max a weapon <b>and</b> own its paired passive to unlock a golden <b>EVOLUTION</b> — a far more powerful form. Chase them.</p></div>
-          <div class="help-card"><h3>✷ Synergies</h3><p>Hold the right <b>weapon pairs</b> together to trigger a <b>synergy</b> — an always-on set bonus (e.g. Flame + Toxin = <b>Wildfire</b>). Active synergies show under your weapons. Discover all ${SYNERGIES.length} in the Codex.</p></div>
-          <div class="help-card"><h3>🎴 Omens</h3><p>Before each run, draft a powerful <b>Omen</b> that reshapes the whole run — usually a big upside with a tradeoff. Or play with none.</p></div>
-          <div class="help-card"><h3>⚔ Gauntlet</h3><p>A boss-rush mode: <b>endless rounds of bosses</b>, escalating each time, with a short breather between. You start with extra upgrades — how many rounds can you clear?</p></div>
-          <div class="help-card"><h3>🎯 Trials</h3><p><b>${TRIALS.length} fixed-rule challenges</b>, each with a twist and a clear objective (survive, slay, or score). They ignore Omens & Relics — pure skill. Clear one for a shard bounty.</p></div>
-          <div class="help-card"><h3>🧪 Custom Run</h3><p>Stack <b>any mutators you like</b> — boons that ease the run or banes that brutalise it — then play. Your self-imposed difficulty <b>scales the shard payout</b>. Endless make-your-own variety.</p></div>
-          <div class="help-card"><h3>⭐ Elites &amp; Champions</h3><p>Glowing <b>elite</b> foes carry an affix and drop extra loot; <b>Champions</b> are named two-affix mini-bosses with a chest. Affixes: ${AFFIX_LIST.map(a => `<b style="color:${a.color}">${a.name}</b>`).join(', ')}.</p></div>
-          <div class="help-card"><h3>🗓 Daily</h3><p>A <b>seeded</b> run that's the same for everyone today. Pure skill — beat your own best score each day.</p></div>
-          <div class="help-card"><h3>🔮 Relics</h3><p>Spend shards to <b>unlock relics</b> (some gated behind achievements), then <b>equip</b> a few into your loadout for permanent bonuses. Collect more to earn extra slots.</p></div>
-          <div class="help-card"><h3>🌌 Biomes</h3><p>The world <b>shifts biome</b> every few minutes — new palette, new skies, and a lean toward different foes. The sequence is the same for a given seed, so the Daily stays fair.</p></div>
-          <div class="help-card"><h3>🔯 Shrines</h3><p>Altars appear in the world offering a <b>gamble</b>: step onto one for a strong boon — a damage surge, a big heal, or a shower of shards — but each <b>summons fresh danger</b>. Worth the detour?</p></div>
-          <div class="help-card"><h3>⚠ Hazards</h3><p>Each biome past the first brings an <b>environmental hazard</b> — meteor strikes, frost pools, gloom, a bloodstorm, riftvortices, sweeping sunfire beams, hunting wisps, shoving galewinds. They're always <b>telegraphed</b> and hurt foes too: watch for the warning ring or line and <b>step out</b>.</p></div>
-          <div class="help-card"><h3>📜 Chronicle</h3><p>Every run is logged in your <b>History</b> — its mode, character, build, score and time — so you can track your records and revisit your best runs.</p></div>
-          <div class="help-card"><h3>🎖 Mastery</h3><p>Every run builds <b>lifetime mastery</b> for the hero you played and the weapons you wielded. Climb the rank ladder — <b>Initiate → Ascendant</b> — for each one. Veterans earn a glowing <b>trail</b>, and an Ascendant hero wears a <b>halo</b>. A long-game goal beyond any single score.</p></div>
-          <div class="help-card"><h3>⚙ Options</h3><p>From the menu, toggle <b>SFX</b>, <b>Music</b>, <b>screen shake</b>, and floating <b>damage numbers</b> to taste.</p></div>
+          <div class="help-card"><h3>Goal</h3><p>You are the last light. Endless waves of dark close in. Survive as long as you can — there is no winning, only how long you last.</p></div>
+          <div class="help-card"><h3>Move</h3><p><b>WASD</b> or <b>Arrow keys</b> to move (drag on touch screens). Your weapons fire <b>automatically</b> — focus on positioning and dodging.</p></div>
+          <div class="help-card"><h3>Blink</h3><p>Tap <b>Space</b> or <b>Shift</b> (double-tap on touch) to <b>dash</b> a short distance with brief <b>invulnerability</b>, on a cooldown. Blink through a wall of foes or out of a closing ring — the HUD bar glows when it's ready.</p></div>
+          <div class="help-card"><h3>Grow</h3><p>Defeated foes drop light shards. Collect them to level up and <b>choose an upgrade</b> — new weapons, weapon levels, or passive boosts. Hate the hand you drew? <b>Reroll</b> it (once per run, more with Second Sight).</p></div>
+          <div class="help-card"><h3>Build</h3><p>You hold up to <b>6 weapons</b> and <b>6 passives</b>. Combine them into a build. Every run is different.</p></div>
+          <div class="help-card"><h3>Bosses</h3><p>Bosses arrive on a timer and hit hard — but drop a flood of XP and treasure. Survive past 10:00 to face the Devourer.</p></div>
+          <div class="help-card"><h3>Sanctuary</h3><p>Earn shards every run. Spend them in the Sanctuary on <b>permanent upgrades</b> and to <b>unlock new characters</b>.</p></div>
+          <div class="help-card"><h3>Evolve</h3><p>Max a weapon <b>and</b> own its paired passive to unlock a golden <b>EVOLUTION</b> — a far more powerful form. Chase them.</p></div>
+          <div class="help-card"><h3>Synergies</h3><p>Hold the right <b>weapon pairs</b> together to trigger a <b>synergy</b> — an always-on set bonus (e.g. Flame + Toxin = <b>Wildfire</b>). Active synergies show under your weapons. Discover all ${SYNERGIES.length} in the Codex.</p></div>
+          <div class="help-card"><h3>Omens</h3><p>Before each run, draft a powerful <b>Omen</b> that reshapes the whole run — usually a big upside with a tradeoff. Or play with none.</p></div>
+          <div class="help-card"><h3>Gauntlet</h3><p>A boss-rush mode: <b>endless rounds of bosses</b>, escalating each time, with a short breather between. You start with extra upgrades — how many rounds can you clear?</p></div>
+          <div class="help-card"><h3>Trials</h3><p><b>${TRIALS.length} fixed-rule challenges</b>, each with a twist and a clear objective (survive, slay, or score). They ignore Omens & Relics — pure skill. Clear one for a shard bounty.</p></div>
+          <div class="help-card"><h3>Custom Run</h3><p>Stack <b>any mutators you like</b> — boons that ease the run or banes that brutalise it — then play. Your self-imposed difficulty <b>scales the shard payout</b>. Endless make-your-own variety.</p></div>
+          <div class="help-card"><h3>Elites &amp; Champions</h3><p>Glowing <b>elite</b> foes carry an affix and drop extra loot; <b>Champions</b> are named two-affix mini-bosses with a chest. Affixes: ${AFFIX_LIST.map(a => `<b style="color:${a.color}">${a.name}</b>`).join(', ')}.</p></div>
+          <div class="help-card"><h3>Daily</h3><p>A <b>seeded</b> run that's the same for everyone today. Pure skill — beat your own best score each day.</p></div>
+          <div class="help-card"><h3>Relics</h3><p>Spend shards to <b>unlock relics</b> (some gated behind achievements), then <b>equip</b> a few into your loadout for permanent bonuses. Collect more to earn extra slots.</p></div>
+          <div class="help-card"><h3>Biomes</h3><p>The world <b>shifts biome</b> every few minutes — new palette, new skies, and a lean toward different foes. The sequence is the same for a given seed, so the Daily stays fair.</p></div>
+          <div class="help-card"><h3>Shrines</h3><p>Altars appear in the world offering a <b>gamble</b>: step onto one for a strong boon — a damage surge, a big heal, or a shower of shards — but each <b>summons fresh danger</b>. Worth the detour?</p></div>
+          <div class="help-card"><h3>Hazards</h3><p>Each biome past the first brings an <b>environmental hazard</b> — meteor strikes, frost pools, gloom, a bloodstorm, riftvortices, sweeping sunfire beams, hunting wisps, shoving galewinds. They're always <b>telegraphed</b> and hurt foes too: watch for the warning ring or line and <b>step out</b>.</p></div>
+          <div class="help-card"><h3>Chronicle</h3><p>Every run is logged in your <b>History</b> — its mode, character, build, score and time — so you can track your records and revisit your best runs.</p></div>
+          <div class="help-card"><h3>Mastery</h3><p>Every run builds <b>lifetime mastery</b> for the hero you played and the weapons you wielded. Climb the rank ladder — <b>Initiate → Ascendant</b> — for each one. Veterans earn a glowing <b>trail</b>, and an Ascendant hero wears a <b>halo</b>. A long-game goal beyond any single score.</p></div>
+          <div class="help-card"><h3>Options</h3><p>From the menu, toggle <b>SFX</b>, <b>Music</b>, <b>screen shake</b>, and floating <b>damage numbers</b> to taste.</p></div>
         </div>
         <div class="menu-buttons row">
-          <button class="btn btn-primary" id="btn-back">← Back</button>
-          <button class="btn" id="btn-replay-tut">↻ Replay Tutorial</button>
+          <button class="btn btn-primary" id="btn-back">Back</button>
+          <button class="btn" id="btn-replay-tut">Replay Tutorial</button>
         </div>
       </div>`;
     document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
@@ -140,13 +140,13 @@ const UI = {
         <h1 class="title">LAST<span>LIGHT</span></h1>
         <p class="tagline">You are the last spark of light against an endless dark.<br>Here's all you need to begin:</p>
         <div class="intro-steps">
-          <div class="intro-step"><div class="intro-ic">🕹</div><div><h3>Move to survive</h3><p>Steer with <b>WASD</b> or <b>arrow keys</b> — or drag on a touch screen. There's no fire button: your weapons attack <b>automatically</b>. Your whole job is to <b>dodge</b>.</p></div></div>
-          <div class="intro-step"><div class="intro-ic">💎</div><div><h3>Gather &amp; grow</h3><p>Fallen foes drop <b>light shards</b>. Scoop them up to <b>level up</b>, then pick a new weapon, a weapon upgrade, or a passive boost.</p></div></div>
+          <div class="intro-step"><div class="intro-ic">✜</div><div><h3>Move to survive</h3><p>Steer with <b>WASD</b> or <b>arrow keys</b> — or drag on a touch screen. There's no fire button: your weapons attack <b>automatically</b>. Your whole job is to <b>dodge</b>.</p></div></div>
+          <div class="intro-step"><div class="intro-ic">✦</div><div><h3>Gather &amp; grow</h3><p>Fallen foes drop <b>light shards</b>. Scoop them up to <b>level up</b>, then pick a new weapon, a weapon upgrade, or a passive boost.</p></div></div>
           <div class="intro-step"><div class="intro-ic">⚒</div><div><h3>Build a combo</h3><p>You carry up to <b>6 weapons</b> and <b>6 passives</b>. Max a weapon beside its paired passive to unlock a powerful <b>evolution</b>.</p></div></div>
-          <div class="intro-step"><div class="intro-ic">✦</div><div><h3>Endure &amp; return</h3><p>Every run earns <b>shards</b> to spend in the <b>Sanctuary</b> on permanent upgrades and new characters. Death is just the start of the next run.</p></div></div>
+          <div class="intro-step"><div class="intro-ic">∞</div><div><h3>Endure &amp; return</h3><p>Every run earns <b>shards</b> to spend in the <b>Sanctuary</b> on permanent upgrades and new characters. Death is just the start of the next run.</p></div></div>
         </div>
         <div class="menu-buttons row">
-          <button class="btn btn-primary" id="btn-intro-go">▶ Begin</button>
+          <button class="btn btn-primary" id="btn-intro-go">Begin</button>
           <button class="btn" id="btn-intro-skip">Skip</button>
         </div>
         <p class="hint">You can replay this anytime from <b>Help</b>.</p>
@@ -170,13 +170,13 @@ const UI = {
       const affordable = Save.data.shards >= c.cost;
       let action;
       if (unlocked) action = `<button class="btn btn-primary select-btn" data-id="${c.id}">SELECT</button>`;
-      else if (c.secret) action = `<div class="char-locktag">🔒 ${getAchievement(c.achievement).name}</div>`;
-      else action = `<button class="btn ${affordable ? '' : 'disabled'} unlock-btn" data-id="${c.id}">🔒 Unlock ✦${c.cost}</button>`;
+      else if (c.secret) action = `<div class="char-locktag"><span class="locked-label">Locked</span> · ${getAchievement(c.achievement).name}</div>`;
+      else action = `<button class="btn ${affordable ? '' : 'disabled'} unlock-btn" data-id="${c.id}">Unlock · ✦ ${c.cost}</button>`;
       const rk = masteryRank(charMasteryPoints(Save.charStats(c.id)));
       const badge = (unlocked && rk.index > 0)
-        ? `<div class="char-mastery" style="color:${rk.color};border-color:${rk.color}">🎖 ${rk.name}</div>` : '';
+        ? `<div class="char-mastery" style="color:${rk.color};border-color:${rk.color}">${rk.name}</div>` : '';
       return `
-        <div class="char-card ${unlocked ? '' : 'locked'} ${c.secret ? 'secret' : ''}" data-id="${c.id}">
+        <div class="char-card ${unlocked ? '' : 'locked'} ${c.secret ? 'secret' : ''}" data-id="${c.id}" style="--c:${c.color}">
           <div class="char-orb" style="--c:${c.color}"></div>
           <h3 style="color:${c.color}">${unlocked || !c.secret ? c.name : '???'}</h3>
           ${badge}
@@ -184,8 +184,8 @@ const UI = {
           <p class="char-blurb">${c.blurb}</p>
           ${c.perkDesc ? `<p class="char-perk" style="color:${c.color}">✦ ${c.perkDesc}</p>` : ''}
           <div class="char-stats">
-            <span>❤ ${c.stats.maxHp}</span><span>👟 ${c.stats.speed}</span>
-            <span>🗡 ${Math.round(c.stats.might*100)}%</span>
+            <span>HP ${c.stats.maxHp}</span><span>SPD ${c.stats.speed}</span>
+            <span>DMG ${Math.round(c.stats.might*100)}%</span>
           </div>
           ${action}
         </div>`;
@@ -195,7 +195,7 @@ const UI = {
       const locked = i > Save.data.maxDifficulty;
       const sel = i === this._selectedDiff;
       return `<button class="diff-btn ${sel ? 'sel' : ''} ${locked ? 'disabled' : ''}" data-i="${i}" style="--c:${dd.color}">
-        ${locked ? '🔒 ' : ''}${dd.name}${i > 0 ? ` <small>×${dd.reward}✦</small>` : ''}</button>`;
+        ${dd.name}${i > 0 ? ` <small>×${dd.reward}✦</small>` : ''}</button>`;
     }).join('');
     const nextLocked = DIFFICULTIES[Save.data.maxDifficulty + 1];
     const diffHint = nextLocked ? `Survive ${formatTime(nextLocked.unlockAt)} to unlock <b style="color:${nextLocked.color}">${nextLocked.name}</b>.` : 'All difficulties unlocked. You are formidable.';
@@ -203,13 +203,13 @@ const UI = {
     this.root.innerHTML = `
       <div class="screen panel wide">
         <div class="panel-head">
-          <h2>${this._mode === 'gauntlet' ? '⚔ Gauntlet — Choose your Light' : (this._mode === 'custom' ? '🧪 Custom Run — Choose your Light' : 'Choose your Light')}</h2>
+          <h2>${this._mode === 'gauntlet' ? 'Gauntlet — Choose Your Light' : (this._mode === 'custom' ? 'Custom Run — Choose Your Light' : 'Choose Your Light')}</h2>
           <span class="shard-chip big">✦ ${formatNum(Save.data.shards)}</span>
         </div>
         <div class="diff-row">${diffBtns}</div>
         <p class="tagline small">${diffHint}</p>
         <div class="char-grid">${cards}</div>
-        <button class="btn" id="btn-back">← Back</button>
+        <button class="btn" id="btn-back">Back</button>
       </div>`;
     this.root.querySelectorAll('.diff-btn:not(.disabled)').forEach(b => {
       b.onclick = () => { this._selectedDiff = +b.dataset.i; Audio2.uiMove(); this.showCharacterSelect(); };
@@ -249,8 +249,8 @@ const UI = {
         <p class="tagline small">A power that reshapes the whole run — choose wisely, or go without.</p>
         <div class="omen-grid">${cards}</div>
         <div class="menu-buttons row">
-          <button class="btn btn-primary" id="btn-none">▶ No Omen</button>
-          <button class="btn" id="btn-back">← Back</button>
+          <button class="btn btn-primary" id="btn-none">No Omen</button>
+          <button class="btn" id="btn-back">Back</button>
         </div>
         <p class="hint">Press 1–${omens.length}, or play with no omen</p>
       </div>`;
@@ -276,7 +276,7 @@ const UI = {
       const got = Save.hasAchievement(a.id);
       return `
         <div class="ach-card ${got ? 'got' : 'locked'}">
-          <div class="ach-icon">${got ? a.icon : '🔒'}</div>
+          <div class="ach-icon">${got ? a.icon : '·'}</div>
           <div class="ach-info">
             <h3>${a.name}</h3>
             <p>${a.desc}</p>
@@ -291,18 +291,18 @@ const UI = {
           <span class="shard-chip big">${Save.achievementCount()} / ${ACHIEVEMENTS.length}</span>
         </div>
         <div class="ach-grid">${cards}</div>
-        <button class="btn" id="btn-back">← Back</button>
+        <button class="btn" id="btn-back">Back</button>
       </div>`;
     document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
   },
 
   // ---- Run History / Chronicle ------------------------------------------
   _modeChip(r) {
-    if (r.mode === 'daily') return `<span class="hist-mode" style="color:#9ad8ff;border-color:#9ad8ff">🗓 Daily</span>`;
-    if (r.mode === 'gauntlet') return `<span class="hist-mode" style="color:#ffd84d;border-color:#ffd84d">⚔ Gauntlet</span>`;
-    if (r.mode === 'trial') return `<span class="hist-mode" style="color:#ff86c8;border-color:#ff86c8">🎯 ${r.trialWon ? '✓ ' : ''}${r.trialName || 'Trial'}</span>`;
-    if (r.mode === 'custom') return `<span class="hist-mode" style="color:#c9a8ff;border-color:#c9a8ff">🧪 Custom${r.mutators && r.mutators.length ? ' ×' + r.mutators.length : ''}</span>`;
-    return `<span class="hist-mode" style="color:${r.diffColor || '#7affc4'};border-color:${r.diffColor || '#7affc4'}">✦ ${r.diff > 0 ? r.diffName : 'Survival'}</span>`;
+    if (r.mode === 'daily') return `<span class="hist-mode" style="color:#9ad8ff;border-color:#9ad8ff">Daily</span>`;
+    if (r.mode === 'gauntlet') return `<span class="hist-mode" style="color:#ffd84d;border-color:#ffd84d">Gauntlet</span>`;
+    if (r.mode === 'trial') return `<span class="hist-mode" style="color:#ff86c8;border-color:#ff86c8">${r.trialWon ? '✓ ' : ''}${r.trialName || 'Trial'}</span>`;
+    if (r.mode === 'custom') return `<span class="hist-mode" style="color:#c9a8ff;border-color:#c9a8ff">Custom${r.mutators && r.mutators.length ? ' ×' + r.mutators.length : ''}</span>`;
+    return `<span class="hist-mode" style="color:${r.diffColor || '#7affc4'};border-color:${r.diffColor || '#7affc4'}">${r.diff > 0 ? r.diffName : 'Survival'}</span>`;
   },
 
   showHistory() {
@@ -322,7 +322,7 @@ const UI = {
         `<span class="hist-wep ${w.evo ? 'evo' : ''}" style="color:${w.color}" title="Lv ${w.level}">${w.icon}</span>`).join('');
       const omen = r.omenIcon ? `<span class="hist-tag" style="color:${r.omenColor};border-color:${r.omenColor}">${r.omenIcon}</span>` : '';
       const relics = (r.relics && r.relics.length)
-        ? `<span class="hist-tag" style="color:#c9a8ff;border-color:#c9a8ff">🔮 ${r.relics.map(id => { const x = getRelic(id); return x ? x.icon : ''; }).join('')}</span>` : '';
+        ? `<span class="hist-tag" style="color:#c9a8ff;border-color:#c9a8ff">${r.relics.map(id => { const x = getRelic(id); return x ? x.icon : ''; }).join('')}</span>` : '';
       return `
         <div class="hist-card">
           <div class="hist-top">
@@ -336,7 +336,7 @@ const UI = {
               <span>✦ ${formatNum(r.score)}</span>
               <span>☠ ${formatNum(r.kills)}</span>
               <span>Lv ${r.level}</span>
-              ${r.bosses ? `<span>👑 ${r.bosses}</span>` : ''}
+              ${r.bosses ? `<span>♛ ${r.bosses}</span>` : ''}
             </div>
           </div>
           <div class="hist-build">${weps}${omen}${relics}</div>
@@ -350,7 +350,7 @@ const UI = {
         </div>
         ${records}
         <div class="hist-list">${rows}</div>
-        <button class="btn" id="btn-back">← Back</button>
+        <button class="btn" id="btn-back">Back</button>
       </div>`;
     document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
   },
@@ -370,7 +370,7 @@ const UI = {
       return `
         <div class="mast-card ${locked ? 'locked' : ''}">
           <div class="mast-head">
-            <span class="mast-hero" style="color:${ch.color}">${locked ? '🔒 ' : ''}${ch.name}</span>
+            <span class="mast-hero" style="color:${ch.color}">${ch.name}</span>
             <span class="mast-rank" style="color:${rk.color};border-color:${rk.color}">${rk.name}</span>
           </div>
           <div class="mast-bar"><div class="mast-fill" style="width:${Math.round(rk.prog * 100)}%;background:${rk.color}"></div></div>
@@ -378,8 +378,8 @@ const UI = {
           <div class="mast-stats">
             <span>${s ? s.runs : 0} runs</span>
             <span>☠ ${formatNum(s ? s.kills : 0)}</span>
-            <span>⏱ ${formatTime(s ? s.bestTime : 0)}</span>
-            <span>👑 ${formatNum(s ? s.bosses : 0)}</span>
+            <span>best ${formatTime(s ? s.bestTime : 0)}</span>
+            <span>♛ ${formatNum(s ? s.bosses : 0)}</span>
           </div>
         </div>`;
     }).join('');
@@ -392,7 +392,7 @@ const UI = {
         <div class="wep-mast ${used ? '' : 'dim'}" title="${w.name}">
           <span class="wep-ic" style="color:${w.color}">${w.icon}</span>
           <span class="wep-stars">${used ? '★'.repeat(stars) + '☆'.repeat(5 - stars) : '—'}</span>
-          <span class="wep-runs">${used ? ws.runs + '× · ' + (ws.evolved ? '🧬' + ws.evolved : 'Lv' + ws.maxLevel) : 'unused'}</span>
+          <span class="wep-runs">${used ? ws.runs + '× · ' + (ws.evolved ? 'evo ' + ws.evolved : 'Lv' + ws.maxLevel) : 'unused'}</span>
         </div>`;
     }).join('');
     const playedAny = heroes.some(ch => Save.charStats(ch.id));
@@ -408,7 +408,7 @@ const UI = {
         <div class="mast-grid">${charCards}</div>
         <h3 class="mast-section">Weapons</h3>
         <div class="wep-grid">${weps}</div>
-        <button class="btn" id="btn-back">← Back</button>
+        <button class="btn" id="btn-back">Back</button>
       </div>`;
     document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
   },
@@ -427,22 +427,22 @@ const UI = {
       const body = unlocked
         ? `<p class="trial-desc">${t.desc}</p>
           <div class="trial-meta">
-            <span class="trial-goal">🎯 ${trialGoalText(t)}</span>
+            <span class="trial-goal">${trialGoalText(t)}</span>
             <span class="trial-tag" style="color:${ch ? ch.color : '#fff'}">${ch ? ch.name : 'Spark'}</span>
             ${t.diff ? `<span class="trial-tag" style="color:${diff.color};border-color:${diff.color}">${diff.name}</span>` : ''}
             <span class="trial-reward">✦ ${t.reward}</span>
           </div>
-          <button class="btn ${cleared ? '' : 'btn-primary'}" data-trial="${t.id}">${cleared ? '↺ Replay' : '▶ Begin'}</button>`
-        : `<p class="trial-desc trial-locked-desc">🔒 Locked — clear ${lockedBy.join(' & ')} to unlock.</p>
+          <button class="btn ${cleared ? '' : 'btn-primary'}" data-trial="${t.id}">${cleared ? 'Replay' : 'Begin'}</button>`
+        : `<p class="trial-desc trial-locked-desc">Locked — clear ${lockedBy.join(' & ')} to unlock.</p>
           <div class="trial-meta">
-            <span class="trial-goal">🎯 ${trialGoalText(t)}</span>
+            <span class="trial-goal">${trialGoalText(t)}</span>
             <span class="trial-reward">✦ ${t.reward}</span>
           </div>
-          <button class="btn" disabled>🔒 Locked</button>`;
+          <button class="btn" disabled>Locked</button>`;
       return `
         <div class="trial-card ${state}" style="--c:${t.color}">
           <div class="trial-top">
-            <span class="trial-name" style="color:${unlocked ? t.color : '#7488a8'}">${unlocked ? t.icon : '🔒'} ${t.name}</span>
+            <span class="trial-name" style="color:${unlocked ? t.color : '#7488a8'}">${unlocked ? t.icon + ' ' : ''}${t.name}</span>
             ${cleared ? '<span class="trial-done">✓ Cleared</span>' : ''}
           </div>
           ${body}
@@ -456,7 +456,7 @@ const UI = {
         </div>
         <p class="trial-intro">Fixed-rule challenges with a clear objective. They ignore Omens and Relics — pure skill. Clearing a Trial unlocks the next on its path; first clear pays the full bounty.</p>
         <div class="trial-grid">${cards}</div>
-        <button class="btn" id="btn-back">← Back</button>
+        <button class="btn" id="btn-back">Back</button>
       </div>`;
     this.root.querySelectorAll('[data-trial]').forEach(btn => {
       btn.onclick = () => {
@@ -491,7 +491,7 @@ const UI = {
     this.root.innerHTML = `
       <div class="screen panel wide">
         <div class="panel-head">
-          <h2>🧪 Custom Run</h2>
+          <h2>Custom Run</h2>
           <span class="shard-chip big" style="color:${tone};border-color:${tone}">✦ ×${mul.toFixed(2)}</span>
         </div>
         <p class="trial-intro">Stack any mutators you like, then choose a hero. Harder choices raise your shard payout; easier ones lower it. Omens & Relics are off.</p>
@@ -500,9 +500,9 @@ const UI = {
         <h3 class="mast-section">Banes <small>(harder — more reward)</small></h3>
         <div class="mut-grid">${banes.map(cardOf).join('')}</div>
         <div class="menu-buttons row">
-          <button class="btn btn-primary" id="btn-go">Choose Hero → <span class="mut-count">${this._mutators.length} active</span></button>
+          <button class="btn btn-primary" id="btn-go">Choose Hero <span class="mut-count">${this._mutators.length} active</span></button>
           <button class="btn" id="btn-clear">Clear</button>
-          <button class="btn" id="btn-back">← Back</button>
+          <button class="btn" id="btn-back">Back</button>
         </div>
       </div>`;
     this.root.querySelectorAll('[data-mut]').forEach(b => {
@@ -525,7 +525,7 @@ const UI = {
       const seen = Save.isSeen('enemies', e.id);
       let info = 'Undiscovered';
       if (seen) {
-        if (e.boss) { const n = Save.bossKillsOf(e.id); info = n > 0 ? `Boss · ⚔ ${formatNum(n)} slain` : 'Boss'; }
+        if (e.boss) { const n = Save.bossKillsOf(e.id); info = n > 0 ? `Boss · ${formatNum(n)} slain` : 'Boss'; }
         else info = 'HP ' + e.hp + ' · DMG ' + e.damage;
       }
       return `<div class="codex-card ${seen ? '' : 'locked'}" style="--c:${e.color}">
@@ -562,7 +562,7 @@ const UI = {
         <div class="codex-grid">${weaponCards}</div>
         <h3 class="sub">Synergies <small>(${SYNERGIES.length} set bonuses)</small></h3>
         <div class="syn-grid">${synergyCards}</div>
-        <button class="btn" id="btn-back">← Back</button>
+        <button class="btn" id="btn-back">Back</button>
       </div>`;
     document.getElementById('btn-back').onclick = () => { Audio2.uiMove(); this.showMenu(); };
   },
@@ -598,7 +598,7 @@ const UI = {
         <p class="tagline small">Permanent upgrades, carried into every run.</p>
         <div class="shop-grid">${items}</div>
         <div class="menu-buttons row">
-          <button class="btn" id="btn-back">← Back</button>
+          <button class="btn" id="btn-back">Back</button>
           <button class="btn danger" id="btn-reset">Reset Progress</button>
         </div>
       </div>`;
@@ -629,11 +629,11 @@ const UI = {
       const affordable = Save.data.shards >= r.cost;
       let action;
       if (owned) action = `<button class="shop-buy relic-eq ${equipped ? 'on' : ''}" data-eq="${r.id}">${equipped ? '✓ Equipped' : 'Equip'}</button>`;
-      else if (!gateMet) action = `<div class="shop-buy maxed-tag">🔒 ${gate.name}</div>`;
+      else if (!gateMet) action = `<div class="shop-buy maxed-tag"><span class="locked-label">Locked</span></div>`;
       else action = `<button class="shop-buy ${affordable ? '' : 'disabled'}" data-buy="${r.id}">✦ ${r.cost}</button>`;
       return `
         <div class="shop-card relic-card ${owned ? '' : 'locked'} ${equipped ? 'equipped' : ''}" style="--c:${r.color}">
-          <div class="shop-icon" style="color:${r.color}">${owned || gateMet ? r.icon : '🔒'}</div>
+          <div class="shop-icon" style="color:${r.color}">${owned || gateMet ? r.icon : '·'}</div>
           <div class="shop-info">
             <h3 style="color:${owned || gateMet ? r.color : ''}">${r.name}</h3>
             <p>${r.desc}</p>
@@ -650,7 +650,7 @@ const UI = {
         </div>
         <p class="tagline small">Unlock relics, then equip up to <b>${slots}</b> — <b>${used}/${slots}</b> slots used. Collect more relics to earn slots. (The Daily Challenge ignores relics.)</p>
         <div class="shop-grid">${cards}</div>
-        <button class="btn" id="btn-back">← Back</button>
+        <button class="btn" id="btn-back">Back</button>
       </div>`;
     this.root.querySelectorAll('.shop-buy[data-buy]').forEach(b => {
       b.onclick = () => {
@@ -694,20 +694,23 @@ const UI = {
     let coachLine = '';
     if (!Save.tipSeen('levelup')) {
       Save.markTip('levelup');
-      coachLine = `<p class="coach-line">➤ Stack <b>weapons</b> and <b>passives</b> into a build — pair a maxed weapon with its passive to <b>evolve</b> it.</p>`;
+      coachLine = `<p class="coach-line">Stack <b>weapons</b> and <b>passives</b> into a build — pair a maxed weapon with its passive to <b>evolve</b> it.</p>`;
     }
     this.root.innerHTML = `
       <div class="screen levelup">
-        <h2 class="levelup-title">✦ LEVEL UP ✦</h2>
+        <h2 class="levelup-title">Level Up</h2>
         <p class="levelup-sub">Choose your power${game.pendingLevels > 1 ? ` &nbsp;(${game.pendingLevels} pending)` : ''}</p>
         ${coachLine}
         <div class="up-grid">${cards}</div>
-        <p class="hint">Press 1–${choices.length} or click</p>
+        ${game.rerolls > 0 ? `<button class="btn reroll-btn" id="btn-reroll">Reroll · ${game.rerolls} left</button>` : ''}
+        <p class="hint">Press 1–${choices.length} or click${game.rerolls > 0 ? ' · R to reroll' : ''}</p>
       </div>`;
     this.root.querySelectorAll('.up-card').forEach(card => {
       card.onmouseenter = () => Audio2.uiMove();
       card.onclick = () => { const i = +card.dataset.i; game.chooseUpgrade(this._levelChoices[i]); };
     });
+    const rr = document.getElementById('btn-reroll');
+    if (rr) rr.onclick = () => game.rerollLevelUp();
   },
   hideLevelUp() { this.hide(); this._levelChoices = null; this.root.classList.remove('translucent'); },
 
@@ -741,8 +744,8 @@ const UI = {
         <h3 class="sub">Passives</h3><div class="tags">${plist || '<i>none</i>'}</div>
         ${syn.length ? `<h3 class="sub">Synergies</h3><div class="tags">${slist}</div>` : ''}
         <div class="menu-buttons row">
-          <button class="btn btn-primary" id="btn-resume">▶ Resume</button>
-          <button class="btn danger" id="btn-quit">⏏ Abandon Run</button>
+          <button class="btn btn-primary" id="btn-resume">Resume</button>
+          <button class="btn danger" id="btn-quit">Abandon Run</button>
         </div>
       </div>`;
     document.getElementById('btn-resume').onclick = () => { Audio2.uiSelect(); game.togglePause(); };
@@ -758,7 +761,7 @@ const UI = {
     const newAch = game.lastNewAchievements || [];
     const achBlock = newAch.length ? `
       <div class="go-unlocks">
-        <h3 class="sub" style="text-align:center;align-self:center">🏆 Unlocked</h3>
+        <h3 class="sub" style="text-align:center;align-self:center">Unlocked</h3>
         <div class="tags">${newAch.map(a => `<span class="tag" style="border-color:#ffd84d;color:#ffd84d">${a.icon} ${a.name}${a.reward ? ' +' + a.reward + '✦' : ''}</span>`).join('')}</div>
       </div>` : '';
     const diffBlock = game.lastUnlockedDiff ? `<p class="new-best" style="color:${game.lastUnlockedDiff.color}">▲ ${game.lastUnlockedDiff.name} difficulty unlocked!</p>` : '';
@@ -772,25 +775,25 @@ const UI = {
     const diffTag = trial
       ? `<span class="diff-chip" style="color:${trial.color};border-color:${trial.color}">${trial.icon} Trial: ${trial.name}</span>`
       : game.customRun
-      ? `<span class="diff-chip" style="color:#c9a8ff;border-color:#c9a8ff">🧪 Custom · ${game.mutators.length} mut · ×${game.mutatorRewardMul.toFixed(2)}</span>`
+      ? `<span class="diff-chip" style="color:#c9a8ff;border-color:#c9a8ff">Custom · ${game.mutators.length} mut · ×${game.mutatorRewardMul.toFixed(2)}</span>`
       : game.daily
-      ? `<span class="diff-chip" style="color:#9ad8ff;border-color:#9ad8ff">🗓 Daily ${game.dailyDate}</span>`
+      ? `<span class="diff-chip" style="color:#9ad8ff;border-color:#9ad8ff">Daily ${game.dailyDate}</span>`
       : gauntlet
-        ? `<span class="diff-chip" style="color:#ffd84d;border-color:#ffd84d">⚔ Gauntlet${game.diffIndex > 0 ? ' · ' + game.diff.name : ''}</span>`
+        ? `<span class="diff-chip" style="color:#ffd84d;border-color:#ffd84d">Gauntlet${game.diffIndex > 0 ? ' · ' + game.diff.name : ''}</span>`
         : (game.diffIndex > 0 ? `<span class="diff-chip" style="color:${game.diff.color};border-color:${game.diff.color}">${game.diff.name}</span>` : '');
     const gauntletBlock = (gauntlet && game.lastGauntlet)
       ? `<p class="new-best" ${game.lastGauntlet.isNew ? '' : 'style="color:var(--muted)"'}>${game.lastGauntlet.isNew ? '★ New Gauntlet Best — Round ' + game.gauntletCleared + '!' : 'Gauntlet best: Round ' + game.lastGauntlet.best.rounds}</p>`
       : '';
     const omenTag = game.omen ? `<span class="diff-chip" style="color:${game.omen.color};border-color:${game.omen.color}">${game.omen.icon} ${game.omen.name}</span>` : '';
     const relicTag = (game.relics && game.relics.length)
-      ? `<span class="diff-chip" style="color:#c9a8ff;border-color:#c9a8ff">🔮 ${game.relics.map(id => { const r = getRelic(id); return r ? r.icon : ''; }).join(' ')}</span>` : '';
+      ? `<span class="diff-chip" style="color:#c9a8ff;border-color:#c9a8ff">${game.relics.map(id => { const r = getRelic(id); return r ? r.icon : ''; }).join(' ')}</span>` : '';
     const dailyBlock = (game.daily && game.lastDaily)
       ? `<p class="new-best" ${game.lastDaily.isNew ? '' : 'style="color:var(--muted)"'}>${game.lastDaily.isNew ? '★ New Daily Best!' : 'Daily best: ' + formatNum(game.lastDaily.best.score) + ' (' + formatTime(game.lastDaily.best.time) + ')'}</p>`
       : '';
     const title = game.trialWon ? 'Trial Complete!' : (trial ? 'Trial Failed' : 'The light fades…');
     const hero = game.player && game.player.char;
     const heroLine = hero
-      ? `<p class="go-hero" style="color:${hero.color}">${hero.name}${game.player.masteryTitle && game.player.masteryRank > 0 ? ' · 🎖 ' + game.player.masteryTitle : ''}</p>` : '';
+      ? `<p class="go-hero" style="color:${hero.color}">${hero.name}${game.player.masteryTitle && game.player.masteryRank > 0 ? ' · ' + game.player.masteryTitle : ''}</p>` : '';
     this.root.innerHTML = `
       <div class="screen panel">
         <h2 class="gameover-title" ${game.trialWon ? `style="color:${trial.color}"` : ''}>${title}</h2>
@@ -813,9 +816,9 @@ const UI = {
         </div>
         ${achBlock}
         <div class="menu-buttons row">
-          <button class="btn btn-primary" id="btn-retry">↺ Play Again</button>
-          <button class="btn" id="btn-history">📜 History</button>
-          <button class="btn" id="btn-menu">⌂ Menu</button>
+          <button class="btn btn-primary" id="btn-retry">Play Again</button>
+          <button class="btn" id="btn-history">History</button>
+          <button class="btn" id="btn-menu">Menu</button>
         </div>
       </div>`;
     document.getElementById('btn-history').onclick = () => { Audio2.uiSelect(); this.showHistory(); };
@@ -826,8 +829,8 @@ const UI = {
     const wasChar = (game.player && game.player.char) ? game.player.char.id : 'spark';
     const wasDiff = game.diffIndex || 0;
     const retryBtn = document.getElementById('btn-retry');
-    if (wasTrial) retryBtn.textContent = '↺ Retry Trial';
-    else if (wasCustom) retryBtn.textContent = '↺ Run Again';
+    if (wasTrial) retryBtn.textContent = 'Retry Trial';
+    else if (wasCustom) retryBtn.textContent = 'Run Again';
     retryBtn.onclick = () => {
       Audio2.uiSelect(); this.hide();
       if (wasTrial) App.startRun(wasChar, trial.diff || 0, { trial: wasTrial });

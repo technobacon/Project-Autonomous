@@ -7,9 +7,9 @@
 const PASSIVES = {
   power:     { id: 'power', name: 'Power Crystal', icon: '◆', color: '#ff6b6b', max: 5, rarity: 1.0,
                desc: l => `+10% damage (lvl ${l})` },
-  haste:     { id: 'haste', name: 'Swift Sigil', icon: '⏩', color: '#ffd84d', max: 5, rarity: 1.0,
+  haste:     { id: 'haste', name: 'Swift Sigil', icon: '≫', color: '#ffd84d', max: 5, rarity: 1.0,
                desc: l => `+8% attack speed (lvl ${l})` },
-  boots:     { id: 'boots', name: 'Wind Boots', icon: '👟', color: '#8affc1', max: 5, rarity: 1.0,
+  boots:     { id: 'boots', name: 'Wind Boots', icon: '➤', color: '#8affc1', max: 5, rarity: 1.0,
                desc: l => `+8% move speed (lvl ${l})` },
   area:      { id: 'area', name: 'Wide Lens', icon: '⊙', color: '#9ad8ff', max: 5, rarity: 0.9,
                desc: l => `+12% area of effect (lvl ${l})` },
@@ -19,23 +19,23 @@ const PASSIVES = {
                desc: l => `+1 pierce (lvl ${l})` },
   velocity:  { id: 'velocity', name: 'Velocity Rune', icon: '»', color: '#9aff9a', max: 4, rarity: 0.9,
                desc: l => `+15% projectile speed (lvl ${l})` },
-  magnet:    { id: 'magnet', name: 'Lodestone', icon: '🧲', color: '#ffb3e6', max: 4, rarity: 1.0,
+  magnet:    { id: 'magnet', name: 'Lodestone', icon: '⌾', color: '#ffb3e6', max: 4, rarity: 1.0,
                desc: l => `+25% pickup range (lvl ${l})` },
-  vigor:     { id: 'vigor', name: 'Heart Ember', icon: '❤', color: '#ff5d8f', max: 5, rarity: 1.0,
+  vigor:     { id: 'vigor', name: 'Heart Ember', icon: '♥', color: '#ff5d8f', max: 5, rarity: 1.0,
                desc: l => `+20 max health & heal (lvl ${l})` },
   regen:     { id: 'regen', name: 'Mending Light', icon: '✚', color: '#7affc4', max: 5, rarity: 0.8,
                desc: l => `+0.5 health/sec (lvl ${l})` },
-  greed:     { id: 'greed', name: 'Greed Idol', icon: '💰', color: '#ffe14d', max: 4, rarity: 0.7,
+  greed:     { id: 'greed', name: 'Greed Idol', icon: '❖', color: '#ffe14d', max: 4, rarity: 0.7,
                desc: l => `+12% XP gained (lvl ${l})` },
   crit:      { id: 'crit', name: 'Keen Edge', icon: '✶', color: '#ff9d3c', max: 5, rarity: 0.8,
                desc: l => `+8% crit chance (lvl ${l})` },
-  guard:     { id: 'guard', name: 'Aegis Plate', icon: '🛡', color: '#9ad8ff', max: 5, rarity: 0.85,
+  guard:     { id: 'guard', name: 'Aegis Plate', icon: '✠', color: '#9ad8ff', max: 5, rarity: 0.85,
                desc: l => `-1 damage taken (lvl ${l})` },
-  luck:      { id: 'luck', name: 'Clover', icon: '🍀', color: '#7affc4', max: 4, rarity: 0.5,
+  luck:      { id: 'luck', name: 'Clover', icon: '✤', color: '#7affc4', max: 4, rarity: 0.5,
                desc: l => `+6% luck (lvl ${l})` },
-  bloodstone:{ id: 'bloodstone', name: 'Bloodstone', icon: '🩸', color: '#e0405a', max: 4, rarity: 0.55,
+  bloodstone:{ id: 'bloodstone', name: 'Bloodstone', icon: '†', color: '#e0405a', max: 4, rarity: 0.55,
                desc: l => `Heal on kill (lvl ${l})` },
-  bramble:   { id: 'bramble', name: 'Bramble Thorns', icon: '🌵', color: '#9fd86a', max: 4, rarity: 0.5,
+  bramble:   { id: 'bramble', name: 'Bramble Thorns', icon: '✻', color: '#9fd86a', max: 4, rarity: 0.5,
                desc: l => `Reflect +10% contact damage (lvl ${l})` },
 };
 const PASSIVE_LIST = Object.values(PASSIVES);
@@ -124,7 +124,7 @@ function buildUpgradeChoices(game, n = 3) {
 
   // Always offer a fallback if pool is exhausted (everything maxed).
   if (choices.length === 0) {
-    choices.push({ kind: 'gold', id: 'gold', name: 'Hoard', icon: '💰', color: '#ffe14d',
+    choices.push({ kind: 'gold', id: 'gold', name: 'Hoard', icon: '❖', color: '#ffe14d',
       desc: 'Gain shards & full heal.', level: 0, isNew: false });
   }
   return choices;

@@ -40,6 +40,7 @@ const App = {
     } else if (g.state === 'paused' && (e.key === 'Escape' || e.key.toLowerCase() === 'p')) {
       e.preventDefault(); g.togglePause();
     } else if (g.state === 'levelup') {
+      if (e.key.toLowerCase() === 'r') { e.preventDefault(); g.rerollLevelUp(); return; }
       const n = parseInt(e.key, 10);
       if (n >= 1 && n <= 9) { e.preventDefault(); UI.pickLevelByIndex(n - 1); }
     } else if (UI._omens) {
@@ -62,6 +63,15 @@ const App = {
     if (!Number.isFinite(frame) || frame < 0) frame = 0;
     frame = Math.min(frame, 0.25); // avoid spiral-of-death after a tab stall
     this.lastT = t;
+    // Hit-stop: a heavy impact freezes the world for a few frames. Wall-clock
+    // time spent frozen is discarded (not accumulated), so the sim itself is
+    // untouched — a seeded run plays out identically with or without it.
+    if (this.game.hitstop > 0) {
+      this.game.hitstop = Math.max(0, this.game.hitstop - frame);
+      this.game.render();
+      requestAnimationFrame((tt) => this.loop(tt));
+      return;
+    }
     this.acc += frame;
     let steps = 0;
     while (this.acc >= FIXED && steps < 5) {

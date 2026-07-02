@@ -266,6 +266,7 @@ class Player {
     this.game.particles.burst(this.x, this.y, 10, { color: '#ff5d6c', speed: rand(80, 200), life: 0.5 });
     this.game.particles.text(this.x, this.y - 20, '-' + Math.round(dmg), { color: '#ff8090', size: 16 });
     this.game.shake(6, 0.2);
+    this.game.hitstopKick(0.05);
     Audio2.playerHurt();
     if (this.hp <= 0) {
       this.hp = 0;
